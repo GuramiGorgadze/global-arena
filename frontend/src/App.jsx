@@ -3,6 +3,7 @@ import { Registration, ScrollToTopButton } from './components';
 import './styles/style.scss';
 import { Toaster } from 'react-hot-toast';
 import { Routes, Route } from 'react-router-dom';
+import { Navbar, Footer, Main } from './layouts';
 import useDocumentTitle from './hooks/useDocumentTitle';
 import useScrollTop from './hooks/useScrollTop';
 
@@ -11,7 +12,7 @@ function App() {
   useScrollTop();
 
   return (
-    <div>
+    <>
       <Toaster
         position="top-center"
         toastOptions={{
@@ -37,15 +38,17 @@ function App() {
           },
         }}
       />
-
-      <ScrollToTopButton />
-      <Routes>
-        <Route
-          path="/"
-          element={<Registration />}
-        />
-      </Routes>
-    </div>
+      <Navbar />
+      <Main>
+        <ScrollToTopButton />
+        <Routes>
+          <Route
+            path="/"
+            element={<Registration />}
+          />
+        </Routes>
+      </Main>
+    </>
   );
 }
 

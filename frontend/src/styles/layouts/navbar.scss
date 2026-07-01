@@ -1,0 +1,52 @@
+@use '../abstracts' as *;
+
+@mixin gold-text {
+  background: linear-gradient(135deg, $gold-bright 0%, #e8c96a 40%, $gold-muted 80%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  height: 72px;
+  background: rgba($black-deep, 0.85);
+  border-bottom: 1px solid rgba($gold-bright, 0.12);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+
+  * {
+    font-family: $font-eng;
+  }
+
+  &__logo {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    text-decoration: none;
+
+    img {
+      height: 48px;
+      width: 48px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 8px rgba($gold-bright, 0.4));
+    }
+
+    span {
+      font-family: $font-display;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      @include gold-text;
+      text-transform: uppercase;
+    }
+  }
+}

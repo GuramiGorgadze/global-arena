@@ -2,6 +2,8 @@
 @use 'abstracts/variables';
 @use 'abstracts/mixins';
 
+@use 'layouts/navbar';
+
 @use 'components/registration';
 @use 'components/scrollToTopButton';
 
