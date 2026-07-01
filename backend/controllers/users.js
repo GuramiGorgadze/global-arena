@@ -38,6 +38,8 @@ const pushToGoogleSheets = async (delegate) => {
     await axios.post(webhookUrl, {
       firstName: delegate.firstName,
       lastName: delegate.lastName,
+      firstNameLatin: delegate.firstNameLatin,
+      lastNameLatin: delegate.lastNameLatin,
       email: delegate.email,
       phone: delegate.phone,
       dob: formatDateOnly(delegate.dob),
@@ -65,6 +67,8 @@ export const registerDelegate = async (req, res) => {
     const {
       firstName,
       lastName,
+      firstNameLatin,
+      lastNameLatin,
       email,
       phone,
       dob,
@@ -81,6 +85,8 @@ export const registerDelegate = async (req, res) => {
     if (
       !firstName ||
       !lastName ||
+      !firstNameLatin ||
+      !lastNameLatin ||
       !email ||
       !phone ||
       !dob ||
@@ -113,6 +119,8 @@ export const registerDelegate = async (req, res) => {
     const delegate = await Delegates.create({
       firstName,
       lastName,
+      firstNameLatin,
+      lastNameLatin,
       email,
       phone,
       dob,

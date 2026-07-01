@@ -6,6 +6,8 @@ const delegateSchema = new Schema(
   {
     firstName: { type: String, required: true, trim: true, maxlength: 20 },
     lastName: { type: String, required: true, trim: true, maxlength: 20 },
+    firstNameLatin: { type: String, required: true, trim: true, maxlength: 20 },
+    lastNameLatin: { type: String, required: true, trim: true, maxlength: 20 },
     email: {
       type: String,
       required: true,

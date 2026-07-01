@@ -12,6 +12,7 @@ const COMMITTEES = [
   { id: 'unhrc', name: 'UNHRC' },
   { id: 'hcc', name: 'HCC' },
   { id: 'disec', name: 'DISEC' },
+  { id: 'presscorps', name: 'Press Corps' },
 ];
 
 const STEPS = ['ინფორმაცია', 'ბექგრაუნდი', 'პრიორიტეტები', 'მიმოხილვა'];
@@ -20,6 +21,8 @@ const MAX = {
   firstName: 20,
   lastName: 20,
   email: 30,
+  firstNameLatin: 20,
+  lastNameLatin: 20,
   phone: 20,
   school: 40,
   nationalId: 11,
@@ -31,9 +34,21 @@ const MAX = {
 };
 
 const PHONE_REGEX = /^5\d{2}-\d{3}-\d{3}$/;
+const LATIN_NAME_REGEX = /^[A-Za-z\s'-]+$/;
 
 const STEP_FIELDS = [
-  ['firstName', 'lastName', 'email', 'phone', 'dob', 'nationalId', 'parentName', 'parentPhone'],
+  [
+    'firstName',
+    'lastName',
+    'firstNameLatin',
+    'lastNameLatin',
+    'email',
+    'phone',
+    'dob',
+    'nationalId',
+    'parentName',
+    'parentPhone',
+  ],
   ['school', 'facebook', 'experience'],
   ['committees', 'countries'],
   [],
@@ -42,6 +57,8 @@ const STEP_FIELDS = [
 const DEFAULT_VALUES = {
   firstName: '',
   lastName: '',
+  firstNameLatin: '',
+  lastNameLatin: '',
   email: '',
   phone: '',
   dob: '',
@@ -67,6 +84,20 @@ const schema = yup.object({
     .trim()
     .required('გვარი სავალდებულოა')
     .max(MAX.lastName, `მაქსიმუმ ${MAX.lastName} სიმბოლო`),
+
+  firstNameLatin: yup
+    .string()
+    .trim()
+    .required('სახელი ლათინურად სავალდებულოა')
+    .max(MAX.firstNameLatin, `მაქსიმუმ ${MAX.firstNameLatin} სიმბოლო`)
+    .matches(LATIN_NAME_REGEX, 'გამოიყენეთ მხოლოდ ლათინური ასოები'),
+
+  lastNameLatin: yup
+    .string()
+    .trim()
+    .required('გვარი ლათინურად სავალდებულოა')
+    .max(MAX.lastNameLatin, `მაქსიმუმ ${MAX.lastNameLatin} სიმბოლო`)
+    .matches(LATIN_NAME_REGEX, 'გამოიყენეთ მხოლოდ ლათინური ასოები'),
 
   email: yup
     .string()
@@ -219,6 +250,8 @@ export default function RegistrationPage() {
     const payload = {
       firstName: data.firstName,
       lastName: data.lastName,
+      firstNameLatin: data.firstNameLatin,
+      lastNameLatin: data.lastNameLatin,
       email: data.email,
       phone: data.phone,
       dob: data.dob,
@@ -266,7 +299,7 @@ export default function RegistrationPage() {
           <h2>
             გახდი შემდეგი <em>დელეგატი</em>
           </h2>
-          <p>დელეგატად დასარეგისტრირებლად შეავსეთ ქვემოთ მოცემული ფორმა.</p>
+          <p>რეგისტრაციისთვის შეავსეთ ქვემოთ მოცემული ფორმა</p>
         </div>
 
         <div className="formCard">
@@ -306,7 +339,7 @@ export default function RegistrationPage() {
                   </div>
                   <div className="formGrid formGrid--2">
                     <Field
-                      label="სახელი"
+                      label="სახელი (ქართულად)"
                       required
                       error={errors.firstName?.message}
                     >
@@ -318,7 +351,7 @@ export default function RegistrationPage() {
                       />
                     </Field>
                     <Field
-                      label="გვარი"
+                      label="გვარი (ქართულად)"
                       required
                       error={errors.lastName?.message}
                     >
@@ -327,6 +360,30 @@ export default function RegistrationPage() {
                         placeholder="შეიყვანეთ გვარი"
                         maxLength={MAX.lastName}
                         {...register('lastName')}
+                      />
+                    </Field>
+                    <Field
+                      label="სახელი ლათინურად"
+                      required
+                      error={errors.firstNameLatin?.message}
+                    >
+                      <input
+                        className={clsx('formInput', { error: errors.firstNameLatin })}
+                        placeholder="Enter First Name"
+                        maxLength={MAX.firstNameLatin}
+                        {...register('firstNameLatin')}
+                      />
+                    </Field>
+                    <Field
+                      label="გვარი ლათინურად"
+                      required
+                      error={errors.lastNameLatin?.message}
+                    >
+                      <input
+                        className={clsx('formInput', { error: errors.lastNameLatin })}
+                        placeholder="Enter Last Name"
+                        maxLength={MAX.lastNameLatin}
+                        {...register('lastNameLatin')}
                       />
                     </Field>
                     <Field
@@ -566,7 +623,14 @@ export default function RegistrationPage() {
                   <SummaryCard
                     title="პირადი ინფორმაცია"
                     rows={[
-                      ['სახელი', `${watch('firstName')} ${watch('lastName')}`.trim() || '—'],
+                      [
+                        'სახელი (ქართულად)',
+                        `${watch('firstName')} ${watch('lastName')}`.trim() || '—',
+                      ],
+                      [
+                        'სახელი (ლათინურად)',
+                        `${watch('firstNameLatin')} ${watch('lastNameLatin')}`.trim() || '—',
+                      ],
                       ['ელ. ფოსტა', watch('email') || '—'],
                       ['ტელეფონი', watch('phone') || '—'],
                       ['დაბადების თარიღი', watch('dob') || '—'],
