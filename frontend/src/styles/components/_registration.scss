@@ -657,3 +657,17 @@
     padding: 15px 25px;
   }
 }
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+  
+  // Forces the text color to stay white/light
+  -webkit-text-fill-color: #ffffff !important; 
+  
+  // Forces the typing indicator (caret) to be white or your preferred color
+  caret-color: #ffffff !important; 
+}
