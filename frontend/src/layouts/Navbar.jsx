@@ -13,7 +13,7 @@ const Navbar = () => {
           src={Logo}
           alt="Logo"
         />
-        <span>Global Arena</span>
+        <span>G-ARENA Natinal Summit 2026</span>
       </Link>
     </nav>
   );

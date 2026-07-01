@@ -41,12 +41,16 @@
     }
 
     span {
-      font-family: $font-display;
+      font-family: $font-body;
       font-size: 22px;
-      font-weight: 700;
+      font-weight: 900;
       letter-spacing: 0.03em;
       @include gold-text;
-      text-transform: uppercase;
+
+      @media (max-width: 500px) {
+      font-size: 14px;
+
+      }
     }
   }
 }
