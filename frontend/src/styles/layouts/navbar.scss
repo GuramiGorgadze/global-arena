@@ -40,16 +40,19 @@
       filter: drop-shadow(0 0 8px rgba($gold-bright, 0.4));
     }
 
-    span {
+    .text {
       font-family: $font-body;
-      font-size: 22px;
+      font-size: 12px;
       font-weight: 900;
       letter-spacing: 0.03em;
       @include gold-text;
+      text-align: center;
+      line-height: 1;
 
-      @media (max-width: 500px) {
-        font-size: 14px;
+      .big {
+        font-size: 28px;
       }
+
     }
   }
 }
