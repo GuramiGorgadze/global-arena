@@ -1,0 +1,74 @@
+@use '../abstracts' as *;
+
+.scroll-btn {
+  position: fixed;
+  bottom: 40px;
+  right: 40px;
+  z-index: 100;
+  
+  width: 52px;
+  height: 52px;
+  border-radius: 50%; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  background: linear-gradient(145deg, rgba($black-card, 0.92) 0%, rgba($black-elevated, 0.94) 100%);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba($gold-bright, 0.35);
+  color: $gold-bright;
+  font-size: 20px;
+  cursor: pointer;
+  
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px);
+  
+  overflow: hidden;
+  
+  transition: 
+    opacity $duration-mid $ease-out, 
+    visibility $duration-mid $ease-out, 
+    transform $duration-mid $ease-out,
+    box-shadow $duration-fast $ease-out,
+    border-color $duration-fast $ease-out,
+    background $duration-fast $ease-out;
+
+  &--visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    background-size: 200% 100%;
+    opacity: 0;
+    transition: opacity $duration-fast;
+    pointer-events: none; 
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-muted 100%);
+    color: $black-deep;
+    border-color: $gold-bright;
+    box-shadow: 0 10px 40px rgba($gold-bright, 0.4); 
+    
+    &::before {
+      opacity: 1;
+      animation: shimmer 1.5s infinite;
+    }
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $gold-bright;
+    box-shadow: 0 0 0 3px rgba($gold-bright, 0.12);
+  }
+
+
+}

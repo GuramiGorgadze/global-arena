@@ -1,0 +1,14 @@
+# Ignore build output
+dist
+build
+
+# Ignore dependencies
+node_modules
+
+# Ignore config files
+*.config.js
+vite.config.js
+
+# Ignore lockfiles
+package-lock.json
+yarn.lock

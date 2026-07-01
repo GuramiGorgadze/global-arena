@@ -1,0 +1,50 @@
+@use 'variables' as *;
+
+:root {
+  --gold-bright: #{$gold-bright};
+  --black-deep: #{$black-deep};
+  --gold-muted: #{$gold-muted};
+  --error-red: #e5484d;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: $gold-muted $black-deep;
+
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+  &::-webkit-scrollbar-track {
+    background: $black-deep;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, $gold-bright, $gold-muted);
+    border-radius: $radius-pill;
+    border: 2px solid $black-deep;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: $gold-bright;
+  }
+}
+
+.customToast {
+  background: linear-gradient(
+    145deg,
+    rgba($black-card, 0.96) 0%,
+    rgba($black-elevated, 0.97) 100%
+  ) !important;
+  border: 1px solid rgba($gold-bright, 0.35) !important;
+  box-shadow:
+    0 0 20px $gold-glow,
+    0 12px 32px rgba($black-deep, 0.5) !important;
+  color: $white-warm !important;
+  font-family: $font-body !important;
+  font-size: 14px !important;
+  border-radius: $radius-md !important;
+  padding: 14px 18px !important;
+}
