@@ -263,7 +263,6 @@ export default function RegistrationPage() {
         ref={formTopRef}
       >
         <div className="sectionHeader">
-          <div className="sectionHeader__tag">რეგისტრაცია</div>
           <h2>
             გახდი შემდეგი <em>დელეგატი</em>
           </h2>
