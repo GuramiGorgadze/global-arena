@@ -1,8 +1,6 @@
 import express from "express";
 import { registerDelegate } from "../controllers/users.js";
 import rateLimit from "express-rate-limit";
-import { validate } from "../middleware/validate.js";
-import { delegateSchema } from "../validators/delegateSchema.js";
 
 const UsersRouter = express.Router();
 
@@ -12,11 +10,6 @@ const registerLimiter = rateLimit({
   message: { err: "Too many attempts, please try again later." },
 });
 
-UsersRouter.post(
-  "/delegate",
-  registerLimiter,
-  validate(delegateSchema),
-  registerDelegate,
-);
+UsersRouter.post("/delegate", registerLimiter, registerDelegate);
 
 export default UsersRouter;
