@@ -157,6 +157,7 @@ export const registerDelegate = async (req, res) => {
     if (err.name === "ValidationError") {
       return res.status(400).json({ message: err.message });
     }
-    res.status(500).json({ err: err.message });
+    console.error(err); 
+    res.status(500).json({ message: "დაფიქსირდა შეცდომა, სცადეთ ხელახლა." });
   }
 };

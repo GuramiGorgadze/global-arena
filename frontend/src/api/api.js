@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export const registerDelegate = async (data) => {
   try {
-    const response = await axios.post('http://localhost:3000/api/users/delegate', JSON.stringify(data), {
+    const response = await axios.post('/api/users/delegate', JSON.stringify(data), {
       headers: { 'Content-Type': 'application/json' },
       withCredentials: true,
     });

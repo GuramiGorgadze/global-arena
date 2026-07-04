@@ -3,18 +3,20 @@ import dotenv from "dotenv";
 import cors from "cors";
 import UsersRouter from "./routes/users.js";
 import connectDB from "./db/connection.js";
+import helmet from "helmet";
 import { fileURLToPath } from "url";
 import path from "path";
 
 dotenv.config();
 
 const app = express();
+app.use(helmet());
 
 const PORT = process.env.PORT || 3000;
 
 app.use(
-  cors({
-    origin: "http://localhost:5173",
+  cors({ 
+    origin: process.env.CLIENT_URL, 
     credentials: true,
   }),
 );
