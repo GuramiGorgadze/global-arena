@@ -8,9 +8,9 @@ import {
 const formatDateOnly = (date) => {
   if (!date) return "";
   const d = new Date(date);
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
 };
 
@@ -82,6 +82,19 @@ export const registerDelegate = async (req, res) => {
       countries,
     } = req.body;
 
+    const stringFields = {
+      firstName, lastName, firstNameLatin, lastNameLatin,
+      email, phone, school, nationalId, facebook,
+      experience, parentName, parentPhone,
+    };
+    for (const [key, value] of Object.entries(stringFields)) {
+      if (typeof value !== "string") {
+        return res
+          .status(400)
+          .json({ message: "ყველა სავალდებულო ველი უნდა იყოს შევსებული." });
+      }
+    }
+
     if (
       !firstName ||
       !lastName ||
@@ -98,8 +111,10 @@ export const registerDelegate = async (req, res) => {
       !parentPhone ||
       !Array.isArray(committees) ||
       committees.length !== 3 ||
+      !committees.every((c) => typeof c === "string") ||
       !Array.isArray(countries) ||
-      countries.length !== 3
+      countries.length !== 3 ||
+      !countries.every((c) => typeof c === "string")
     ) {
       return res
         .status(400)
@@ -157,7 +172,9 @@ export const registerDelegate = async (req, res) => {
     if (err.name === "ValidationError") {
       return res.status(400).json({ message: err.message });
     }
-    console.error(err); 
-    res.status(500).json({ message: "დაფიქსირდა შეცდომა, სცადეთ ხელახლა." });
+    console.error("registerDelegate error:", err);
+    res.status(500).json({
+      message: "სერვერზე მოხდა შეცდომა. სცადეთ ხელახლა მოგვიანებით.",
+    });
   }
 };

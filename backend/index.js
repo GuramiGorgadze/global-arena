@@ -10,14 +10,14 @@ import path from "path";
 dotenv.config();
 
 const app = express();
-app.set("trust proxy", 1); 
+app.set("trust proxy", 1);
 app.use(helmet());
 
 const PORT = process.env.PORT || 3000;
 
 app.use(
-  cors({ 
-    origin: process.env.CLIENT_URL, 
+  cors({
+    origin: process.env.CLIENT_URL,
     credentials: true,
   }),
 );
@@ -32,6 +32,13 @@ app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
 app.get("/{*any}", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+});
+
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err);
+  res.status(err.status || 500).json({
+    message: "სერვერზე მოხდა შეცდომა.",
+  });
 });
 
 const startServer = async () => {
