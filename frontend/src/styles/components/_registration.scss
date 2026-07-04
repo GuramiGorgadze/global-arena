@@ -147,6 +147,10 @@
       color: $white-warm;
       background: $gold-glow-sm;
     }
+
+    @media (max-width: 650px) {
+      padding: 13px;
+    }
   }
 }
 
@@ -638,7 +642,7 @@
   }
 
   @media (max-width: 650px) {
-    padding: 15px 25px;
+    padding: 15px 20px;
   }
 }
 
