@@ -1,14 +1,13 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-export const registerDelegate = (data) => api.post('/users/delegate', data);
-
-export default api;
+export const registerDelegate = async (data) => {
+  try {
+    const response = await axios.post('/api/users/delegate', JSON.stringify(data), {
+      headers: { 'Content-Type': 'application/json' },
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (err) {
+    throw new Error(err.response?.data?.err || 'Error registering delegate');
+  }
+};
