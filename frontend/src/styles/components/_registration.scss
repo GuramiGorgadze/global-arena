@@ -310,6 +310,63 @@
   }
 }
 
+.formDraftBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 28px;
+  padding: 14px 20px;
+  border-radius: $radius-md;
+  background: linear-gradient(135deg, rgba($gold-bright, 0.1) 0%, rgba($gold-muted, 0.04) 100%);
+  border: 1px solid rgba($gold-bright, 0.3);
+  animation: stepEnter $duration-mid $ease-out both;
+
+  span {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: $white-muted;
+    line-height: 1.4;
+
+    i {
+      font-size: 15px;
+      color: $gold-bright;
+      flex-shrink: 0;
+
+      @media (max-width: 390px) {
+        font-size: 12px;
+      }
+    }
+
+    @media (max-width: 390px) {
+      font-size: 10px;
+      gap: 5px;
+    }
+  }
+
+  @media (max-width: 390px) {
+    padding: 10px;
+  }
+}
+
+.btn--sm {
+  padding: 8px 18px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+
+  &:hover {
+    border-color: rgba($gold-bright, 0.5);
+  }
+
+  @media (max-width: 390px) {
+    padding: 5px 10px;
+  }
+}
+
 .formGrid {
   display: grid;
   gap: 20px;
@@ -647,13 +704,13 @@
 }
 
 input:-webkit-autofill,
-input:-webkit-autofill:hover, 
+input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
   transition: background-color 5000s ease-in-out 0s;
-  
-  -webkit-text-fill-color: #ffffff !important; 
-  
-  caret-color: #ffffff !important; 
+
+  -webkit-text-fill-color: #ffffff !important;
+
+  caret-color: #ffffff !important;
 }

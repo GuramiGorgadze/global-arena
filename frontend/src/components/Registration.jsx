@@ -1,4 +1,4 @@
-import { useState, useRef, cloneElement, isValidElement } from 'react';
+import { useState, useRef, useEffect, cloneElement, isValidElement } from 'react';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { useForm } from 'react-hook-form';
@@ -19,6 +19,8 @@ const STEPS = ['ინფორმაცია', 'ბექგრაუნდი
 
 const MIN_AGE = 10;
 const MAX_AGE = 30;
+
+const STORAGE_KEY = 'munReg:draft:v1';
 
 const MAX = {
   firstName: 20,
@@ -212,6 +214,30 @@ const getFirstErrorStep = (formErrors) => {
   return 0;
 };
 
+const loadDraft = () => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const saveDraft = (values, step) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ values, step, savedAt: Date.now() }));
+  } catch {}
+};
+
+const clearDraft = () => {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {}
+};
+
 export default function RegistrationPage() {
   const formTopRef = useRef(null);
   const {
@@ -231,10 +257,30 @@ export default function RegistrationPage() {
   });
 
   const [step, setStep] = useState(0);
+  const [draftRestored, setDraftRestored] = useState(false);
   const experienceText = watch('experience') || '';
 
   const committees = watch('committees');
   const countries = watch('countries');
+
+  useEffect(() => {
+    const draft = loadDraft();
+    if (draft?.values) {
+      reset({ ...DEFAULT_VALUES, ...draft.values });
+      if (typeof draft.step === 'number') {
+        setStep(Math.min(Math.max(draft.step, 0), STEPS.length - 1));
+      }
+      setDraftRestored(true);
+      toast('ფორმა აღდგენილია', { icon: '📝' });
+    }
+  }, []);
+
+  useEffect(() => {
+    const subscription = watch((values) => {
+      saveDraft(values, step);
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, step]);
 
   const handlePhoneChange = (name) => (e) => {
     let digits = e.target.value.replace(/\D/g, '').substring(0, 9);
@@ -307,6 +353,15 @@ export default function RegistrationPage() {
     }
   };
 
+  const handleClearDraft = () => {
+    clearDraft();
+    reset(DEFAULT_VALUES);
+    setStep(0);
+    setDraftRestored(false);
+    toast('ფორმა გასუფთავდა', { icon: '🗑️' });
+    scrollTop();
+  };
+
   const onSubmit = async (data) => {
     const payload = {
       firstName: data.firstName,
@@ -332,8 +387,10 @@ export default function RegistrationPage() {
     try {
       await api.registerDelegate(payload);
       toast.success('წარმატებით დარეგისტრირდით!', { id: toastId });
+      clearDraft();
       reset(DEFAULT_VALUES);
       setStep(0);
+      setDraftRestored(false);
       scrollTop();
     } catch (err) {
       const message = err?.message || 'რეგისტრაცია ვერ მოხერხდა, სცადეთ ხელახლა.';
@@ -380,6 +437,24 @@ export default function RegistrationPage() {
               </div>
             ))}
           </div>
+
+          {draftRestored && (
+            <div
+              className="formDraftBanner"
+              role="status"
+            >
+              <span>
+                <i className="bi bi-clock-history" /> ფორმა აღდგენილია
+              </span>
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                onClick={handleClearDraft}
+              >
+                გასუფთავება
+              </button>
+            </div>
+          )}
 
           <form
             onSubmit={handleSubmit(onSubmit, onInvalid)}
