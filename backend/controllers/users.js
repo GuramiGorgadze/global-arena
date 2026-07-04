@@ -55,6 +55,7 @@ const pushToGoogleSheets = async (delegate) => {
       country1: delegate.countries?.[0] || "",
       country2: delegate.countries?.[1] || "",
       country3: delegate.countries?.[2] || "",
+      promoCode: delegate.promoCode || "",
       createdAt: formatDateTime(delegate.createdAt),
     });
   } catch (err) {
@@ -80,12 +81,22 @@ export const registerDelegate = async (req, res) => {
       parentPhone,
       committees,
       countries,
+      promoCode,
     } = req.body;
 
     const stringFields = {
-      firstName, lastName, firstNameLatin, lastNameLatin,
-      email, phone, school, nationalId, facebook,
-      experience, parentName, parentPhone,
+      firstName,
+      lastName,
+      firstNameLatin,
+      lastNameLatin,
+      email,
+      phone,
+      school,
+      nationalId,
+      facebook,
+      experience,
+      parentName,
+      parentPhone,
     };
     for (const [key, value] of Object.entries(stringFields)) {
       if (typeof value !== "string") {
@@ -93,6 +104,12 @@ export const registerDelegate = async (req, res) => {
           .status(400)
           .json({ message: "ყველა სავალდებულო ველი უნდა იყოს შევსებული." });
       }
+    }
+
+    if (promoCode !== undefined && typeof promoCode !== "string") {
+      return res
+        .status(400)
+        .json({ message: "ყველა სავალდებულო ველი უნდა იყოს შევსებული." });
     }
 
     if (
@@ -147,6 +164,7 @@ export const registerDelegate = async (req, res) => {
       parentPhone,
       committees,
       countries,
+      promoCode: promoCode?.trim() || undefined,
     });
 
     pushToGoogleSheets(delegate);

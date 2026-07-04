@@ -34,6 +34,7 @@ const MAX = {
   country: 30,
   parentName: 40,
   parentPhone: 11,
+  promoCode: 20,
 };
 
 const PHONE_REGEX = /^5\d{2}-\d{3}-\d{3}$/;
@@ -75,6 +76,7 @@ const DEFAULT_VALUES = {
   parentPhone: '',
   committees: ['', '', ''],
   countries: ['', '', ''],
+  promoCode: '',
 };
 
 const schema = yup.object({
@@ -83,7 +85,7 @@ const schema = yup.object({
     .trim()
     .required('სახელი სავალდებულოა')
     .max(MAX.firstName, `მაქსიმუმ ${MAX.firstName} სიმბოლო`)
-    .matches(GEORGIAN_NAME_REGEX, 'გამოიყენეთ მხოლოდ ქართული ასოები'),
+    .matches(GEORGIAN_NAME_REGEX, 'მხოლოდ ქართული ასოები'),
 
   lastName: yup
     .string()
@@ -190,23 +192,16 @@ const schema = yup.object({
 
   countries: yup
     .array()
-    .of(
-      yup
-        .string()
-        .trim()
-        .required('შეიყვანეთ ქვეყანა')
-        .max(MAX.country, `მაქსიმუმ ${MAX.country} სიმბოლო`)
-    )
-    .length(3, 'შეიყვანეთ სამივე ქვეყანა')
+    .of(yup.string().trim().max(MAX.country, `მაქსიმუმ ${MAX.country} სიმბოლო`))
     .test('unique', 'ქვეყნები არ უნდა მეორდებოდეს', (arr) => {
       if (!arr) return true;
       const filled = arr.map((c) => (c || '').trim().toLowerCase()).filter(Boolean);
       return new Set(filled).size === filled.length;
     }),
+
+  promoCode: yup.string().trim().max(MAX.promoCode, `მაქსიმუმ ${MAX.promoCode} სიმბოლო`),
 });
 
-// Maps an errored field name back to the step that renders it,
-// so onInvalid can jump the user to the right place.
 const getFirstErrorStep = (formErrors) => {
   const erroredFields = Object.keys(formErrors);
   for (let s = 0; s < STEP_FIELDS.length; s++) {
@@ -267,7 +262,7 @@ export default function RegistrationPage() {
       shouldValidate: Boolean(errors.committees),
       shouldDirty: true,
     });
-  };  
+  };
 
   const nextStep = async () => {
     const valid = await trigger(STEP_FIELDS[step]);
@@ -329,12 +324,9 @@ export default function RegistrationPage() {
       parentPhone: data.parentPhone,
       committees: data.committees,
       countries: data.countries,
+      promoCode: data.promoCode?.trim() || '',
     };
 
-    // Single source of truth for the error message now: err.message,
-    // which is what api.registerDelegate actually throws. Both the toast
-    // and the inline server error read from the same place, so they can't
-    // disagree with each other.
     const toastId = toast.loading('რეგისტრაცია მიმდინარეობს...');
 
     try {
@@ -496,6 +488,7 @@ export default function RegistrationPage() {
                         className={clsx('formInput', { error: errors.dob })}
                         placeholder="MM/DD/YYYY"
                         {...register('dob')}
+                        required
                       />
                     </Field>
                     <Field
@@ -667,7 +660,6 @@ export default function RegistrationPage() {
                     <Field
                       id="country-0"
                       label="ქვეყანა 1"
-                      required
                       error={errors.countries?.[0]?.message}
                     >
                       <input
@@ -680,7 +672,6 @@ export default function RegistrationPage() {
                     <Field
                       id="country-1"
                       label="ქვეყანა 2"
-                      required
                       error={errors.countries?.[1]?.message}
                     >
                       <input
@@ -693,7 +684,6 @@ export default function RegistrationPage() {
                     <Field
                       id="country-2"
                       label="ქვეყანა 3"
-                      required
                       error={errors.countries?.[2]?.message}
                     >
                       <input
@@ -704,7 +694,6 @@ export default function RegistrationPage() {
                       />
                     </Field>
                   </div>
-                  {/* Group-level error (wrong count / duplicates) for countries */}
                   {typeof errors.countries?.message === 'string' && (
                     <p
                       className="formError"
@@ -760,6 +749,20 @@ export default function RegistrationPage() {
                     title="სასურველი ქვეყნები"
                     rows={countries.map((c, i) => [`ქვეყანა ${i + 1}`, c || '—'])}
                   />
+                  <div className="formGrid formGrid--1">
+                    <Field
+                      id="promoCode"
+                      label="პრომო კოდი"
+                      error={errors.promoCode?.message}
+                    >
+                      <input
+                        className={clsx('formInput', { error: errors.promoCode })}
+                        placeholder="შეიყვანეთ პრომო კოდი, თუ გაქვთ"
+                        maxLength={MAX.promoCode}
+                        {...register('promoCode')}
+                      />
+                    </Field>
+                  </div>
                 </>
               )}
             </div>

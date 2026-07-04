@@ -46,6 +46,7 @@ const delegateSchema = new Schema(
         message: "Exactly 3 country preferences are required",
       },
     },
+    promoCode: { type: String, trim: true, maxlength: 20 },
   },
   { timestamps: true },
 );
