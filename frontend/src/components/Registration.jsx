@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, cloneElement, isValidElement } from 'react';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { useForm } from 'react-hook-form';
@@ -17,24 +17,29 @@ const COMMITTEES = [
 
 const STEPS = ['ინფორმაცია', 'ბექგრაუნდი', 'პრიორიტეტები', 'მიმოხილვა'];
 
+const MIN_AGE = 10;
+const MAX_AGE = 30;
+
 const MAX = {
   firstName: 20,
   lastName: 20,
   email: 30,
   firstNameLatin: 20,
   lastNameLatin: 20,
-  phone: 20,
+  phone: 11,
   school: 40,
   nationalId: 11,
   facebook: 150,
   experience: 400,
   country: 30,
   parentName: 40,
-  parentPhone: 20,
+  parentPhone: 11,
 };
 
 const PHONE_REGEX = /^5\d{2}-\d{3}-\d{3}$/;
 const LATIN_NAME_REGEX = /^[A-Za-z\s'-]+$/;
+const GEORGIAN_NAME_REGEX = /^[\u10A0-\u10FF\s'-]+$/;
+const FACEBOOK_REGEX = /^(https?:\/\/)?(www\.)?(facebook\.com|fb\.com)\/.+/i;
 
 const STEP_FIELDS = [
   [
@@ -77,13 +82,15 @@ const schema = yup.object({
     .string()
     .trim()
     .required('სახელი სავალდებულოა')
-    .max(MAX.firstName, `მაქსიმუმ ${MAX.firstName} სიმბოლო`),
+    .max(MAX.firstName, `მაქსიმუმ ${MAX.firstName} სიმბოლო`)
+    .matches(GEORGIAN_NAME_REGEX, 'გამოიყენეთ მხოლოდ ქართული ასოები'),
 
   lastName: yup
     .string()
     .trim()
     .required('გვარი სავალდებულოა')
-    .max(MAX.lastName, `მაქსიმუმ ${MAX.lastName} სიმბოლო`),
+    .max(MAX.lastName, `მაქსიმუმ ${MAX.lastName} სიმბოლო`)
+    .matches(GEORGIAN_NAME_REGEX, 'გამოიყენეთ მხოლოდ ქართული ასოები'),
 
   firstNameLatin: yup
     .string()
@@ -112,7 +119,27 @@ const schema = yup.object({
     .required('ტელეფონის ნომერი სავალდებულოა')
     .matches(PHONE_REGEX, 'ფორმატი: 5XX-XXX-XXX'),
 
-  dob: yup.string().trim().required('დაბადების თარიღი სავალდებულოა'),
+  dob: yup
+    .string()
+    .trim()
+    .required('დაბადების თარიღი სავალდებულოა')
+    .test('valid-date', 'შეიყვანეთ ვალიდური თარიღი', (value) => {
+      if (!value) return false;
+      const date = new Date(value);
+      return !Number.isNaN(date.getTime());
+    })
+    .test('age-range', `ასაკი უნდა იყოს ${MIN_AGE}-${MAX_AGE} წლის ფარგლებში`, (value) => {
+      if (!value) return false;
+      const dob = new Date(value);
+      if (Number.isNaN(dob.getTime())) return false;
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const hasHadBirthdayThisYear =
+        today.getMonth() > dob.getMonth() ||
+        (today.getMonth() === dob.getMonth() && today.getDate() >= dob.getDate());
+      if (!hasHadBirthdayThisYear) age -= 1;
+      return age >= MIN_AGE && age <= MAX_AGE;
+    }),
 
   nationalId: yup
     .string()
@@ -142,7 +169,8 @@ const schema = yup.object({
     .string()
     .trim()
     .required('Facebook ბმული სავალდებულოა')
-    .max(MAX.facebook, `მაქსიმუმ ${MAX.facebook} სიმბოლო`),
+    .max(MAX.facebook, `მაქსიმუმ ${MAX.facebook} სიმბოლო`)
+    .matches(FACEBOOK_REGEX, 'შეიყვანეთ ვალიდური Facebook ბმული'),
 
   experience: yup
     .string()
@@ -169,8 +197,25 @@ const schema = yup.object({
         .required('შეიყვანეთ ქვეყანა')
         .max(MAX.country, `მაქსიმუმ ${MAX.country} სიმბოლო`)
     )
-    .length(3, 'შეიყვანეთ სამივე ქვეყანა'),
+    .length(3, 'შეიყვანეთ სამივე ქვეყანა')
+    .test('unique', 'ქვეყნები არ უნდა მეორდებოდეს', (arr) => {
+      if (!arr) return true;
+      const filled = arr.map((c) => (c || '').trim().toLowerCase()).filter(Boolean);
+      return new Set(filled).size === filled.length;
+    }),
 });
+
+// Maps an errored field name back to the step that renders it,
+// so onInvalid can jump the user to the right place.
+const getFirstErrorStep = (formErrors) => {
+  const erroredFields = Object.keys(formErrors);
+  for (let s = 0; s < STEP_FIELDS.length; s++) {
+    if (STEP_FIELDS[s].some((f) => erroredFields.includes(f))) {
+      return s;
+    }
+  }
+  return 0;
+};
 
 export default function RegistrationPage() {
   const formTopRef = useRef(null);
@@ -186,7 +231,8 @@ export default function RegistrationPage() {
   } = useForm({
     resolver: yupResolver(schema),
     defaultValues: DEFAULT_VALUES,
-    mode: 'onChange',
+    mode: 'onSubmit',
+    reValidateMode: 'onChange',
   });
 
   const [step, setStep] = useState(0);
@@ -200,14 +246,28 @@ export default function RegistrationPage() {
     let formatted = digits;
     if (digits.length > 3) formatted = digits.substring(0, 3) + '-' + digits.substring(3);
     if (digits.length > 6) formatted = formatted.substring(0, 7) + '-' + digits.substring(6, 9);
-    setValue(name, formatted, { shouldValidate: true, shouldDirty: true });
+    setValue(name, formatted, {
+      shouldValidate: Boolean(errors[name]),
+      shouldDirty: true,
+    });
+  };
+
+  const handleDigitsChange = (name, maxDigits) => (e) => {
+    const digits = e.target.value.replace(/\D/g, '').substring(0, maxDigits);
+    setValue(name, digits, {
+      shouldValidate: Boolean(errors[name]),
+      shouldDirty: true,
+    });
   };
 
   const setCommitteeAt = (i, value) => {
     const next = [...committees];
     next[i] = value;
-    setValue('committees', next, { shouldValidate: true, shouldDirty: true });
-  };
+    setValue('committees', next, {
+      shouldValidate: Boolean(errors.committees),
+      shouldDirty: true,
+    });
+  };  
 
   const nextStep = async () => {
     const valid = await trigger(STEP_FIELDS[step]);
@@ -219,7 +279,13 @@ export default function RegistrationPage() {
     scrollTop();
   };
 
-  const onInvalid = () => {
+  // Jumps back to whichever step actually contains the invalid field,
+  // instead of just scrolling up on the current (possibly unrelated) step.
+  const onInvalid = (formErrors) => {
+    const targetStep = getFirstErrorStep(formErrors);
+    if (targetStep !== step) {
+      setStep(targetStep);
+    }
     scrollTop();
   };
 
@@ -265,23 +331,22 @@ export default function RegistrationPage() {
       countries: data.countries,
     };
 
-    const submitPromise = api.registerDelegate(payload);
-
-    toast.promise(submitPromise, {
-      loading: 'რეგისტრაცია მიმდინარეობს...',
-      success: 'წარმატებით დარეგისტრირდით!',
-      error: (err) => err?.response?.data?.message || 'რეგისტრაცია ვერ მოხერხდა, სცადეთ ხელახლა.',
-    });
+    // Single source of truth for the error message now: err.message,
+    // which is what api.registerDelegate actually throws. Both the toast
+    // and the inline server error read from the same place, so they can't
+    // disagree with each other.
+    const toastId = toast.loading('რეგისტრაცია მიმდინარეობს...');
 
     try {
-      await submitPromise;
+      await api.registerDelegate(payload);
+      toast.success('წარმატებით დარეგისტრირდით!', { id: toastId });
       reset(DEFAULT_VALUES);
       setStep(0);
       scrollTop();
     } catch (err) {
-      setError('root.serverError', {
-        message: err?.response?.data?.message || 'რეგისტრაცია ვერ მოხერხდა, სცადეთ ხელახლა.',
-      });
+      const message = err?.message || 'რეგისტრაცია ვერ მოხერხდა, სცადეთ ხელახლა.';
+      toast.error(message, { id: toastId });
+      setError('root.serverError', { message });
       scrollTop();
     }
   };
@@ -339,6 +404,7 @@ export default function RegistrationPage() {
                   </div>
                   <div className="formGrid formGrid--2">
                     <Field
+                      id="firstName"
                       label="სახელი (ქართულად)"
                       required
                       error={errors.firstName?.message}
@@ -351,6 +417,7 @@ export default function RegistrationPage() {
                       />
                     </Field>
                     <Field
+                      id="lastName"
                       label="გვარი (ქართულად)"
                       required
                       error={errors.lastName?.message}
@@ -363,6 +430,7 @@ export default function RegistrationPage() {
                       />
                     </Field>
                     <Field
+                      id="firstNameLatin"
                       label="სახელი ლათინურად"
                       required
                       error={errors.firstNameLatin?.message}
@@ -375,6 +443,7 @@ export default function RegistrationPage() {
                       />
                     </Field>
                     <Field
+                      id="lastNameLatin"
                       label="გვარი ლათინურად"
                       required
                       error={errors.lastNameLatin?.message}
@@ -387,6 +456,7 @@ export default function RegistrationPage() {
                       />
                     </Field>
                     <Field
+                      id="email"
                       label="ელ. ფოსტის მისამართი"
                       required
                       error={errors.email?.message}
@@ -400,12 +470,14 @@ export default function RegistrationPage() {
                       />
                     </Field>
                     <Field
+                      id="phone"
                       label="ტელეფონის ნომერი"
                       required
                       error={errors.phone?.message}
                     >
                       <input
                         type="tel"
+                        inputMode="numeric"
                         className={clsx('formInput', { error: errors.phone })}
                         placeholder="5XX-XXX-XXX"
                         maxLength={MAX.phone}
@@ -414,6 +486,7 @@ export default function RegistrationPage() {
                       />
                     </Field>
                     <Field
+                      id="dob"
                       label="დაბადების თარიღი"
                       required
                       error={errors.dob?.message}
@@ -422,20 +495,22 @@ export default function RegistrationPage() {
                         type="date"
                         className={clsx('formInput', { error: errors.dob })}
                         placeholder="MM/DD/YYYY"
-                        required
                         {...register('dob')}
                       />
                     </Field>
                     <Field
+                      id="nationalId"
                       label="პირადი ნომერი"
                       required
                       error={errors.nationalId?.message}
                     >
                       <input
+                        inputMode="numeric"
                         className={clsx('formInput', { error: errors.nationalId })}
                         placeholder="შეიყვანეთ პირადი ნომერი"
                         maxLength={MAX.nationalId}
-                        {...register('nationalId')}
+                        value={watch('nationalId')}
+                        onChange={handleDigitsChange('nationalId', MAX.nationalId)}
                       />
                     </Field>
                   </div>
@@ -445,6 +520,7 @@ export default function RegistrationPage() {
                   </div>
                   <div className="formGrid formGrid--2">
                     <Field
+                      id="parentName"
                       label="მშობლის სრული სახელი"
                       required
                       error={errors.parentName?.message}
@@ -457,11 +533,14 @@ export default function RegistrationPage() {
                       />
                     </Field>
                     <Field
+                      id="parentPhone"
                       label="მშობლის ტელეფონის ნომერი"
                       required
                       error={errors.parentPhone?.message}
                     >
                       <input
+                        type="tel"
+                        inputMode="numeric"
                         className={clsx('formInput', { error: errors.parentPhone })}
                         placeholder="5XX-XXX-XXX"
                         maxLength={MAX.parentPhone}
@@ -480,6 +559,7 @@ export default function RegistrationPage() {
                   </div>
                   <div className="formGrid formGrid--2">
                     <Field
+                      id="school"
                       label="სკოლა / უნივერსიტეტი"
                       required
                       error={errors.school?.message}
@@ -492,6 +572,7 @@ export default function RegistrationPage() {
                       />
                     </Field>
                     <Field
+                      id="facebook"
                       label="Facebook გვერდის ბმული"
                       required
                       error={errors.facebook?.message}
@@ -507,6 +588,7 @@ export default function RegistrationPage() {
 
                   <div className="formGrid formGrid--1">
                     <Field
+                      id="experience"
                       label="MUN გამოცდილება"
                       required
                       error={errors.experience?.message}
@@ -518,7 +600,6 @@ export default function RegistrationPage() {
                         maxLength={MAX.experience}
                         {...register('experience')}
                       />
-
                       <div className="textareaFooter">
                         <span
                           className={clsx('charCounter', {
@@ -545,13 +626,11 @@ export default function RegistrationPage() {
                   <div className="formGrid formGrid--3">
                     {committees.map((val, i) => (
                       <Field
+                        id={`committee-${i}`}
                         label={`კომიტეტი ${i + 1}`}
                         key={i}
                         required
-                        error={
-                          errors.committees?.[i]?.message ||
-                          (i === 0 ? errors.committees?.message : undefined)
-                        }
+                        error={errors.committees?.[i]?.message}
                       >
                         <select
                           className={clsx('formSelect', { error: errors.committees?.[i] })}
@@ -573,9 +652,20 @@ export default function RegistrationPage() {
                       </Field>
                     ))}
                   </div>
+                  {/* Group-level error (wrong count / duplicates) rendered once,
+                      not attached to any single dropdown. */}
+                  {typeof errors.committees?.message === 'string' && (
+                    <p
+                      className="formError"
+                      role="alert"
+                    >
+                      {errors.committees.message}
+                    </p>
+                  )}
 
                   <div className="formGrid formGrid--3">
                     <Field
+                      id="country-0"
                       label="ქვეყანა 1"
                       required
                       error={errors.countries?.[0]?.message}
@@ -588,6 +678,7 @@ export default function RegistrationPage() {
                       />
                     </Field>
                     <Field
+                      id="country-1"
                       label="ქვეყანა 2"
                       required
                       error={errors.countries?.[1]?.message}
@@ -600,6 +691,7 @@ export default function RegistrationPage() {
                       />
                     </Field>
                     <Field
+                      id="country-2"
                       label="ქვეყანა 3"
                       required
                       error={errors.countries?.[2]?.message}
@@ -612,6 +704,15 @@ export default function RegistrationPage() {
                       />
                     </Field>
                   </div>
+                  {/* Group-level error (wrong count / duplicates) for countries */}
+                  {typeof errors.countries?.message === 'string' && (
+                    <p
+                      className="formError"
+                      role="alert"
+                    >
+                      {errors.countries.message}
+                    </p>
+                  )}
                 </>
               )}
 
@@ -664,7 +765,12 @@ export default function RegistrationPage() {
             </div>
 
             {errors.root?.serverError?.message && (
-              <p className="formError formError--root">{errors.root.serverError.message}</p>
+              <p
+                className="formError formError--root"
+                role="alert"
+              >
+                {errors.root.serverError.message}
+              </p>
             )}
 
             <div className="formFooter">
@@ -711,14 +817,34 @@ export default function RegistrationPage() {
   );
 }
 
-function Field({ label, required, error, children }) {
+function Field({ label, required, error, children, id }) {
+  const errorId = error ? `${id}-error` : undefined;
+  const child = isValidElement(children)
+    ? cloneElement(children, {
+        id,
+        'aria-invalid': error ? true : undefined,
+        'aria-describedby': errorId,
+      })
+    : children;
+
   return (
     <div className="formGroup">
-      <label className="formLabel">
+      <label
+        className="formLabel"
+        htmlFor={id}
+      >
         {label} {required && <span className="formLabel__req">*</span>}
       </label>
-      {children}
-      {error && <p className="formError">{error}</p>}
+      {child}
+      {error && (
+        <p
+          className="formError"
+          id={errorId}
+          role="alert"
+        >
+          {error}
+        </p>
+      )}
     </div>
   );
 }
