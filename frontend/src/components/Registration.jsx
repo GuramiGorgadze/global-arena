@@ -275,8 +275,14 @@ export default function RegistrationPage() {
     }
   }, []);
 
+  const skipNextSaveRef = useRef(false);
+
   useEffect(() => {
     const subscription = watch((values) => {
+      if (skipNextSaveRef.current) {
+        skipNextSaveRef.current = false;
+        return;
+      }
       saveDraft(values, step);
     });
     return () => subscription.unsubscribe();
@@ -354,6 +360,7 @@ export default function RegistrationPage() {
   };
 
   const handleClearDraft = () => {
+    skipNextSaveRef.current = true;
     clearDraft();
     reset(DEFAULT_VALUES);
     setStep(0);
@@ -387,6 +394,7 @@ export default function RegistrationPage() {
     try {
       await api.registerDelegate(payload);
       toast.success('წარმატებით დარეგისტრირდით!', { id: toastId });
+      skipNextSaveRef.current = true;
       clearDraft();
       reset(DEFAULT_VALUES);
       setStep(0);
@@ -561,7 +569,7 @@ export default function RegistrationPage() {
                       <input
                         type="date"
                         className={clsx('formInput', { error: errors.dob })}
-                        placeholder="MM/DD/YYYY"
+                        placeholder="შეიყვანეთ დაბადების თარიღი"
                         {...register('dob')}
                         required
                       />

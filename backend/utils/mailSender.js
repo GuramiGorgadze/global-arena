@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { formatDateOnly } from "./dateFormat.js";
 
 const createTransporter = () =>
   nodemailer.createTransport({
@@ -118,7 +119,7 @@ const sendAdminNotificationMail = async (delegate) => {
       ${infoRow("სახელი და გვარი", `${delegate.firstName} ${delegate.lastName}`)}
       ${infoRow("ელ. ფოსტა", `<a href="mailto:${delegate.email}" style="color: #9a7a35;">${delegate.email}</a>`)}
       ${infoRow("ტელეფონი", delegate.phone)}
-      ${infoRow("დაბადების თარიღი", delegate.dob)}
+      ${infoRow("დაბადების თარიღი", formatDateOnly(delegate.dob))}
       ${infoRow("პირადი ნომერი", delegate.nationalId)}
       ${infoRow("მშობელი", `${delegate.parentName} (${delegate.parentPhone})`)}
       ${infoRow("სასწავლებელი", delegate.school)}

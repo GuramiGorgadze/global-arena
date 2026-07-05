@@ -4,27 +4,7 @@ import {
   sendDelegateConfirmationMail,
   sendAdminNotificationMail,
 } from "../utils/mailSender.js";
-
-const formatDateOnly = (date) => {
-  if (!date) return "";
-  const d = new Date(date);
-  const yyyy = d.getUTCFullYear();
-  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(d.getUTCDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-};
-
-const formatDateTime = (date) => {
-  if (!date) return "";
-  const d = new Date(date);
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const hh = String(d.getHours()).padStart(2, "0");
-  const min = String(d.getMinutes()).padStart(2, "0");
-  const ss = String(d.getSeconds()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
-};
+import { formatDateOnly, formatDateTime } from "../utils/dateFormat.js";
 
 const pushToGoogleSheets = async (delegate) => {
   const webhookUrl = process.env.GOOGLE_SHEETS_WEBHOOK_URL;
