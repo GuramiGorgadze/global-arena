@@ -11,7 +11,7 @@ const COMMITTEES = [
   { id: 'specpol', name: 'SPECPOL' },
   { id: 'unhrc', name: 'UNHRC' },
   { id: 'hcc', name: 'HCC' },
-  { id: 'disec', name: 'DISEC' },
+  { id: 'disec', name: 'DISEC (ENG)' },
   { id: 'presscorps', name: 'Press Corps' },
 ];
 
