@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import UsersRouter from "./routes/users.js";
 import VisitsRouter from "./routes/visits.js";
-import { trackVisit } from "./controllers/visitController.js";
+import { trackVisit } from "./controllers/visits.js";
 import connectDB from "./db/connection.js";
 import helmet from "helmet";
 import { fileURLToPath } from "url";
