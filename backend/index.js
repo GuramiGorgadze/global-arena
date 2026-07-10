@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import UsersRouter from "./routes/users.js";
+import { trackVisit, getVisitCount } from "./controllers/stats.js";
 import connectDB from "./db/connection.js";
 import helmet from "helmet";
 import { fileURLToPath } from "url";
@@ -24,13 +25,14 @@ app.use(
 app.use(express.json());
 
 app.use("/api/users", UsersRouter);
+app.get("/api/stats/visits", getVisitCount);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-app.get("/{*any}", (req, res) => {
+app.get("/{*any}", trackVisit, (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
 
