@@ -238,8 +238,15 @@ const clearDraft = () => {
   } catch {}
 };
 
+// Enter-key navigation: elements considered "focusable fields" within a step.
+// Extend this selector if you add more field types (e.g. textarea, if you
+// want Enter to hop out of it too).
+const FOCUSABLE_FIELD_SELECTOR =
+  'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]):not([readonly])';
+
 export default function RegistrationPage() {
   const formTopRef = useRef(null);
+  const stepContentRef = useRef(null);
   const {
     register,
     handleSubmit,
@@ -345,13 +352,38 @@ export default function RegistrationPage() {
     formTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  // Enter key behavior:
+  // - On a textarea, do nothing special (let Enter insert a newline).
+  // - On any other field, move focus to the next focusable field in the
+  //   current step (like Tab), instead of immediately validating/advancing
+  //   the whole step.
+  // - Only when there's no next field left in the step (i.e. Enter was
+  //   pressed on the last field) do we run step validation / submit.
   const handleFormKeyDown = (e) => {
     if (e.key !== 'Enter') return;
-    if (e.target.tagName === 'TEXTAREA') return;
     e.preventDefault();
 
     if (isSubmitting) return;
 
+    const container = stepContentRef.current;
+    const focusable = container
+      ? Array.from(container.querySelectorAll(FOCUSABLE_FIELD_SELECTOR))
+      : [];
+    const currentIndex = focusable.indexOf(e.target);
+
+    if (currentIndex !== -1) {
+      const nextField = focusable[currentIndex + 1];
+      if (nextField) {
+        nextField.focus();
+        if (nextField.tagName === 'INPUT' && typeof nextField.select === 'function') {
+          nextField.select();
+        }
+        return;
+      }
+    }
+
+    // No next field in this step (or Enter fired outside a tracked field,
+    // e.g. from a button) — fall back to advancing the step / submitting.
     if (step < STEPS.length - 1) {
       nextStep();
     } else {
@@ -471,6 +503,7 @@ export default function RegistrationPage() {
             <div
               className="formStepContent"
               key={step}
+              ref={stepContentRef}
             >
               {step === 0 && (
                 <>
