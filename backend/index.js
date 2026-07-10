@@ -2,7 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import UsersRouter from "./routes/users.js";
-import { trackVisit, getVisitCount } from "./controllers/stats.js";
+import VisitsRouter from "./routes/visits.js";
+import { trackVisit } from "./controllers/visitController.js";
 import connectDB from "./db/connection.js";
 import helmet from "helmet";
 import { fileURLToPath } from "url";
@@ -24,21 +25,19 @@ app.use(
 );
 app.use(express.json());
 
+app.use(trackVisit);
 app.use("/api/users", UsersRouter);
-app.get("/api/stats/visits", getVisitCount);
+app.use("/api/visits", VisitsRouter);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-app.get("/", trackVisit, (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
-});
-
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-app.get("/{*any}", trackVisit, (req, res) => {
+app.get("/{*any}", (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
+
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);
   res.status(err.status || 500).json({

@@ -1,4 +1,4 @@
-import Visit from "../models/visit.js";
+import Visit from "../models/visits.js";
 
 export const trackVisit = async (req, res, next) => {
   try {
@@ -15,7 +15,7 @@ export const trackVisit = async (req, res, next) => {
 
 export const getVisitCount = async (req, res) => {
   try {
-    const visit = await Visit.findOne({});
+    const visit = await Visit.findOne({ key: "global" });
     res.json({ count: visit ? visit.count : 0 });
   } catch (err) {
     console.error("getVisitCount error:", err);
