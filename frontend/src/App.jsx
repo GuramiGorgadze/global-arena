@@ -43,7 +43,7 @@ function App() {
         <ScrollToTopButton />
         <Routes>
           <Route
-            path="/"
+            path="*"
             element={<Registration />}
           />
         </Routes>
