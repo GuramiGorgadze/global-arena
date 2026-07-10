@@ -3,7 +3,7 @@ import Visit from "../models/visit.js";
 export const trackVisit = async (req, res, next) => {
   try {
     await Visit.updateOne(
-      {},
+      { key: "global" },
       { $inc: { count: 1 }, $set: { lastVisited: new Date() } },
       { upsert: true },
     );

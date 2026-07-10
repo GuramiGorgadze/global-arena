@@ -30,12 +30,15 @@ app.get("/api/stats/visits", getVisitCount);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+app.get("/", trackVisit, (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+});
+
 app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
 app.get("/{*any}", trackVisit, (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
-
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);
   res.status(err.status || 500).json({
