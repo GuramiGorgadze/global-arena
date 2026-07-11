@@ -1,7 +1,10 @@
+import { init } from '@plausible-analytics/tracker'
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter as Router } from 'react-router-dom';
 import App from './App.jsx';
+
+init({ domain: 'g-arena.org' })
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
