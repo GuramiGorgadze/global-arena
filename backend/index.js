@@ -11,7 +11,19 @@ dotenv.config();
 
 const app = express();
 app.set("trust proxy", 1);
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "https://plausible.io"],
+        connectSrc: ["'self'", "https://plausible.io"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:"],
+      },
+    },
+  }),
+);
 
 const PORT = process.env.PORT || 3000;
 
