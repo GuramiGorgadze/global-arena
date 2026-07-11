@@ -1,0 +1,39 @@
+@use 'variables' as *;
+
+@mixin gold-text {
+  background: linear-gradient(135deg, $gold-bright 0%, #e8c96a 40%, $gold-muted 80%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@mixin glass-card {
+  background: linear-gradient(145deg, $black-card 0%, $black-elevated 100%);
+  border: 1px solid $black-border;
+}
+
+@mixin input-base {
+  width: 100%;
+  background: rgba($black-deep, 0.6);
+  border: 1px solid $black-border;
+  border-radius: $radius-md;
+  color: $white-warm;
+  font-family: $font-body;
+  font-size: 15px;
+  padding: 14px 18px;
+  transition:
+    border-color $duration-fast $ease-out,
+    box-shadow $duration-fast $ease-out;
+  outline: none;
+
+  &::placeholder {
+    color: $white-dim;
+  }
+  &:hover {
+    border-color: rgba($gold-bright, 0.25);
+  }
+  &:focus {
+    border-color: $gold-bright;
+    box-shadow: 0 0 0 3px rgba($gold-bright, 0.12);
+  }
+}

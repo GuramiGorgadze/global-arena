@@ -87,28 +87,28 @@ const schema = yup.object({
     .trim()
     .required('სახელი სავალდებულოა')
     .max(MAX.firstName, `მაქსიმუმ ${MAX.firstName} სიმბოლო`)
-    .matches(GEORGIAN_NAME_REGEX, 'მხოლოდ ქართული ასოები'),
+    .matches(GEORGIAN_NAME_REGEX, 'დაწერეთ სახელი ქართულად'),
 
   lastName: yup
     .string()
     .trim()
     .required('გვარი სავალდებულოა')
     .max(MAX.lastName, `მაქსიმუმ ${MAX.lastName} სიმბოლო`)
-    .matches(GEORGIAN_NAME_REGEX, 'გამოიყენეთ მხოლოდ ქართული ასოები'),
+    .matches(GEORGIAN_NAME_REGEX, 'დაწერეთ გვარი ქართულად'),
 
   firstNameLatin: yup
     .string()
     .trim()
     .required('სახელი ლათინურად სავალდებულოა')
     .max(MAX.firstNameLatin, `მაქსიმუმ ${MAX.firstNameLatin} სიმბოლო`)
-    .matches(LATIN_NAME_REGEX, 'გამოიყენეთ მხოლოდ ლათინური ასოები'),
+    .matches(LATIN_NAME_REGEX,'დაწერეთ სახელი ლათინურად'),
 
   lastNameLatin: yup
     .string()
     .trim()
     .required('გვარი ლათინურად სავალდებულოა')
     .max(MAX.lastNameLatin, `მაქსიმუმ ${MAX.lastNameLatin} სიმბოლო`)
-    .matches(LATIN_NAME_REGEX, 'გამოიყენეთ მხოლოდ ლათინური ასოები'),
+    .matches(LATIN_NAME_REGEX, 'დაწერეთ გვარი ლათინურად'),
 
   email: yup
     .string()
@@ -238,9 +238,6 @@ const clearDraft = () => {
   } catch {}
 };
 
-// Enter-key navigation: elements considered "focusable fields" within a step.
-// Extend this selector if you add more field types (e.g. textarea, if you
-// want Enter to hop out of it too).
 const FOCUSABLE_FIELD_SELECTOR =
   'input:not([disabled]):not([readonly]), select:not([disabled]), textarea:not([disabled]):not([readonly])';
 
@@ -333,8 +330,6 @@ export default function RegistrationPage() {
     scrollTop();
   };
 
-  // Jumps back to whichever step actually contains the invalid field,
-  // instead of just scrolling up on the current (possibly unrelated) step.
   const onInvalid = (formErrors) => {
     const targetStep = getFirstErrorStep(formErrors);
     if (targetStep !== step) {
@@ -352,13 +347,6 @@ export default function RegistrationPage() {
     formTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  // Enter key behavior:
-  // - On a textarea, do nothing special (let Enter insert a newline).
-  // - On any other field, move focus to the next focusable field in the
-  //   current step (like Tab), instead of immediately validating/advancing
-  //   the whole step.
-  // - Only when there's no next field left in the step (i.e. Enter was
-  //   pressed on the last field) do we run step validation / submit.
   const handleFormKeyDown = (e) => {
     if (e.key !== 'Enter') return;
     e.preventDefault();
@@ -382,8 +370,6 @@ export default function RegistrationPage() {
       }
     }
 
-    // No next field in this step (or Enter fired outside a tracked field,
-    // e.g. from a button) — fall back to advancing the step / submitting.
     if (step < STEPS.length - 1) {
       nextStep();
     } else {
@@ -687,7 +673,7 @@ export default function RegistrationPage() {
                       error={errors.facebook?.message}
                     >
                       <input
-                        className={clsx('formInput', { error: errors.facebook })}
+                        className={clsx('formInput facebookInput', { error: errors.facebook })}
                         placeholder="facebook.com/username"
                         maxLength={MAX.facebook}
                         {...register('facebook')}
@@ -702,21 +688,23 @@ export default function RegistrationPage() {
                       required
                       error={errors.experience?.message}
                     >
-                      <textarea
-                        className={clsx('formTextarea', { error: errors.experience })}
-                        placeholder="აღწერეთ თქვენი გაეროს მოდელირების ან მსგავსი პროექტების გამოცდილება. რომელ კონფერენციებში მიგიღიათ მონაწილეობა და რა როლით"
-                        rows={5}
-                        maxLength={MAX.experience}
-                        {...register('experience')}
-                      />
-                      <div className="textareaFooter">
-                        <span
-                          className={clsx('charCounter', {
-                            'charCounter--nearMax': experienceText.length > 350,
-                          })}
-                        >
-                          {experienceText.length} / {MAX.experience}
-                        </span>
+                      <div className="textareaWrap">
+                        <textarea
+                          className={clsx('formTextarea', { error: errors.experience })}
+                          placeholder="აღწერეთ თქვენი გაეროს მოდელირების ან მსგავსი პროექტების გამოცდილება. რომელ კონფერენციებში მიგიღიათ მონაწილეობა და რა როლით"
+                          rows={5}
+                          maxLength={MAX.experience}
+                          {...register('experience')}
+                        />
+                        <div className="textareaFooter">
+                          <span
+                            className={clsx('charCounter', {
+                              'charCounter--nearMax': experienceText.length > 350,
+                            })}
+                          >
+                            {experienceText.length} / {MAX.experience}
+                          </span>
+                        </div>
                       </div>
                     </Field>
                   </div>

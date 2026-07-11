@@ -2,6 +2,10 @@ import React from 'react';
 import Logo from '../assets/logo.png';
 import { Link } from 'react-router-dom';
 
+const NAV_LINKS = [
+  { href: '#committees', label: 'კომიტეტები' },
+];
+
 const Navbar = () => {
   return (
     <nav className="navbar">
@@ -13,7 +17,9 @@ const Navbar = () => {
           src={Logo}
           alt="Logo"
         />
-        <span className='text'><span className='big'>G-ARENA</span> <br /> National Summit 2026</span>
+        <span className="text">
+          <span className="big">G-ARENA</span> <br /> National Summit 2026
+        </span>
       </Link>
     </nav>
   );

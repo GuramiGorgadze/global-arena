@@ -1,0 +1,736 @@
+@use '../abstracts' as *;
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes floatSlow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes bounceHint {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateY(6px);
+    opacity: 1;
+  }
+}
+
+@keyframes rotateCW {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rotateCCW {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes borderPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 24px $gold-glow;
+  }
+  50% {
+    box-shadow: 0 0 44px rgba($gold-bright, 0.28);
+  }
+}
+
+.home {
+  font-family: $font-body;
+  background-color: $black-deep;
+  color: $white-warm;
+  overflow-x: hidden;
+
+  em {
+    font-style: normal;
+    @include gold-text;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Scroll-reveal utility — sections/grids fade + rise into place; individual
+// children (cards, stat items, timeline rows) can stagger via inline
+// transition-delay set from JS, keyed off the parent's reveal state.
+// ---------------------------------------------------------------------------
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.7s $ease-out,
+    transform 0.7s $ease-out;
+
+  &--visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal--visible,
+  .statsBar__item,
+  .committeeCard,
+  .schedule__item {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Hero
+// ---------------------------------------------------------------------------
+
+.hero {
+  position: relative;
+  min-height: 92vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 80px 40px 60px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('../../assets/banner.jpeg');
+    background-size: cover;
+    background-position: center 38%;
+    opacity: 0.4;
+    filter: grayscale(10%) contrast(1.05);
+    z-index: 0;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 70% 45% at 50% 30%, rgba($gold-bright, 0.1), transparent 60%),
+      linear-gradient(
+        180deg,
+        rgba($black-deep, 0.4) 0%,
+        rgba($black-deep, 0.75) 55%,
+        $black-deep 100%
+      );
+    z-index: 0;
+  }
+
+  // Radar / graticule rings — echoes the crosshair-globe in the logo.
+  // Two independently rotating groups create slow, ambient parallax.
+  &__rings {
+    position: absolute;
+    top: 48%;
+    left: 50%;
+    width: min(760px, 92vw);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.35;
+  }
+
+  &__ringsSvg {
+    width: 100%;
+    height: 100%;
+
+    circle,
+    line {
+      fill: none;
+      stroke: rgba($gold-bright, 0.55);
+      stroke-width: 1;
+    }
+  }
+
+  &__ringsOuter {
+    transform-origin: 300px 300px;
+    animation: rotateCW 110s linear infinite;
+  }
+
+  &__ringsInner {
+    transform-origin: 300px 300px;
+    animation: rotateCCW 75s linear infinite;
+  }
+
+  &__content {
+    position: relative;
+    z-index: 2;
+    max-width: 720px;
+  }
+
+  &__badge {
+    display: inline-block;
+    padding: 8px 20px;
+    border-radius: $radius-pill;
+    border: 1px solid rgba($gold-bright, 0.35);
+    background: $gold-glow-sm;
+    color: $gold-bright;
+    font-family: $font-eng, $font-display;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: fadeUp 0.7s $ease-out 0.1s both;
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-size: clamp(38px, 6vw, 68px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 0.8s $ease-out 0.26s both;
+  }
+
+  &__subtitle {
+    font-size: 17px;
+    line-height: 1.75;
+    color: $white-muted;
+    max-width: 560px;
+    margin: 0 auto 40px;
+    opacity: 0;
+    animation: fadeUp 0.8s $ease-out 0.42s both;
+  }
+
+  &__cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    opacity: 0;
+    animation: fadeUp 0.8s $ease-out 0.58s both;
+  }
+
+  &__scrollHint {
+    position: absolute;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    color: $gold-muted;
+    font-size: 20px;
+    animation: bounceHint 2s $ease-out infinite;
+  }
+
+  @media (max-width: 650px) {
+    min-height: 94vh;
+    padding: 64px 20px 48px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &__badge,
+    &__title,
+    &__subtitle,
+    &__cta {
+      animation: none;
+      opacity: 1;
+    }
+    &__ringsOuter,
+    &__ringsInner,
+    &__scrollHint {
+      animation: none;
+    }
+  }
+}
+
+.statsBar {
+  max-width: 900px;
+  margin: -44px auto 0;
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  @include glass-card;
+  border: 1px solid rgba($gold-bright, 0.25);
+  border-radius: $radius-xl;
+  box-shadow: 0 20px 60px rgba($black-deep, 0.6);
+  padding: 32px 20px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+    row-gap: 28px;
+    margin: -32px 16px 0;
+  }
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+    border-right: 1px solid $black-border;
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity 0.6s $ease-out,
+      transform 0.6s $ease-out;
+
+    .reveal--visible & {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    &:last-child {
+      border-right: none;
+    }
+
+    @media (max-width: 640px) {
+      &:nth-child(2) {
+        border-right: none;
+      }
+      &:nth-child(1),
+      &:nth-child(2) {
+        border-bottom: 1px solid $black-border;
+        padding-bottom: 20px;
+      }
+    }
+  }
+
+  &__value {
+    font-family: $font-display;
+    font-size: 34px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    @include gold-text;
+  }
+
+  &__label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: $white-dim;
+  }
+}
+
+.about {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 140px 40px 100px;
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 60px;
+  align-items: center;
+
+  @media (max-width: 860px) {
+    grid-template-columns: 1fr;
+    padding: 100px 20px 70px;
+    gap: 32px;
+    * {
+        text-align: justify;
+    }
+  }
+
+  &__emblem {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 280px;
+      opacity: 0.9;
+      animation: floatSlow 7s ease-in-out infinite;
+    }
+
+    @media (max-width: 860px) {
+      order: -1;
+      img {
+        max-width: 170px;
+      }
+    }
+  }
+
+  &__emblemGlow {
+    position: absolute;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba($gold-bright, 0.22), transparent 70%);
+    animation: pulseGlow 5s ease-in-out infinite;
+    z-index: 0;
+
+    @media (max-width: 860px) {
+      width: 180px;
+      height: 180px;
+    }
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-size: clamp(28px, 3.2vw, 36px);
+    font-weight: 700;
+    margin-bottom: 20px;
+  }
+
+  &__text {
+    font-size: 15px;
+    line-height: 1.85;
+    color: $white-muted;
+    margin-bottom: 36px;
+  }
+
+  &__features {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  &__feature {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    transition: transform $duration-fast $ease-out;
+
+    &:hover {
+      transform: translateX(4px);
+    }
+
+    i {
+      font-size: 20px;
+      color: $gold-bright;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+  }
+
+  &__featureTitle {
+    font-size: 15px;
+    font-weight: 700;
+    color: $white-warm;
+    margin-bottom: 2px;
+  }
+
+  &__featureText {
+    font-size: 13px;
+    color: $white-dim;
+    line-height: 1.6;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &__emblem img,
+    &__emblemGlow {
+      animation: none;
+    }
+  }
+}
+
+.committees {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 60px 40px 110px;
+
+  @media (max-width: 768px) {
+    padding: 20px 20px 80px;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+
+    @media (max-width: 980px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    @media (max-width: 620px) {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.committeeCard {
+  position: relative;
+  @include glass-card;
+  border-radius: $radius-md;
+  border: 1px solid $black-border;
+  padding: 28px 24px;
+  perspective: 800px;
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.6s $ease-out,
+    transform 0.5s $ease-out,
+    border-color $duration-fast $ease-out,
+    box-shadow $duration-mid $ease-out;
+
+  .reveal--visible & {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 24px;
+    right: 24px;
+    height: 3px;
+    border-radius: 0 0 4px 4px;
+    background: linear-gradient(90deg, $gold-muted, $gold-bright, $gold-muted);
+    background-size: 200% 100%;
+    opacity: 0;
+    transition: opacity $duration-fast $ease-out;
+  }
+
+  &:hover {
+    transform: translateY(-6px) rotateX(2deg);
+    border-color: rgba($gold-bright, 0.35);
+    box-shadow: 0 16px 40px rgba($black-deep, 0.5);
+
+    &::before {
+      opacity: 1;
+      animation: shimmer 1.8s linear infinite;
+    }
+
+    .committeeCard__icon {
+      background: $gold-bright;
+      color: $black-deep;
+      transform: rotate(-8deg) scale(1.05);
+    }
+  }
+
+  &__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+
+  &__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba($gold-bright, 0.1);
+    border: 1px solid rgba($gold-bright, 0.3);
+    color: $gold-bright;
+    font-size: 18px;
+    transition: all $duration-mid $ease-out;
+  }
+
+  &__tag {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: $gold-bright;
+    border: 1px solid rgba($gold-bright, 0.4);
+    border-radius: $radius-pill;
+    padding: 3px 10px;
+  }
+
+  &__abbr {
+    font-family: $font-eng;
+    font-size: 22px;
+    font-weight: 700;
+    color: $white-warm;
+    margin-bottom: 4px;
+  }
+
+  &__full {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: $gold-muted;
+    margin-bottom: 14px;
+  }
+
+  &__desc {
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: $white-muted;
+  }
+}
+
+// .schedule {
+//   max-width: 780px;
+//   margin: 0 auto;
+//   padding: 40px 40px 110px;
+
+//   @media (max-width: 768px) {
+//     padding: 10px 20px 80px;
+//   }
+
+//   &__timeline {
+//     display: flex;
+//     flex-direction: column;
+//   }
+
+//   &__item {
+//     position: relative;
+//     display: flex;
+//     gap: 24px;
+//     padding-bottom: 40px;
+//     opacity: 0;
+//     transform: translateX(-16px);
+//     transition:
+//       opacity 0.6s $ease-out,
+//       transform 0.6s $ease-out;
+
+//     .reveal--visible & {
+//       opacity: 1;
+//       transform: translateX(0);
+//     }
+
+//     &:last-child {
+//       padding-bottom: 0;
+//     }
+//   }
+
+//   &__line {
+//     position: absolute;
+//     top: 40px;
+//     left: 19px;
+//     width: 2px;
+//     bottom: 0;
+//     background: linear-gradient(180deg, $gold-muted, $black-border);
+//   }
+
+//   &__num {
+//     flex-shrink: 0;
+//     width: 40px;
+//     height: 40px;
+//     border-radius: 50%;
+//     border: 2px solid $gold-bright;
+//     background: $black-card;
+//     color: $gold-bright;
+//     font-family: $font-display;
+//     font-weight: 700;
+//     font-size: 14px;
+//     display: flex;
+//     align-items: center;
+//     justify-content: center;
+//     box-shadow: 0 0 16px rgba($gold-bright, 0.25);
+//     z-index: 1;
+//   }
+
+//   &__body {
+//     flex: 1;
+//     padding-bottom: 4px;
+//   }
+
+//   &__heading {
+//     display: flex;
+//     align-items: baseline;
+//     justify-content: space-between;
+//     gap: 12px;
+//     margin-bottom: 10px;
+//     flex-wrap: wrap;
+//   }
+
+//   &__title {
+//     font-family: $font-display;
+//     font-size: 20px;
+//     font-weight: 700;
+//     color: $white-warm;
+//   }
+
+//   &__time {
+//     font-size: 12px;
+//     color: $white-dim;
+//     font-weight: 600;
+//     letter-spacing: 0.03em;
+//   }
+
+//   &__list {
+//     list-style: none;
+//     display: flex;
+//     flex-direction: column;
+//     gap: 8px;
+
+//     li {
+//       font-size: 14px;
+//       color: $white-muted;
+//       padding-left: 18px;
+//       position: relative;
+
+//       &::before {
+//         content: '';
+//         position: absolute;
+//         left: 0;
+//         top: 8px;
+//         width: 6px;
+//         height: 6px;
+//         border-radius: 50%;
+//         background: $gold-muted;
+//       }
+//     }
+//   }
+// }
+
+.ctaBanner {
+  max-width: 1180px;
+  margin: 0 auto 100px;
+  text-align: center;
+  padding: 70px 40px;
+  border-radius: $radius-xl;
+  background: linear-gradient(145deg, rgba($black-card, 0.92) 0%, rgba($black-elevated, 0.94) 100%);
+  border: 1px solid rgba($gold-bright, 0.3);
+  animation: borderPulse 4s ease-in-out infinite;
+
+  h2 {
+    font-family: $font-display;
+    font-size: clamp(28px, 3.6vw, 40px);
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+
+  p {
+    font-size: 15px;
+    color: $white-muted;
+    margin-bottom: 32px;
+  }
+
+  @media (max-width: 768px) {
+    margin: 0 20px 70px;
+    padding: 48px 24px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}

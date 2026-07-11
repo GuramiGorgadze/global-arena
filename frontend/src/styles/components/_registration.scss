@@ -1,85 +1,5 @@
 @use '../abstracts' as *;
 
-@keyframes shimmer {
-  0% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
-}
-
-@keyframes stepEnter {
-  from {
-    opacity: 0;
-    transform: translateX(18px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes checkPop {
-  0% {
-    transform: scale(0.4);
-    opacity: 0;
-  }
-  60% {
-    transform: scale(1.15);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-@mixin gold-text {
-  background: linear-gradient(135deg, $gold-bright 0%, #e8c96a 40%, $gold-muted 80%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-@mixin glass-card {
-  background: linear-gradient(145deg, $black-card 0%, $black-elevated 100%);
-  border: 1px solid $black-border;
-}
-
-@mixin input-base {
-  width: 100%;
-  background: rgba($black-deep, 0.6);
-  border: 1px solid $black-border;
-  border-radius: $radius-md;
-  color: $white-warm;
-  font-family: $font-body;
-  font-size: 15px;
-  padding: 14px 18px;
-  transition:
-    border-color $duration-fast $ease-out,
-    box-shadow $duration-fast $ease-out;
-  outline: none;
-
-  &::placeholder {
-    color: $white-dim;
-  }
-  &:hover {
-    border-color: rgba($gold-bright, 0.25);
-  }
-  &:focus {
-    border-color: $gold-bright;
-    box-shadow: 0 0 0 3px rgba($gold-bright, 0.12);
-  }
-}
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
 .munReg {
   position: relative;
   font-family: $font-body;
@@ -135,6 +55,7 @@
   outline: none;
   font-family: $font-display;
   transition: all $duration-fast $ease-out;
+  text-decoration: none;
 
   &--ghost {
     padding: 13px 28px;
@@ -505,6 +426,10 @@
   }
 }
 
+.facebookInput {
+  text-transform: lowercase
+}
+
 .formTextarea {
   @include input-base;
   resize: vertical;
@@ -513,12 +438,17 @@
   line-height: 1.6;
 }
 
+.textareaWrap {
+  position: relative;
+}
+
 .textareaFooter {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: -4px;
+  position: absolute;
+  bottom: 10px;
+  right: 14px;
   font-size: 12px;
   color: $white-dim;
+  pointer-events: none;
 
   .charCounter--nearMax {
     color: #e5484d;
@@ -662,6 +592,7 @@
   overflow: hidden;
   transition: all $duration-fast $ease-out;
   font-family: $font-display;
+  text-decoration: none;
 
   &::before {
     content: '';
@@ -701,16 +632,4 @@
   @media (max-width: 650px) {
     padding: 15px 20px;
   }
-}
-
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
-  transition: background-color 5000s ease-in-out 0s;
-
-  -webkit-text-fill-color: #ffffff !important;
-
-  caret-color: #ffffff !important;
 }

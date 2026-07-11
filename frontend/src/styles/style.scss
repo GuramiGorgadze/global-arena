@@ -3,7 +3,10 @@
 @use 'abstracts/mixins';
 
 @use 'layouts/navbar';
+@use 'layouts/footer';
 
 @use 'components/registration';
 @use 'components/scrollToTopButton';
+
+@use 'routes/home';
 
