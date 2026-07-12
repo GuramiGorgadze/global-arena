@@ -59,7 +59,7 @@ const STEP_FIELDS = [
     'parentPhone',
   ],
   ['school', 'facebook', 'experience'],
-  ['committees', 'countries'],
+  ['committees'],
   [],
 ];
 
@@ -193,14 +193,7 @@ const schema = yup.object({
       return new Set(filled).size === filled.length;
     }),
 
-  countries: yup
-    .array()
-    .of(yup.string().trim().max(MAX.country, `მაქსიმუმ ${MAX.country} სიმბოლო`))
-    .test('unique', 'ქვეყნები არ უნდა მეორდებოდეს', (arr) => {
-      if (!arr) return true;
-      const filled = arr.map((c) => (c || '').trim().toLowerCase()).filter(Boolean);
-      return new Set(filled).size === filled.length;
-    }),
+  countries: yup.array().of(yup.string()),
 
   promoCode: yup.string().trim().max(MAX.promoCode, `მაქსიმუმ ${MAX.promoCode} სიმბოლო`),
 });
@@ -989,10 +982,9 @@ export default function RegistrationPage() {
                       <Field
                         id="country-0"
                         label="ქვეყანა 1"
-                        error={errors.countries?.[0]?.message}
                       >
                         <input
-                          className={clsx('formInput', { error: errors.countries?.[0] })}
+                          className="formInput"
                           placeholder="მაგ. საფრანგეთი"
                           maxLength={MAX.country}
                           {...register('countries.0')}
@@ -1001,10 +993,9 @@ export default function RegistrationPage() {
                       <Field
                         id="country-1"
                         label="ქვეყანა 2"
-                        error={errors.countries?.[1]?.message}
                       >
                         <input
-                          className={clsx('formInput', { error: errors.countries?.[1] })}
+                          className="formInput"
                           placeholder="მაგ. იაპონია"
                           maxLength={MAX.country}
                           {...register('countries.1')}
@@ -1013,26 +1004,15 @@ export default function RegistrationPage() {
                       <Field
                         id="country-2"
                         label="ქვეყანა 3"
-                        error={errors.countries?.[2]?.message}
                       >
                         <input
-                          className={clsx('formInput', { error: errors.countries?.[2] })}
+                          className="formInput"
                           placeholder="მაგ. ბრაზილია"
                           maxLength={MAX.country}
                           {...register('countries.2')}
                         />
                       </Field>
                     </motion.div>
-                    {typeof errors.countries?.message === 'string' && (
-                      <motion.p
-                        className="formError"
-                        role="alert"
-                        initial={{ opacity: 0, y: -6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                      >
-                        {errors.countries.message}
-                      </motion.p>
-                    )}
                   </>
                 )}
 

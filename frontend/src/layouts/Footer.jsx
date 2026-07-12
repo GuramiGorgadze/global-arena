@@ -21,7 +21,7 @@ function Footer() {
         <div className="footer__col">
           <p className="footer__colTitle">კონტაქტი</p>
           <a href="mailto:globalarena.mun@gmail.com">globalarena.mun@gmail.com</a>
-          <a href="tel:+995500000000">+995 500 05 10 95</a>
+          <a href="tel:+995500051095">+995 500 05 10 95</a>
           <div className="footer__socials">
             <a
               href="https://www.instagram.com/globalarena.mun/"
