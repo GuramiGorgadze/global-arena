@@ -43,6 +43,24 @@
   }
 }
 
+/* Ambient floating gold dust — sits above the background wash, below the card */
+.ambientParticles {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+
+  &__dot {
+    position: absolute;
+    bottom: -4vh;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba($gold-bright, 0.95) 0%, rgba($gold-bright, 0) 70%);
+    box-shadow: 0 0 6px 1px rgba($gold-bright, 0.5);
+    will-change: transform, opacity;
+  }
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -54,7 +72,7 @@
   border: none;
   outline: none;
   font-family: $font-display;
-  transition: all $duration-fast $ease-out;
+  transition: color $duration-fast $ease-out, border-color $duration-fast $ease-out, background $duration-fast $ease-out;
   text-decoration: none;
 
   &--ghost {
@@ -100,6 +118,8 @@
     em {
       font-style: normal;
       @include gold-text;
+      display: inline-block;
+      animation: emGlow 3.6s ease-in-out infinite;
     }
   }
 
@@ -108,6 +128,16 @@
     color: $white-muted;
     max-width: 480px;
     margin: 0 auto;
+  }
+}
+
+@keyframes emGlow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 rgba($gold-bright, 0));
+  }
+  50% {
+    filter: drop-shadow(0 0 16px rgba($gold-bright, 0.55));
   }
 }
 
@@ -122,6 +152,7 @@
     inset 0 1px 0 rgba($gold-bright, 0.1);
   border-radius: $radius-xl;
   padding: 48px 40px;
+  overflow: hidden;
 
   @media (max-width: 768px) {
     padding: 32px 15px;
@@ -150,21 +181,11 @@
     align-items: center;
     gap: 8px;
 
-    &--active .formSteps__num {
-      background: $gold-bright;
-      color: $black-deep;
-      border-color: $gold-bright;
-      box-shadow: 0 0 20px rgba($gold-bright, 0.35);
-    }
     &--done .formSteps__num {
       background: $black-elevated;
       border-color: $gold-muted;
       color: $gold-bright;
       box-shadow: inset 0 0 0 999px rgba($gold-bright, 0.18);
-
-      i {
-        animation: checkPop 0.3s $ease-out both;
-      }
     }
   }
 
@@ -180,7 +201,12 @@
     font-size: 13px;
     color: $white-dim;
     background: $black-card;
-    transition: all $duration-mid $ease-out;
+
+    .formSteps__step--active & {
+      background: $gold-bright;
+      color: $black-deep;
+      border-color: $gold-bright;
+    }
 
     @media (max-width: 400px) {
       width: 34px;
@@ -199,6 +225,7 @@
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
+    transition: color $duration-mid $ease-out;
 
     .formSteps__step--active & {
       color: $gold-bright;
@@ -224,10 +251,14 @@
     height: 2px;
     background: $black-border;
     z-index: 0;
+    overflow: hidden;
+  }
 
-    &--done {
-      background: linear-gradient(90deg, $gold-muted, rgba($gold-bright, 0.3));
-    }
+  &__lineFill {
+    position: absolute;
+    inset: 0;
+    transform-origin: left center;
+    background: linear-gradient(90deg, $gold-muted, rgba($gold-bright, 0.75));
   }
 }
 
@@ -237,12 +268,11 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 14px;
-  margin-bottom: 28px;
   padding: 14px 20px;
   border-radius: $radius-md;
   background: linear-gradient(135deg, rgba($gold-bright, 0.1) 0%, rgba($gold-muted, 0.04) 100%);
   border: 1px solid rgba($gold-bright, 0.3);
-  animation: stepEnter $duration-mid $ease-out both;
+  overflow: hidden;
 
   span {
     display: flex;
@@ -331,10 +361,21 @@
   }
 }
 
+.formInput,
+.formTextarea,
+.formSelect {
+  transition: border-color $duration-fast $ease-out, box-shadow $duration-fast $ease-out, background $duration-fast $ease-out;
+
+  &:focus {
+    box-shadow: 0 0 0 3px rgba($gold-bright, 0.16), 0 0 18px rgba($gold-bright, 0.12);
+  }
+}
+
 .formError {
   font-size: 12px;
   color: #e5484d;
   line-height: 1.4;
+  overflow: hidden;
 
   &--root {
     text-align: center;
@@ -503,8 +544,11 @@
   }
 }
 
+/* Step transitions are now driven entirely by Framer Motion (see stepVariants
+   in RegistrationPage.jsx) — no CSS keyframe animation applied here to avoid
+   double-animating the same properties. */
 .formStepContent {
-  animation: stepEnter $duration-mid $ease-out both;
+  width: 100%;
 }
 
 .summaryCard {
@@ -513,6 +557,12 @@
   border: 1px solid $black-border;
   padding: 20px 24px;
   margin-bottom: 16px;
+  transition: border-color $duration-mid $ease-out, box-shadow $duration-mid $ease-out;
+
+  &:hover {
+    border-color: rgba($gold-bright, 0.3);
+    box-shadow: 0 0 20px rgba($gold-bright, 0.08);
+  }
 
   &__title {
     font-size: 11px;
@@ -590,7 +640,7 @@
   border-radius: $radius-pill;
   cursor: pointer;
   overflow: hidden;
-  transition: all $duration-fast $ease-out;
+  transition: background $duration-fast $ease-out;
   font-family: $font-display;
   text-decoration: none;
 
@@ -604,9 +654,7 @@
     transition: opacity $duration-fast;
   }
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 40px rgba($gold-bright, 0.4);
+  &:hover:not(:disabled) {
     &::before {
       opacity: 1;
       animation: shimmer 1.5s infinite;
@@ -616,17 +664,19 @@
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-    &:hover {
-      transform: none;
-      box-shadow: none;
-      &::before {
-        opacity: 0;
-      }
-    }
   }
 
   i {
     font-size: 16px;
+  }
+
+  &__spinner {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border: 2px solid rgba($black-deep, 0.25);
+    border-top-color: $black-deep;
+    display: inline-block;
   }
 
   @media (max-width: 650px) {
