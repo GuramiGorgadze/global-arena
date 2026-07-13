@@ -9,9 +9,9 @@ const NAV_LINKS = [
 const Navbar = () => {
   return (
     <nav className="navbar">
-      <Link
+      <a
         className="navbar__logo"
-        to="/"
+        href="https://g-arena.org"
       >
         <img
           src={Logo}
@@ -20,7 +20,7 @@ const Navbar = () => {
         <span className="text">
           <span className="big">G-ARENA</span> <br /> National Summit 2026
         </span>
-      </Link>
+      </a>
     </nav>
   );
 };

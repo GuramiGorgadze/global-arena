@@ -134,12 +134,11 @@
 }
 
 .formCard {
-  @include glass-card;
-  background: linear-gradient(145deg, rgba($black-card, 0.92) 0%, rgba($black-elevated, 0.94) 100%);
+  @include glass-card($from-opacity: 0.92, $to-opacity: 0.94);
   backdrop-filter: blur(6px);
   border: 1px solid rgba($gold-bright, 0.35);
   box-shadow:
-    0 0 24px $gold-glow,
+    gold-ring-shadow(24px, 0.15),
     0 20px 60px rgba($black-deep, 0.6),
     inset 0 1px 0 rgba($gold-bright, 0.1);
   border-radius: $radius-xl;
@@ -329,6 +328,9 @@
   }
   &--3 {
     grid-template-columns: repeat(3, 1fr);
+    @media (max-width: 980px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
     @media (max-width: 640px) {
       grid-template-columns: 1fr;
     }
@@ -645,15 +647,12 @@
     position: absolute;
     inset: 0;
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    background-size: 200% 100%;
-    opacity: 0;
-    transition: opacity $duration-fast;
+    @include shimmer-base;
   }
 
   &:hover:not(:disabled) {
     &::before {
-      opacity: 1;
-      animation: shimmer 1.5s infinite;
+      @include shimmer-trigger(1.5s);
     }
   }
 

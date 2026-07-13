@@ -7,9 +7,45 @@
   background-clip: text;
 }
 
-@mixin glass-card {
-  background: linear-gradient(145deg, $black-card 0%, $black-elevated 100%);
-  border: 1px solid $black-border;
+@mixin glass-card(
+  $from: $black-card,
+  $to: $black-elevated,
+  $from-opacity: 1,
+  $to-opacity: 1,
+  $tint-opacity: 0.035,
+  $dot-opacity: 0,
+  $dot-size: 22px
+) {
+  background:
+    radial-gradient(circle, rgba($gold-bright, $dot-opacity) 1px, transparent 1.4px),
+    linear-gradient(160deg, rgba($gold-bright, $tint-opacity) 0%, rgba($gold-bright, 0) 45%),
+    linear-gradient(145deg, rgba($from, $from-opacity) 0%, rgba($to, $to-opacity) 100%);
+  background-size:
+    $dot-size $dot-size,
+    auto,
+    auto;
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba($white-warm, 0.08);
+}
+
+@mixin shimmer-base {
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity $duration-fast $ease-out;
+}
+
+@mixin shimmer-trigger($duration: 1.5s) {
+  opacity: 1;
+  animation: shimmer $duration infinite;
+}
+
+@mixin gold-ring($size: 24px, $opacity: 0.15) {
+  box-shadow: 0 0 $size rgba($gold-bright, $opacity);
+}
+
+@function gold-ring-shadow($size: 24px, $opacity: 0.15) {
+  @return 0 0 $size rgba($gold-bright, $opacity);
 }
 
 @mixin input-base {
@@ -36,4 +72,44 @@
     border-color: $gold-bright;
     box-shadow: 0 0 0 3px rgba($gold-bright, 0.12);
   }
+}
+
+@mixin ornate-panel(
+  $from: $black-card,
+  $to: $black-elevated,
+  $from-opacity: 1,
+  $to-opacity: 1,
+  $tint-opacity: 0.035,
+  $dot-opacity: 0,
+  $dot-size: 22px,
+  $line-opacity: 0.05,
+  $line-pitch: 8px
+) {
+  background-image:
+    repeating-linear-gradient(
+      55deg,
+      rgba($gold-bright, $line-opacity) 0,
+      rgba($gold-bright, $line-opacity) 1px,
+      transparent 1px,
+      transparent $line-pitch
+    ),
+    repeating-linear-gradient(
+      125deg,
+      rgba($gold-bright, $line-opacity * 0.6) 0,
+      rgba($gold-bright, $line-opacity * 0.6) 1px,
+      transparent 1px,
+      transparent $line-pitch
+    ),
+    radial-gradient(circle, rgba($gold-bright, $dot-opacity) 1px, transparent 1.4px),
+    linear-gradient(160deg, rgba($gold-bright, $tint-opacity) 0%, rgba($gold-bright, 0) 45%),
+    linear-gradient(145deg, rgba($from, $from-opacity) 0%, rgba($to, $to-opacity) 100%);
+  background-size:
+    $line-pitch $line-pitch,
+    $line-pitch $line-pitch,
+    $dot-size $dot-size,
+    auto,
+    auto;
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba($white-warm, 0.08);
 }

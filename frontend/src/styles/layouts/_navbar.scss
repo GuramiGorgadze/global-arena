@@ -1,12 +1,5 @@
 @use '../abstracts' as *;
 
-@mixin gold-text {
-  background: linear-gradient(135deg, $gold-bright 0%, #e8c96a 40%, $gold-muted 80%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
 .navbar {
   position: fixed;
   top: 0;

@@ -401,8 +401,6 @@ export default function RegistrationPage() {
     return () => subscription.unsubscribe();
   }, [watch, step, trigger]);
 
-  // Re-validate parent fields whenever dob crosses the minor threshold,
-  // so switching from minor -> adult (or back) clears/applies required errors immediately.
   useEffect(() => {
     if (errorsRef.current.parentName || errorsRef.current.parentPhone) {
       trigger(['parentName', 'parentPhone']);

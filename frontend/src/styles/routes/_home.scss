@@ -1,73 +1,7 @@
 @use '../abstracts' as *;
 
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(22px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes floatSlow {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-14px);
-  }
-}
-
-@keyframes pulseGlow {
-  0%,
-  100% {
-    opacity: 0.5;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.85;
-    transform: scale(1.08);
-  }
-}
-
-@keyframes bounceHint {
-  0%,
-  100% {
-    transform: translateY(0);
-    opacity: 0.55;
-  }
-  50% {
-    transform: translateY(6px);
-    opacity: 1;
-  }
-}
-
-@keyframes rotateCW {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes rotateCCW {
-  to {
-    transform: rotate(-360deg);
-  }
-}
-
-@keyframes borderPulse {
-  0%,
-  100% {
-    box-shadow: 0 0 24px $gold-glow;
-  }
-  50% {
-    box-shadow: 0 0 44px rgba($gold-bright, 0.28);
-  }
-}
-
 .home {
+  position: relative;
   font-family: $font-body;
   background-color: $black-deep;
   color: $white-warm;
@@ -79,41 +13,162 @@
   }
 }
 
-// ---------------------------------------------------------------------------
-// Scroll-reveal utility — sections/grids fade + rise into place; individual
-// children (cards, stat items, timeline rows) can stagger via inline
-// transition-delay set from JS, keyed off the parent's reveal state.
-// ---------------------------------------------------------------------------
+.scrollProgress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  transform-origin: 0% 50%;
+  background: linear-gradient(90deg, $gold-muted, $gold-bright);
+  box-shadow: 0 0 12px rgba($gold-bright, 0.5);
+  z-index: 999;
+}
 
-.reveal {
-  opacity: 0;
-  transform: translateY(28px);
-  transition:
-    opacity 0.7s $ease-out,
-    transform 0.7s $ease-out;
+.cursorAura {
+  position: fixed;
+  top: -190px;
+  left: -190px;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 40;
+  mix-blend-mode: screen;
+  background: radial-gradient(circle, rgba($gold-bright, 0.16), rgba($gold-bright, 0) 68%);
+  filter: blur(6px);
 
-  &--visible {
-    opacity: 1;
-    transform: translateY(0);
+  @media (max-width: 768px), (hover: none) {
+    display: none;
+  }
+}
+
+.grainOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.045;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+
+  &--hero {
+    z-index: 1;
+  }
+
+  &--cta {
+    z-index: 0;
+  }
+
+  &__dot {
+    position: absolute;
+    bottom: -6%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba($gold-bright, 0.95), rgba($gold-bright, 0) 70%);
+    filter: blur(0.4px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .reveal,
-  .reveal--visible,
-  .statsBar__item,
-  .committeeCard,
-  .schedule__item {
-    transition: none !important;
-    animation: none !important;
-    transform: none !important;
-    opacity: 1 !important;
+  .particles {
+    display: none;
   }
 }
 
-// ---------------------------------------------------------------------------
-// Hero
-// ---------------------------------------------------------------------------
+@keyframes glowDrift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-3%, 4%) scale(1.08);
+  }
+}
+
+.pageBody {
+  position: relative;
+  isolation: isolate;
+}
+
+.pageBody__pattern {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba($gold-bright, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba($gold-bright, 0.05) 1px, transparent 1px),
+    radial-gradient(circle, rgba($gold-bright, 0.14) 1px, transparent 1.6px);
+  background-size:
+    64px 64px,
+    64px 64px,
+    32px 32px;
+  background-position:
+    -1px -1px,
+    -1px -1px,
+    0 0;
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    black 140px,
+    black calc(100% - 200px),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    black 140px,
+    black calc(100% - 200px),
+    transparent 100%
+  );
+}
+
+.pageBody__glow {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 50%;
+  filter: blur(90px);
+  animation: glowDrift 22s ease-in-out infinite;
+
+  &--one {
+    top: 6%;
+    right: -8%;
+    width: 420px;
+    height: 420px;
+    background: radial-gradient(circle, rgba($gold-bright, 0.16), transparent 70%);
+  }
+
+  &--two {
+    top: 62%;
+    left: -10%;
+    width: 480px;
+    height: 480px;
+    background: radial-gradient(circle, rgba($gold-bright, 0.12), transparent 70%);
+    animation-delay: -11s;
+  }
+}
+
+@media (max-width: 768px) {
+  .pageBody__glow {
+    width: 260px !important;
+    height: 260px !important;
+    filter: blur(60px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pageBody__glow {
+    animation: none;
+  }
+}
 
 .hero {
   position: relative;
@@ -123,6 +178,7 @@
   justify-content: center;
   text-align: center;
   padding: 80px 40px 60px;
+  overflow: hidden;
 
   &::before {
     content: '';
@@ -151,15 +207,34 @@
     z-index: 0;
   }
 
-  // Radar / graticule rings — echoes the crosshair-globe in the logo.
-  // Two independently rotating groups create slow, ambient parallax.
+  &__mesh {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: min(900px, 110vw);
+    aspect-ratio: 1;
+    margin-top: calc(-1 * min(450px, 55vw));
+    margin-left: calc(-1 * min(450px, 55vw));
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 30% 35%, rgba($gold-bright, 0.1), transparent 45%),
+      radial-gradient(circle at 70% 65%, rgba($gold-muted, 0.08), transparent 50%);
+    filter: blur(40px);
+
+    @media (max-width: 650px) {
+      display: none;
+    }
+  }
+
   &__rings {
     position: absolute;
     top: 48%;
     left: 50%;
     width: min(760px, 92vw);
     aspect-ratio: 1;
-    transform: translate(-50%, -50%);
+    margin-top: calc(-1 * min(380px, 46vw));
+    margin-left: calc(-1 * min(380px, 46vw));
     z-index: 1;
     pointer-events: none;
     opacity: 0.35;
@@ -206,19 +281,30 @@
     letter-spacing: 0.12em;
     text-transform: uppercase;
     margin-bottom: 28px;
-    opacity: 0;
-    animation: fadeUp 0.7s $ease-out 0.1s both;
   }
 
   &__title {
     font-family: $font-display;
-    font-size: clamp(38px, 6vw, 68px);
+    font-size: 67px;
     font-weight: 700;
-    letter-spacing: -0.02em;
-    line-height: 1.15;
+    line-height: 60px;
     margin-bottom: 24px;
-    opacity: 0;
-    animation: fadeUp 0.8s $ease-out 0.26s both;
+  }
+
+  &__titleShine {
+    background: linear-gradient(
+      90deg,
+      $gold-muted 0%,
+      $gold-bright 25%,
+      #fff3d6 50%,
+      $gold-bright 75%,
+      $gold-muted 100%
+    );
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: titleShine 5s linear infinite;
   }
 
   &__subtitle {
@@ -227,8 +313,10 @@
     color: $white-muted;
     max-width: 560px;
     margin: 0 auto 40px;
-    opacity: 0;
-    animation: fadeUp 0.8s $ease-out 0.42s both;
+
+    @media (max-width: 640px) {
+      font-size: 14px;
+    }
   }
 
   &__cta {
@@ -237,19 +325,6 @@
     justify-content: center;
     gap: 16px;
     flex-wrap: wrap;
-    opacity: 0;
-    animation: fadeUp 0.8s $ease-out 0.58s both;
-  }
-
-  &__scrollHint {
-    position: absolute;
-    bottom: 28px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 2;
-    color: $gold-muted;
-    font-size: 20px;
-    animation: bounceHint 2s $ease-out infinite;
   }
 
   @media (max-width: 650px) {
@@ -258,33 +333,117 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    &__badge,
-    &__title,
-    &__subtitle,
-    &__cta {
+    &__titleShine {
       animation: none;
-      opacity: 1;
+      background-position: 0% 50%;
     }
     &__ringsOuter,
-    &__ringsInner,
-    &__scrollHint {
+    &__ringsInner {
       animation: none;
     }
   }
 }
 
+.ticker {
+  position: relative;
+  overflow: hidden;
+  top: 50px;
+  border-top: 1px solid $black-border;
+  border-bottom: 1px solid $black-border;
+  padding: 18px 0;
+  mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 8%, black 92%, transparent);
+
+  &:hover &__track {
+    animation-play-state: paused;
+  }
+
+  &__track {
+    display: flex;
+    width: max-content;
+    animation: tickerScroll 32s linear infinite;
+
+    &--paused {
+      animation-play-state: paused;
+      transform: translateX(0);
+    }
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    padding: 0 22px;
+    font-family: $font-eng, $font-display;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: $white-dim;
+    white-space: nowrap;
+  }
+
+  &__sep {
+    font-size: 10px;
+    color: $gold-muted;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &__track {
+      animation: none;
+      transform: translateX(0);
+    }
+  }
+}
+
 .statsBar {
+  position: relative;
   max-width: 900px;
   margin: -44px auto 0;
-  position: relative;
   z-index: 2;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  @include glass-card;
-  border: 1px solid rgba($gold-bright, 0.25);
+  isolation: isolate;
+  overflow: hidden;
+  @include ornate-panel(
+    $from-opacity: 0.72,
+    $to-opacity: 0.88,
+    $tint-opacity: 0.05,
+    $dot-opacity: 0.06,
+    $dot-size: 20px,
+    $line-opacity: 0.045,
+    $line-pitch: 9px
+  );
+  border: 1px solid rgba($gold-bright, 0.28);
   border-radius: $radius-xl;
-  box-shadow: 0 20px 60px rgba($black-deep, 0.6);
+  box-shadow:
+    inset 0 1px 0 rgba($white-warm, 0.06),
+    inset 0 0 60px rgba($gold-bright, 0.03),
+    0 20px 60px rgba($black-deep, 0.55);
   padding: 32px 20px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse 70% 120% at 50% 50%,
+      rgba($gold-bright, 0.06),
+      transparent 70%
+    );
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    z-index: 0;
+    background: linear-gradient(90deg, transparent, rgba($gold-bright, 0.5), transparent);
+  }
 
   @media (max-width: 640px) {
     grid-template-columns: repeat(2, 1fr);
@@ -293,22 +452,14 @@
   }
 
   &__item {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 6px;
     text-align: center;
     border-right: 1px solid $black-border;
-    opacity: 0;
-    transform: translateY(16px);
-    transition:
-      opacity 0.6s $ease-out,
-      transform 0.6s $ease-out;
-
-    .reveal--visible & {
-      opacity: 1;
-      transform: translateY(0);
-    }
 
     &:last-child {
       border-right: none;
@@ -352,13 +503,14 @@
   gap: 60px;
   align-items: center;
 
+  * {
+    text-align: justify;
+  }
+
   @media (max-width: 860px) {
     grid-template-columns: 1fr;
     padding: 100px 20px 70px;
     gap: 32px;
-    * {
-        text-align: justify;
-    }
   }
 
   &__emblem {
@@ -367,19 +519,26 @@
     align-items: center;
     justify-content: center;
 
+    @media (max-width: 860px) {
+      order: -1;
+    }
+  }
+
+  &__emblemParallax {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    transform-style: preserve-3d;
+
     img {
-      position: relative;
-      z-index: 1;
       width: 100%;
       max-width: 280px;
       opacity: 0.9;
-      animation: floatSlow 7s ease-in-out infinite;
-    }
 
-    @media (max-width: 860px) {
-      order: -1;
-      img {
-        max-width: 170px;
+      @media (max-width: 860px) {
+        max-width: 220px;
       }
     }
   }
@@ -423,11 +582,6 @@
     display: flex;
     gap: 16px;
     align-items: flex-start;
-    transition: transform $duration-fast $ease-out;
-
-    &:hover {
-      transform: translateX(4px);
-    }
 
     i {
       font-size: 20px;
@@ -451,9 +605,11 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    &__emblem img,
     &__emblemGlow {
       animation: none;
+    }
+    &__emblemParallax {
+      transform: none !important;
     }
   }
 }
@@ -471,6 +627,7 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
+    perspective: 1200px;
 
     @media (max-width: 980px) {
       grid-template-columns: repeat(2, 1fr);
@@ -481,24 +638,44 @@
   }
 }
 
+.sectionHeader p {
+  font-size: 17px;
+  line-height: 1.75;
+  color: $white-muted;
+  max-width: 560px;
+  margin: 0 auto 40px;
+
+  @media (max-width: 640px) {
+    font-size: 14px;
+  }
+}
+
 .committeeCard {
   position: relative;
-  @include glass-card;
+  z-index: 0;
+  @include ornate-panel(
+    $from-opacity: 0.72,
+    $to-opacity: 0.88,
+    $tint-opacity: 0.03,
+    $dot-opacity: 0.045,
+    $dot-size: 24px,
+    $line-opacity: 0.05,
+    $line-pitch: 7px
+  );
   border-radius: $radius-md;
   border: 1px solid $black-border;
+  box-shadow:
+    inset 0 1px 0 rgba($white-warm, 0.05),
+    0 4px 20px rgba($black-deep, 0.3);
   padding: 28px 24px;
-  perspective: 800px;
-  opacity: 0;
-  transform: translateY(24px);
+  transform-style: preserve-3d;
+  overflow: hidden;
   transition:
-    opacity 0.6s $ease-out,
-    transform 0.5s $ease-out,
     border-color $duration-fast $ease-out,
     box-shadow $duration-mid $ease-out;
 
-  .reveal--visible & {
-    opacity: 1;
-    transform: translateY(0);
+  @media (max-width: 768px) {
+    padding: 22px 18px;
   }
 
   &::before {
@@ -510,19 +687,83 @@
     height: 3px;
     border-radius: 0 0 4px 4px;
     background: linear-gradient(90deg, $gold-muted, $gold-bright, $gold-muted);
-    background-size: 200% 100%;
+    @include shimmer-base;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      circle at var(--mx, 50%) var(--my, 50%),
+      rgba($gold-bright, 0.16),
+      transparent 55%
+    );
     opacity: 0;
-    transition: opacity $duration-fast $ease-out;
+    transition: opacity $duration-mid $ease-out;
+    pointer-events: none;
+  }
+
+  &__watermark {
+    position: absolute;
+    z-index: 0;
+    right: -10px;
+    bottom: -20px;
+    font-size: 118px;
+    line-height: 1;
+    color: rgba($gold-bright, 0.055);
+    transform: rotate(-8deg);
+    pointer-events: none;
+
+    @media (max-width: 768px) {
+      font-size: 88px;
+    }
+  }
+
+  &__body {
+    position: relative;
+    z-index: 1;
+  }
+
+  &__sheen {
+    position: absolute;
+    inset: -40% -20%;
+    z-index: 2;
+    background: linear-gradient(
+      115deg,
+      transparent 30%,
+      rgba($gold-bright, 0.14) 48%,
+      rgba(#fff3d6, 0.22) 50%,
+      rgba($gold-bright, 0.14) 52%,
+      transparent 70%
+    );
+    transform: translateX(-60%);
+    opacity: 0;
+    transition:
+      transform 0.9s $ease-out,
+      opacity 0.3s $ease-out;
+    pointer-events: none;
   }
 
   &:hover {
-    transform: translateY(-6px) rotateX(2deg);
     border-color: rgba($gold-bright, 0.35);
-    box-shadow: 0 16px 40px rgba($black-deep, 0.5);
+    box-shadow:
+      inset 0 1px 0 rgba($white-warm, 0.08),
+      0 16px 40px rgba($black-deep, 0.5),
+      0 0 0 1px rgba($gold-bright, 0.12);
 
     &::before {
+      @include shimmer-trigger(1.8s);
+    }
+
+    &::after {
       opacity: 1;
-      animation: shimmer 1.8s linear infinite;
+    }
+
+    .committeeCard__sheen {
+      opacity: 1;
+      transform: translateX(60%);
     }
 
     .committeeCard__icon {
@@ -575,7 +816,7 @@
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.03em;
-    color: $gold-muted;
+    color: $gold-text-safe;
     margin-bottom: 14px;
   }
 
@@ -586,131 +827,65 @@
   }
 }
 
-// .schedule {
-//   max-width: 780px;
-//   margin: 0 auto;
-//   padding: 40px 40px 110px;
-
-//   @media (max-width: 768px) {
-//     padding: 10px 20px 80px;
-//   }
-
-//   &__timeline {
-//     display: flex;
-//     flex-direction: column;
-//   }
-
-//   &__item {
-//     position: relative;
-//     display: flex;
-//     gap: 24px;
-//     padding-bottom: 40px;
-//     opacity: 0;
-//     transform: translateX(-16px);
-//     transition:
-//       opacity 0.6s $ease-out,
-//       transform 0.6s $ease-out;
-
-//     .reveal--visible & {
-//       opacity: 1;
-//       transform: translateX(0);
-//     }
-
-//     &:last-child {
-//       padding-bottom: 0;
-//     }
-//   }
-
-//   &__line {
-//     position: absolute;
-//     top: 40px;
-//     left: 19px;
-//     width: 2px;
-//     bottom: 0;
-//     background: linear-gradient(180deg, $gold-muted, $black-border);
-//   }
-
-//   &__num {
-//     flex-shrink: 0;
-//     width: 40px;
-//     height: 40px;
-//     border-radius: 50%;
-//     border: 2px solid $gold-bright;
-//     background: $black-card;
-//     color: $gold-bright;
-//     font-family: $font-display;
-//     font-weight: 700;
-//     font-size: 14px;
-//     display: flex;
-//     align-items: center;
-//     justify-content: center;
-//     box-shadow: 0 0 16px rgba($gold-bright, 0.25);
-//     z-index: 1;
-//   }
-
-//   &__body {
-//     flex: 1;
-//     padding-bottom: 4px;
-//   }
-
-//   &__heading {
-//     display: flex;
-//     align-items: baseline;
-//     justify-content: space-between;
-//     gap: 12px;
-//     margin-bottom: 10px;
-//     flex-wrap: wrap;
-//   }
-
-//   &__title {
-//     font-family: $font-display;
-//     font-size: 20px;
-//     font-weight: 700;
-//     color: $white-warm;
-//   }
-
-//   &__time {
-//     font-size: 12px;
-//     color: $white-dim;
-//     font-weight: 600;
-//     letter-spacing: 0.03em;
-//   }
-
-//   &__list {
-//     list-style: none;
-//     display: flex;
-//     flex-direction: column;
-//     gap: 8px;
-
-//     li {
-//       font-size: 14px;
-//       color: $white-muted;
-//       padding-left: 18px;
-//       position: relative;
-
-//       &::before {
-//         content: '';
-//         position: absolute;
-//         left: 0;
-//         top: 8px;
-//         width: 6px;
-//         height: 6px;
-//         border-radius: 50%;
-//         background: $gold-muted;
-//       }
-//     }
-//   }
-// }
-
 .ctaBanner {
+  position: relative;
+  overflow: hidden;
   max-width: 1180px;
   margin: 0 auto 100px;
   text-align: center;
   padding: 70px 40px;
   border-radius: $radius-xl;
-  background: linear-gradient(145deg, rgba($black-card, 0.92) 0%, rgba($black-elevated, 0.94) 100%);
+  background:
+    radial-gradient(circle at 15% 20%, rgba($gold-bright, 0.14), transparent 55%),
+    repeating-linear-gradient(
+      55deg,
+      rgba($gold-bright, 0.045) 0,
+      rgba($gold-bright, 0.045) 1px,
+      transparent 1px,
+      transparent 8px
+    ),
+    repeating-linear-gradient(
+      125deg,
+      rgba($gold-bright, 0.03) 0,
+      rgba($gold-bright, 0.03) 1px,
+      transparent 1px,
+      transparent 8px
+    ),
+    linear-gradient(145deg, rgba($black-card, 0.92) 0%, rgba($black-elevated, 0.94) 100%);
   border: 1px solid rgba($gold-bright, 0.3);
   animation: borderPulse 4s ease-in-out infinite;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -32%;
+    right: -14%;
+    width: 460px;
+    height: 460px;
+    pointer-events: none;
+    opacity: 0.6;
+    background: repeating-radial-gradient(
+      circle at center,
+      transparent 0,
+      transparent 38px,
+      rgba($gold-bright, 0.14) 39px,
+      rgba($gold-bright, 0.14) 40px
+    );
+    mask-image: radial-gradient(circle at center, black 0%, transparent 70%);
+    -webkit-mask-image: radial-gradient(circle at center, black 0%, transparent 70%);
+
+    @media (max-width: 768px) {
+      width: 280px;
+      height: 280px;
+    }
+  }
+
+  h2,
+  p,
+  .burstCTA {
+    position: relative;
+    z-index: 1;
+  }
 
   h2 {
     font-family: $font-display;
@@ -732,5 +907,56 @@
 
   @media (prefers-reduced-motion: reduce) {
     animation: none;
+  }
+}
+
+.burstCTA {
+  position: relative;
+  display: inline-flex;
+
+  &__particle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    margin: -3px 0 0 -3px;
+    border-radius: 50%;
+    background: $gold-bright;
+    box-shadow: 0 0 8px rgba($gold-bright, 0.7);
+    pointer-events: none;
+    z-index: 3;
+  }
+}
+
+.dirBtn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+
+  &__fill {
+    position: absolute;
+    inset: 0;
+    background: rgba($gold-bright, 0.14);
+    transform: scaleX(0);
+    transition: transform 0.45s $ease-out;
+    z-index: 0;
+  }
+
+  &--left &__fill {
+    transform-origin: left center;
+  }
+
+  &--right &__fill {
+    transform-origin: right center;
+  }
+
+  &:hover &__fill {
+    transform: scaleX(1);
+  }
+
+  &__label {
+    position: relative;
+    z-index: 1;
   }
 }
