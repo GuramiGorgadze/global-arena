@@ -2,6 +2,22 @@ import mongoose from "mongoose";
 
 const { Schema } = mongoose;
 
+const MINOR_AGE_THRESHOLD = 18;
+
+const isMinorDob = function (dobValue) {
+  const dob = dobValue || this.dob;
+  if (!dob) return false;
+  const dobDate = new Date(dob);
+  if (Number.isNaN(dobDate.getTime())) return false;
+  const today = new Date();
+  let age = today.getFullYear() - dobDate.getFullYear();
+  const hasHadBirthdayThisYear =
+    today.getMonth() > dobDate.getMonth() ||
+    (today.getMonth() === dobDate.getMonth() && today.getDate() >= dobDate.getDate());
+  if (!hasHadBirthdayThisYear) age -= 1;
+  return age < MINOR_AGE_THRESHOLD;
+};
+
 const delegateSchema = new Schema(
   {
     firstName: { type: String, required: true, trim: true, maxlength: 20 },
@@ -28,8 +44,18 @@ const delegateSchema = new Schema(
     },
     facebook: { type: String, required: true, trim: true, maxlength: 150 },
     experience: { type: String, required: true, trim: true, maxlength: 400 },
-    parentName: { type: String, required: true, trim: true, maxlength: 40 },
-    parentPhone: { type: String, required: true, trim: true, maxlength: 20 },
+    parentName: {
+      type: String,
+      trim: true,
+      maxlength: 40,
+      required: [isMinorDob, "მშობლის სახელი სავალდებულოა"],
+    },
+    parentPhone: {
+      type: String,
+      trim: true,
+      maxlength: 20,
+      required: [isMinorDob, "მშობლის ტელეფონის ნომერი სავალდებულოა"],
+    },
     committees: {
       type: [String],
       required: true,

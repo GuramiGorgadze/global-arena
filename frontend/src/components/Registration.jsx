@@ -20,6 +20,7 @@ const STEPS = ['ინფორმაცია', 'ბექგრაუნდი
 
 const MIN_AGE = 10;
 const MAX_AGE = 30;
+const MINOR_AGE_THRESHOLD = 18;
 
 const STORAGE_KEY = 'munReg:draft:v1';
 
@@ -82,6 +83,24 @@ const DEFAULT_VALUES = {
   promoCode: '',
 };
 
+const calculateAge = (dobValue) => {
+  if (!dobValue) return null;
+  const dob = new Date(dobValue);
+  if (Number.isNaN(dob.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const hasHadBirthdayThisYear =
+    today.getMonth() > dob.getMonth() ||
+    (today.getMonth() === dob.getMonth() && today.getDate() >= dob.getDate());
+  if (!hasHadBirthdayThisYear) age -= 1;
+  return age;
+};
+
+const isMinorDob = (dobValue) => {
+  const age = calculateAge(dobValue);
+  return age !== null && age < MINOR_AGE_THRESHOLD;
+};
+
 const schema = yup.object({
   firstName: yup
     .string()
@@ -134,16 +153,8 @@ const schema = yup.object({
       return !Number.isNaN(date.getTime());
     })
     .test('age-range', `ასაკი უნდა იყოს ${MIN_AGE}-${MAX_AGE} წლის ფარგლებში`, (value) => {
-      if (!value) return false;
-      const dob = new Date(value);
-      if (Number.isNaN(dob.getTime())) return false;
-      const today = new Date();
-      let age = today.getFullYear() - dob.getFullYear();
-      const hasHadBirthdayThisYear =
-        today.getMonth() > dob.getMonth() ||
-        (today.getMonth() === dob.getMonth() && today.getDate() >= dob.getDate());
-      if (!hasHadBirthdayThisYear) age -= 1;
-      return age >= MIN_AGE && age <= MAX_AGE;
+      const age = calculateAge(value);
+      return age !== null && age >= MIN_AGE && age <= MAX_AGE;
     }),
 
   nationalId: yup
@@ -155,14 +166,20 @@ const schema = yup.object({
   parentName: yup
     .string()
     .trim()
-    .required('მშობლის სახელი სავალდებულოა')
-    .max(MAX.parentName, `მაქსიმუმ ${MAX.parentName} სიმბოლო`),
+    .max(MAX.parentName, `მაქსიმუმ ${MAX.parentName} სიმბოლო`)
+    .when('dob', {
+      is: (dob) => isMinorDob(dob),
+      then: (s) => s.required('მშობლის სახელი სავალდებულოა'),
+    }),
 
   parentPhone: yup
     .string()
     .trim()
-    .required('მშობლის ტელეფონის ნომერი სავალდებულოა')
-    .matches(PHONE_REGEX, 'ფორმატი: 5XX-XXX-XXX'),
+    .test('phone-format', 'ფორმატი: 5XX-XXX-XXX', (value) => !value || PHONE_REGEX.test(value))
+    .when('dob', {
+      is: (dob) => isMinorDob(dob),
+      then: (s) => s.required('მშობლის ტელეფონის ნომერი სავალდებულოა'),
+    }),
 
   school: yup
     .string()
@@ -344,6 +361,8 @@ export default function RegistrationPage() {
 
   const committees = watch('committees');
   const countries = watch('countries');
+  const dobValue = watch('dob');
+  const showParentFields = useMemo(() => isMinorDob(dobValue), [dobValue]);
 
   const errorsRef = useRef(errors);
   useEffect(() => {
@@ -381,6 +400,14 @@ export default function RegistrationPage() {
     });
     return () => subscription.unsubscribe();
   }, [watch, step, trigger]);
+
+  // Re-validate parent fields whenever dob crosses the minor threshold,
+  // so switching from minor -> adult (or back) clears/applies required errors immediately.
+  useEffect(() => {
+    if (errorsRef.current.parentName || errorsRef.current.parentPhone) {
+      trigger(['parentName', 'parentPhone']);
+    }
+  }, [showParentFields, trigger]);
 
   const handlePhoneChange = (name) => (e) => {
     let digits = e.target.value.replace(/\D/g, '').substring(0, 9);
@@ -493,8 +520,8 @@ export default function RegistrationPage() {
       nationalId: data.nationalId,
       facebook: data.facebook,
       experience: data.experience,
-      parentName: data.parentName,
-      parentPhone: data.parentPhone,
+      parentName: isMinorDob(data.dob) ? data.parentName : '',
+      parentPhone: isMinorDob(data.dob) ? data.parentPhone : '',
       committees: data.committees,
       countries: data.countries,
       promoCode: data.promoCode?.trim() || '',
@@ -784,45 +811,58 @@ export default function RegistrationPage() {
                       </Field>
                     </motion.div>
 
-                    <div className="formDivider">
-                      <span>მშობლის ინფორმაცია</span>
-                    </div>
-                    <motion.div
-                      className="formGrid formGrid--2"
-                      variants={containerVariants}
-                      initial="hidden"
-                      animate="visible"
-                    >
-                      <Field
-                        id="parentName"
-                        label="მშობლის სრული სახელი"
-                        required
-                        error={errors.parentName?.message}
-                      >
-                        <input
-                          className={clsx('formInput', { error: errors.parentName })}
-                          placeholder="სრული სახელი"
-                          maxLength={MAX.parentName}
-                          {...register('parentName')}
-                        />
-                      </Field>
-                      <Field
-                        id="parentPhone"
-                        label="მშობლის ტელეფონის ნომერი"
-                        required
-                        error={errors.parentPhone?.message}
-                      >
-                        <input
-                          type="tel"
-                          inputMode="numeric"
-                          className={clsx('formInput', { error: errors.parentPhone })}
-                          placeholder="5XX-XXX-XXX"
-                          maxLength={MAX.parentPhone}
-                          value={watch('parentPhone')}
-                          onChange={handlePhoneChange('parentPhone')}
-                        />
-                      </Field>
-                    </motion.div>
+                    <AnimatePresence initial={false}>
+                      {showParentFields && (
+                        <motion.div
+                          key="parentFieldsWrap"
+                          initial={{ opacity: 0, height: 0, marginTop: 0, marginBottom: 0 }}
+                          animate={{ opacity: 1, height: 'auto', marginTop: 32, marginBottom: 0 }}
+                          exit={{ opacity: 0, height: 0, marginTop: 0, marginBottom: 0 }}
+                          transition={{ duration: 0.4, ease: EASE }}
+                          style={{ overflow: 'hidden' }}
+                        >
+                          <div className="formDivider">
+                            <span>მშობლის ინფორმაცია (18 წლამდე ასაკისთვის)</span>
+                          </div>
+                          <motion.div
+                            className="formGrid formGrid--2"
+                            variants={containerVariants}
+                            initial="hidden"
+                            animate="visible"
+                          >
+                            <Field
+                              id="parentName"
+                              label="მშობლის სრული სახელი"
+                              required
+                              error={errors.parentName?.message}
+                            >
+                              <input
+                                className={clsx('formInput', { error: errors.parentName })}
+                                placeholder="სრული სახელი"
+                                maxLength={MAX.parentName}
+                                {...register('parentName')}
+                              />
+                            </Field>
+                            <Field
+                              id="parentPhone"
+                              label="მშობლის ტელეფონის ნომერი"
+                              required
+                              error={errors.parentPhone?.message}
+                            >
+                              <input
+                                type="tel"
+                                inputMode="numeric"
+                                className={clsx('formInput', { error: errors.parentPhone })}
+                                placeholder="5XX-XXX-XXX"
+                                maxLength={MAX.parentPhone}
+                                value={watch('parentPhone')}
+                                onChange={handlePhoneChange('parentPhone')}
+                              />
+                            </Field>
+                          </motion.div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </>
                 )}
 
@@ -1022,12 +1062,16 @@ export default function RegistrationPage() {
                           ['ტელეფონი', watch('phone') || '—'],
                           ['დაბადების თარიღი', watch('dob') || '—'],
                           ['პირადი ნომერი', watch('nationalId') || '—'],
-                          [
-                            'მშობელი',
-                            watch('parentName')
-                              ? `${watch('parentName')} (${watch('parentPhone') || '—'})`
-                              : '—',
-                          ],
+                          ...(showParentFields
+                            ? [
+                                [
+                                  'მშობელი',
+                                  watch('parentName')
+                                    ? `${watch('parentName')} (${watch('parentPhone') || '—'})`
+                                    : '—',
+                                ],
+                              ]
+                            : []),
                         ]}
                       />
                       <SummaryCard
