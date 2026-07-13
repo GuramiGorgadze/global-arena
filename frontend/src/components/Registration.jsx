@@ -345,18 +345,6 @@ export default function RegistrationPage() {
   const committees = watch('committees');
   const countries = watch('countries');
 
-  // react-hook-form only applies `reValidateMode` once `formState.isSubmitted`
-  // is true, and `isSubmitted` is only ever set by an actual `handleSubmit()`
-  // call. Because this is a multi-step form, steps are validated with
-  // `trigger()` (see nextStep below), so `isSubmitted` stays false until the
-  // very last step — meaning plain `register()` fields would otherwise never
-  // live-revalidate while typing, no matter what reValidateMode says.
-  //
-  // We work around this below by manually re-triggering validation for a
-  // field whenever it changes and already has a visible error. Keeping the
-  // latest `errors` in a ref (rather than a dependency of the watch effect)
-  // means we don't need to tear down and recreate the subscription on every
-  // keystroke that changes error state.
   const errorsRef = useRef(errors);
   useEffect(() => {
     errorsRef.current = errors;
@@ -384,9 +372,6 @@ export default function RegistrationPage() {
       }
       saveDraft(values, step);
 
-      // Live-revalidate whichever field just changed, but only if it (or its
-      // parent, e.g. the `committees` array) currently has an error — this
-      // mirrors what reValidateMode: 'onChange' is supposed to do on its own.
       if (name) {
         const topLevelKey = name.split('.')[0];
         if (errorsRef.current[topLevelKey]) {
@@ -454,8 +439,6 @@ export default function RegistrationPage() {
   const handleFormKeyDown = (e) => {
     if (e.key !== 'Enter') return;
 
-    // Let Enter insert a normal newline inside the experience textarea
-    // instead of hijacking it to advance/submit the form.
     if (e.target.tagName === 'TEXTAREA') return;
 
     e.preventDefault();
@@ -960,8 +943,6 @@ export default function RegistrationPage() {
                         </Field>
                       ))}
                     </motion.div>
-                    {/* Group-level error (wrong count / duplicates) rendered once,
-                        not attached to any single dropdown. */}
                     {typeof errors.committees?.message === 'string' && (
                       <motion.p
                         className="formError"
