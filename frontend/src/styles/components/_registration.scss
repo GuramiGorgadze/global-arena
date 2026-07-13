@@ -43,7 +43,6 @@
   }
 }
 
-/* Ambient floating gold dust — sits above the background wash, below the card */
 .ambientParticles {
   position: fixed;
   inset: 0;
@@ -72,7 +71,10 @@
   border: none;
   outline: none;
   font-family: $font-display;
-  transition: color $duration-fast $ease-out, border-color $duration-fast $ease-out, background $duration-fast $ease-out;
+  transition:
+    color $duration-fast $ease-out,
+    border-color $duration-fast $ease-out,
+    background $duration-fast $ease-out;
   text-decoration: none;
 
   &--ghost {
@@ -128,16 +130,6 @@
     color: $white-muted;
     max-width: 480px;
     margin: 0 auto;
-  }
-}
-
-@keyframes emGlow {
-  0%,
-  100% {
-    filter: drop-shadow(0 0 0 rgba($gold-bright, 0));
-  }
-  50% {
-    filter: drop-shadow(0 0 16px rgba($gold-bright, 0.55));
   }
 }
 
@@ -364,10 +356,15 @@
 .formInput,
 .formTextarea,
 .formSelect {
-  transition: border-color $duration-fast $ease-out, box-shadow $duration-fast $ease-out, background $duration-fast $ease-out;
+  transition:
+    border-color $duration-fast $ease-out,
+    box-shadow $duration-fast $ease-out,
+    background $duration-fast $ease-out;
 
   &:focus {
-    box-shadow: 0 0 0 3px rgba($gold-bright, 0.16), 0 0 18px rgba($gold-bright, 0.12);
+    box-shadow:
+      0 0 0 3px rgba($gold-bright, 0.16),
+      0 0 18px rgba($gold-bright, 0.12);
   }
 }
 
@@ -468,7 +465,7 @@
 }
 
 .facebookInput {
-  text-transform: lowercase
+  text-transform: lowercase;
 }
 
 .formTextarea {
@@ -544,9 +541,6 @@
   }
 }
 
-/* Step transitions are now driven entirely by Framer Motion (see stepVariants
-   in RegistrationPage.jsx) — no CSS keyframe animation applied here to avoid
-   double-animating the same properties. */
 .formStepContent {
   width: 100%;
 }
@@ -557,7 +551,9 @@
   border: 1px solid $black-border;
   padding: 20px 24px;
   margin-bottom: 16px;
-  transition: border-color $duration-mid $ease-out, box-shadow $duration-mid $ease-out;
+  transition:
+    border-color $duration-mid $ease-out,
+    box-shadow $duration-mid $ease-out;
 
   &:hover {
     border-color: rgba($gold-bright, 0.3);

@@ -1,3 +1,5 @@
+@use 'variables' as *;
+
 @keyframes shimmer {
   0% {
     background-position: -200% center;
@@ -29,5 +31,15 @@
   }
   100% {
     transform: scale(1);
+  }
+}
+
+@keyframes emGlow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 rgba($gold-bright, 0));
+  }
+  50% {
+    filter: drop-shadow(0 0 16px rgba($gold-bright, 0.55));
   }
 }
