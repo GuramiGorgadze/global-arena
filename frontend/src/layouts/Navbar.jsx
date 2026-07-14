@@ -50,6 +50,26 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Fix: Handle hash scrolling on landing from the external applications subdomain
+  useEffect(() => {
+    if (!isHome || !location.hash) return undefined;
+
+    const id = location.hash.replace('#', '');
+    
+    const scrollToHash = () => {
+      const el = document.getElementById(id);
+      if (el) {
+        const top = el.getBoundingClientRect().top + window.scrollY - SCROLL_OFFSET;
+        window.scrollTo({ top, behavior: reduceMotion ? 'auto' : 'smooth' });
+      }
+    };
+
+    // 250ms delay allows the DOM to render and safely overrides the useScrollTop() hook's forces
+    const timer = setTimeout(scrollToHash, 250);
+
+    return () => clearTimeout(timer);
+  }, [isHome, location.hash, reduceMotion]);
+
   useEffect(() => {
     if (!isHome) {
       setActiveId('');
@@ -109,7 +129,6 @@ export default function Navbar() {
     return () => document.removeEventListener('pointerdown', onPointerDown, true);
   }, [mobileOpen]);
 
-  // Helper to determine the target address based on the current subdomain
   const getLinkUrl = (id) => {
     if (isApplicationsSite) {
       return `${MAIN_SITE_URL}/#${id}`;
@@ -118,7 +137,7 @@ export default function Navbar() {
   };
 
   const goToSection = (id) => (e) => {
-    if (!isHome) return; // Let default anchor tag behavior take over when navigating away from Home
+    if (!isHome) return; 
     const el = document.getElementById(id);
     if (!el) return;
     e.preventDefault();
@@ -150,7 +169,6 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* Desktop Navigation - now always visible */}
           <div className="navbar__links">
             {SECTION_LINKS.map((link) => (
               <Link
@@ -225,7 +243,6 @@ export default function Navbar() {
                 initial="hidden"
                 animate="visible"
               >
-                {/* Mobile Navigation - now always visible */}
                 {SECTION_LINKS.map((link) => (
                   <motion.div
                     key={link.id}
