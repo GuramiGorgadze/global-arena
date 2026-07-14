@@ -109,8 +109,16 @@ export default function Navbar() {
     return () => document.removeEventListener('pointerdown', onPointerDown, true);
   }, [mobileOpen]);
 
+  // Helper to determine the target address based on the current subdomain
+  const getLinkUrl = (id) => {
+    if (isApplicationsSite) {
+      return `${MAIN_SITE_URL}/#${id}`;
+    }
+    return isHome ? `#${id}` : `/#${id}`;
+  };
+
   const goToSection = (id) => (e) => {
-    if (!isHome) return;
+    if (!isHome) return; // Let default anchor tag behavior take over when navigating away from Home
     const el = document.getElementById(id);
     if (!el) return;
     e.preventDefault();
@@ -128,7 +136,7 @@ export default function Navbar() {
         <div className="navbar__inner">
           <Link
             className="navbar__logo"
-            to="https://g-arena.org"
+            to={MAIN_SITE_URL}
           >
             <span className="navbar__logoRing">
               <img
@@ -142,61 +150,58 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {!isApplicationsSite && (
-            <div className="navbar__links">
-              {SECTION_LINKS.map((link) => (
-                <Link
-                  key={link.id}
-                  to={isHome ? `#${link.id}` : `/#${link.id}`}
-                  className={`navbar__link ${activeId === link.id ? 'navbar__link--active' : ''}`}
-                  onClick={goToSection(link.id)}
-                >
-                  {link.label}
-                  {activeId === link.id && (
-                    <motion.span
-                      className="navbar__linkDot"
-                      layoutId="navIndicator"
-                      transition={
-                        reduceMotion
-                          ? { duration: 0 }
-                          : { type: 'spring', stiffness: 380, damping: 30 }
-                      }
-                    />
-                  )}
-                </Link>
-              ))}
-            </div>
-          )}
+          {/* Desktop Navigation - now always visible */}
+          <div className="navbar__links">
+            {SECTION_LINKS.map((link) => (
+              <Link
+                key={link.id}
+                to={getLinkUrl(link.id)}
+                className={`navbar__link ${activeId === link.id ? 'navbar__link--active' : ''}`}
+                onClick={goToSection(link.id)}
+              >
+                {link.label}
+                {activeId === link.id && (
+                  <motion.span
+                    className="navbar__linkDot"
+                    layoutId="navIndicator"
+                    transition={
+                      reduceMotion
+                        ? { duration: 0 }
+                        : { type: 'spring', stiffness: 380, damping: 30 }
+                    }
+                  />
+                )}
+              </Link>
+            ))}
+          </div>
 
           <div className="navbar__actions">
             <a
-              className={`navbar__cta ${isApplicationsSite ? 'navbar__cta--solo' : ''}`}
+              className="navbar__cta"
               href={REGISTER_URL}
               rel="noreferrer"
             >
               დარეგისტრირდი <i className="bi bi-arrow-right" />
             </a>
 
-            {!isApplicationsSite && (
-              <button
-                ref={menuButtonRef}
-                type="button"
-                className={`navbar__burger ${mobileOpen ? 'navbar__burger--open' : ''}`}
-                aria-label={mobileOpen ? 'დახურე მენიუ' : 'გახსენი მენიუ'}
-                aria-expanded={mobileOpen}
-                onClick={() => setMobileOpen((v) => !v)}
-              >
-                <span />
-                <span />
-                <span />
-              </button>
-            )}
+            <button
+              ref={menuButtonRef}
+              type="button"
+              className={`navbar__burger ${mobileOpen ? 'navbar__burger--open' : ''}`}
+              aria-label={mobileOpen ? 'დახურე მენიუ' : 'გახსენი მენიუ'}
+              aria-expanded={mobileOpen}
+              onClick={() => setMobileOpen((v) => !v)}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
           </div>
         </div>
       </motion.nav>
 
       <AnimatePresence>
-        {!isApplicationsSite && mobileOpen && (
+        {mobileOpen && (
           <motion.div
             className="navbarMobile"
             initial={{ opacity: 0 }}
@@ -220,21 +225,21 @@ export default function Navbar() {
                 initial="hidden"
                 animate="visible"
               >
-                {!isApplicationsSite &&
-                  SECTION_LINKS.map((link) => (
-                    <motion.div
-                      key={link.id}
-                      variants={menuItem}
+                {/* Mobile Navigation - now always visible */}
+                {SECTION_LINKS.map((link) => (
+                  <motion.div
+                    key={link.id}
+                    variants={menuItem}
+                  >
+                    <Link
+                      to={getLinkUrl(link.id)}
+                      className="navbarMobile__link"
+                      onClick={goToSection(link.id)}
                     >
-                      <Link
-                        to={isHome ? `#${link.id}` : `/#${link.id}`}
-                        className="navbarMobile__link"
-                        onClick={goToSection(link.id)}
-                      >
-                        {link.label}
-                      </Link>
-                    </motion.div>
-                  ))}
+                      {link.label}
+                    </Link>
+                  </motion.div>
+                ))}
                 <motion.div variants={menuItem}>
                   <a
                     className="navbarMobile__cta"

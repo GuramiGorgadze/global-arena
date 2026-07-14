@@ -215,14 +215,6 @@
     @media (max-width: 880px) {
       display: none;
     }
-
-    // Applications subdomain has no burger/mobile panel fallback,
-    // so the CTA must stay visible at every width.
-    &--solo {
-      @media (max-width: 880px) {
-        display: inline-flex;
-      }
-    }
   }
 
   &__burger {
