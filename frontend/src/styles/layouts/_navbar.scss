@@ -78,7 +78,13 @@
       }
 
       @media (max-width: 480px) {
-        display: none;
+        .big {
+          font-size: 22px;
+        }
+
+        .small {
+          font-size: 9px;
+        }
       }
     }
   }

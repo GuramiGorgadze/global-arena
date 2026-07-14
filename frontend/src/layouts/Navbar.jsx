@@ -34,11 +34,11 @@ export default function Navbar() {
   const [activeId, setActiveId] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
   const menuButtonRef = useRef(null);
+  const mobilePanelRef = useRef(null);
 
   const { scrollY } = useScroll();
   const navHeight = useTransform(scrollY, [0, 90], [NAV_HEIGHT_TOP, NAV_HEIGHT_SCROLLED]);
 
-  // Compact the bar once the page has actually moved
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
@@ -46,7 +46,6 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Track which section is in view so the gold dot knows where to sit
   useEffect(() => {
     if (!isHome) {
       setActiveId('');
@@ -69,7 +68,6 @@ export default function Navbar() {
     return () => observer.disconnect();
   }, [isHome]);
 
-  // Lock scroll behind the mobile menu, close it on route change or Escape
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : '';
     return () => {
@@ -93,8 +91,22 @@ export default function Navbar() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [mobileOpen]);
 
+  useEffect(() => {
+    if (!mobileOpen) return undefined;
+
+    const onPointerDown = (e) => {
+      const panel = mobilePanelRef.current;
+      const burger = menuButtonRef.current;
+      if (panel?.contains(e.target) || burger?.contains(e.target)) return;
+      setMobileOpen(false);
+    };
+
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+  }, [mobileOpen]);
+
   const goToSection = (id) => (e) => {
-    if (!isHome) return; // not on the home page — let the link navigate to /#id
+    if (!isHome) return;
     const el = document.getElementById(id);
     if (!el) return;
     e.preventDefault();
@@ -112,7 +124,7 @@ export default function Navbar() {
         <div className="navbar__inner">
           <Link
             className="navbar__logo"
-            to="/"
+            to="https://g-arena.org"
           >
             <span className="navbar__logoRing">
               <img
@@ -187,6 +199,7 @@ export default function Navbar() {
             aria-modal="true"
           >
             <motion.div
+              ref={mobilePanelRef}
               className="navbarMobile__panel"
               initial={{ y: -20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
