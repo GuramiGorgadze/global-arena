@@ -601,7 +601,7 @@ function Hero() {
           <em className="hero__titleShine">
             <ScrambleText text="ხმა" />
           </em>
-          , რომელსაც სამყარო უსმენს
+          , რომელსაც მსოფლიო უსმენს
         </motion.h1>
         <motion.p
           className="hero__subtitle"
