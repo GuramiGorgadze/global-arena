@@ -4,6 +4,8 @@ import { Link, useLocation } from 'react-router-dom';
 import Logo from '../assets/logo.png';
 
 const REGISTER_URL = 'https://applications.g-arena.org';
+const MAIN_SITE_URL = 'https://g-arena.org';
+const APPLICATIONS_HOST = 'applications.g-arena.org';
 
 const SECTION_LINKS = [
   { id: 'about', label: 'ჩვენ შესახებ' },
@@ -27,7 +29,9 @@ const menuItem = {
 
 export default function Navbar() {
   const location = useLocation();
-  const isHome = location.pathname === '/';
+  const isApplicationsSite =
+    typeof window !== 'undefined' && window.location.hostname === APPLICATIONS_HOST;
+  const isHome = !isApplicationsSite && location.pathname === '/';
   const reduceMotion = useReducedMotion();
 
   const [scrolled, setScrolled] = useState(false);
@@ -138,29 +142,31 @@ export default function Navbar() {
             </span>
           </Link>
 
-          <div className="navbar__links">
-            {SECTION_LINKS.map((link) => (
-              <Link
-                key={link.id}
-                to={isHome ? `#${link.id}` : `/#${link.id}`}
-                className={`navbar__link ${activeId === link.id ? 'navbar__link--active' : ''}`}
-                onClick={goToSection(link.id)}
-              >
-                {link.label}
-                {activeId === link.id && (
-                  <motion.span
-                    className="navbar__linkDot"
-                    layoutId="navIndicator"
-                    transition={
-                      reduceMotion
-                        ? { duration: 0 }
-                        : { type: 'spring', stiffness: 380, damping: 30 }
-                    }
-                  />
-                )}
-              </Link>
-            ))}
-          </div>
+          {!isApplicationsSite && (
+            <div className="navbar__links">
+              {SECTION_LINKS.map((link) => (
+                <Link
+                  key={link.id}
+                  to={isHome ? `#${link.id}` : `/#${link.id}`}
+                  className={`navbar__link ${activeId === link.id ? 'navbar__link--active' : ''}`}
+                  onClick={goToSection(link.id)}
+                >
+                  {link.label}
+                  {activeId === link.id && (
+                    <motion.span
+                      className="navbar__linkDot"
+                      layoutId="navIndicator"
+                      transition={
+                        reduceMotion
+                          ? { duration: 0 }
+                          : { type: 'spring', stiffness: 380, damping: 30 }
+                      }
+                    />
+                  )}
+                </Link>
+              ))}
+            </div>
+          )}
 
           <div className="navbar__actions">
             <a
@@ -212,20 +218,21 @@ export default function Navbar() {
                 initial="hidden"
                 animate="visible"
               >
-                {SECTION_LINKS.map((link) => (
-                  <motion.div
-                    key={link.id}
-                    variants={menuItem}
-                  >
-                    <Link
-                      to={isHome ? `#${link.id}` : `/#${link.id}`}
-                      className="navbarMobile__link"
-                      onClick={goToSection(link.id)}
+                {!isApplicationsSite &&
+                  SECTION_LINKS.map((link) => (
+                    <motion.div
+                      key={link.id}
+                      variants={menuItem}
                     >
-                      {link.label}
-                    </Link>
-                  </motion.div>
-                ))}
+                      <Link
+                        to={isHome ? `#${link.id}` : `/#${link.id}`}
+                        className="navbarMobile__link"
+                        onClick={goToSection(link.id)}
+                      >
+                        {link.label}
+                      </Link>
+                    </motion.div>
+                  ))}
                 <motion.div variants={menuItem}>
                   <a
                     className="navbarMobile__cta"
