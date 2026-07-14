@@ -170,31 +170,33 @@ export default function Navbar() {
 
           <div className="navbar__actions">
             <a
-              className="navbar__cta"
+              className={`navbar__cta ${isApplicationsSite ? 'navbar__cta--solo' : ''}`}
               href={REGISTER_URL}
               rel="noreferrer"
             >
               დარეგისტრირდი <i className="bi bi-arrow-right" />
             </a>
 
-            <button
-              ref={menuButtonRef}
-              type="button"
-              className={`navbar__burger ${mobileOpen ? 'navbar__burger--open' : ''}`}
-              aria-label={mobileOpen ? 'დახურე მენიუ' : 'გახსენი მენიუ'}
-              aria-expanded={mobileOpen}
-              onClick={() => setMobileOpen((v) => !v)}
-            >
-              <span />
-              <span />
-              <span />
-            </button>
+            {!isApplicationsSite && (
+              <button
+                ref={menuButtonRef}
+                type="button"
+                className={`navbar__burger ${mobileOpen ? 'navbar__burger--open' : ''}`}
+                aria-label={mobileOpen ? 'დახურე მენიუ' : 'გახსენი მენიუ'}
+                aria-expanded={mobileOpen}
+                onClick={() => setMobileOpen((v) => !v)}
+              >
+                <span />
+                <span />
+                <span />
+              </button>
+            )}
           </div>
         </div>
       </motion.nav>
 
       <AnimatePresence>
-        {mobileOpen && (
+        {!isApplicationsSite && mobileOpen && (
           <motion.div
             className="navbarMobile"
             initial={{ opacity: 0 }}
