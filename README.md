@@ -6,9 +6,7 @@
 
 **A full-stack Model United Nations conference platform**
 
-[![Live Demo](https://img.shields.io/badge/demo-g--arena.org-FEA90C?style=for-the-badge&logo=vercel&logoColor=white)](#)
-&nbsp;
-<br/>
+[![Live Site](https://img.shields.io/badge/Live%20Site-g--arena.org-FEA90C?style=for-the-badge&logo=vercel&logoColor=white)](https://g-arena.org)
 
 ![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB)
 ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)
@@ -42,40 +40,52 @@
 <td width="33%" valign="top">
 
 ### 🎬 Animated Landing
+
 A hero with a scramble-text headline, cursor-reactive parallax rings, a scrolling committee ticker, and tilt cards for each of the six committees.
 <br/><br/>
+
 </td>
 <td width="33%" valign="top">
 
 ### 📝 Guided Registration
+
 A four-step wizard - info, background, priorities, review - with a progress indicator, inline validation, and shake feedback on invalid steps.
 <br/><br/>
+
 </td>
 <td width="33%" valign="top">
 
 ### 💾 Draft Autosave
+
 Form progress saves to local storage as the delegate types, so a closed tab or a dead connection doesn't mean starting over.
 <br/><br/>
+
 </td>
 </tr>
 <tr>
 <td width="33%" valign="top">
 
 ### 🔞 Age-Aware Logic
+
 Delegates under 18 are automatically asked for a parent's name and phone number before the form will let them submit.
 <br/><br/>
+
 </td>
 <td width="33%" valign="top">
 
 ### ✉️ Automated Emails
+
 Nodemailer fires a branded confirmation to the delegate and a notification to the admin inbox in parallel, each with its own HTML template.
 <br/><br/>
+
 </td>
 <td width="33%" valign="top">
 
 ### 📊 Google Sheets Sync
+
 Every successful registration is pushed to a Sheets webhook, so the organizing team can see who's signed up without opening the database.
 <br/><br/>
+
 </td>
 </tr>
 </table>
