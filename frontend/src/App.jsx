@@ -4,7 +4,7 @@ import './styles/style.scss';
 import { Toaster } from 'react-hot-toast';
 import { Routes, Route } from 'react-router-dom';
 import { Navbar, Footer, Main } from './layouts';
-import { Registration, Home } from './routes';
+import { Registration, Home, Marathon } from './routes';
 import useDocumentTitle from './hooks/useDocumentTitle';
 import useScrollTop from './hooks/useScrollTop';
 
@@ -53,6 +53,10 @@ function App() {
             <Route
               path="/"
               element={<Home />}
+            />
+            <Route
+              path="/marathon"
+              element={<Marathon />}
             />
             <Route
               path="*"

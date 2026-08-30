@@ -1,0 +1,530 @@
+@use '../abstracts' as *;
+
+.marathon {
+  position: relative;
+  font-family: $font-body;
+  background-color: $black-deep;
+  color: $white-warm;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url('../../assets/banner.jpeg');
+    background-size: cover;
+    background-position: center 35%;
+    background-repeat: no-repeat;
+    opacity: 0.28;
+    filter: grayscale(15%) contrast(1.05);
+    z-index: 0;
+  }
+
+  &::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba($gold-bright, 0.08), transparent 60%),
+      linear-gradient(
+        180deg,
+        rgba($black-deep, 0.55) 0%,
+        rgba($black-deep, 0.88) 38%,
+        $black-deep 75%
+      );
+    z-index: 0;
+  }
+
+  &__inner {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 80px 40px 100px;
+
+    @media (max-width: 768px) {
+      padding: 70px 16px 70px;
+    }
+  }
+
+  .sectionHeader h2 em {
+    font-style: normal;
+    @include gold-text;
+  }
+}
+
+.marathonCard {
+  position: relative;
+  z-index: 1;
+  @include glass-card($from-opacity: 0.92, $to-opacity: 0.94);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba($gold-bright, 0.35);
+  box-shadow:
+    gold-ring-shadow(24px, 0.15),
+    0 20px 60px rgba($black-deep, 0.6),
+    inset 0 1px 0 rgba($gold-bright, 0.1);
+  border-radius: $radius-xl;
+  padding: 44px 36px;
+  // Deliberately no `overflow: hidden` here. The background above already
+  // clips to border-radius on its own, and an overflow value other than
+  // `visible` on this ancestor breaks `position: sticky` on the in-quiz
+  // timer bar below — the card would become the sticky containing block
+  // instead of the viewport, so the bar would just scroll away.
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  @media (max-width: 768px) {
+    padding: 30px 18px;
+  }
+}
+
+/* ---------- Identify step ---------- */
+
+.marathonIdentify {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  &__intro {
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: $white-muted;
+    text-align: center;
+
+    strong {
+      color: $gold-bright;
+      font-weight: 700;
+    }
+  }
+
+  .submitBtn {
+    align-self: center;
+  }
+}
+
+/* ---------- Generic status screen (errors, closed, already done...) ---------- */
+
+.marathonStatus {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+
+  &__icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    margin-bottom: 6px;
+    border: 1px solid rgba($gold-bright, 0.3);
+    background: rgba($gold-bright, 0.1);
+    color: $gold-bright;
+
+    &--success {
+      background: rgba(#4ade80, 0.12);
+      border-color: rgba(#4ade80, 0.35);
+      color: #4ade80;
+    }
+
+    &--warning {
+      background: rgba(#e5484d, 0.1);
+      border-color: rgba(#e5484d, 0.3);
+      color: #e5484d;
+    }
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-size: 22px;
+    font-weight: 700;
+
+    @media (max-width: 400px) {
+      font-size: 19px;
+    }
+  }
+
+  &__message {
+    font-size: 14px;
+    line-height: 1.75;
+    color: $white-muted;
+    max-width: 420px;
+
+    strong {
+      color: $white-warm;
+    }
+  }
+
+  &__note {
+    font-size: 12px;
+    color: $white-dim;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+}
+
+.marathonSpinner {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid rgba($gold-bright, 0.2);
+  border-top-color: $gold-bright;
+  animation: marathonSpin 0.8s linear infinite;
+}
+
+@keyframes marathonSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Countdown ---------- */
+
+.marathonCountdown {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+
+  &__label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: $white-dim;
+  }
+
+  &__units {
+    display: flex;
+    gap: 14px;
+
+    @media (max-width: 360px) {
+      gap: 8px;
+    }
+  }
+
+  &__unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 68px;
+    padding: 14px 10px;
+    border-radius: $radius-md;
+    border: 1px solid rgba($gold-bright, 0.28);
+    background: rgba($gold-bright, 0.06);
+
+    @media (max-width: 480px) {
+      min-width: 54px;
+      padding: 10px 6px;
+    }
+
+    @media (max-width: 360px) {
+      min-width: 48px;
+      padding: 8px 4px;
+    }
+  }
+
+  &__value {
+    font-family: $font-display;
+    font-size: 30px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    @include gold-text;
+
+    @media (max-width: 480px) {
+      font-size: 22px;
+    }
+
+    @media (max-width: 360px) {
+      font-size: 19px;
+    }
+  }
+
+  &__unitLabel {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: $white-dim;
+  }
+
+  &__date {
+    font-size: 13px;
+    color: $white-muted;
+  }
+}
+
+/* ---------- Quiz ---------- */
+
+.marathonQuiz {
+  width: 100%;
+}
+
+.marathonTimerBar {
+  position: sticky;
+  top: 12px;
+  z-index: 5;
+  background: rgba($black-deep, 0.85);
+  border: 1px solid rgba($gold-bright, 0.3);
+  border-radius: $radius-md;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(8px);
+  transition: border-color $duration-mid $ease-out;
+
+  &--urgent {
+    border-color: rgba(#e5484d, 0.55);
+    animation: marathonUrgentPulse 1s ease-in-out infinite;
+  }
+
+  &__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+
+    @media (max-width: 360px) {
+      justify-content: center;
+      text-align: center;
+    }
+  }
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #e5484d;
+  }
+
+  &__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #e5484d;
+    animation: marathonDotPulse 1.2s ease-in-out infinite;
+  }
+
+  &__clock {
+    font-family: $font-display;
+    font-size: 20px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: $white-warm;
+
+    @media (max-width: 360px) {
+      font-size: 17px;
+    }
+  }
+
+  &__count {
+    font-size: 12px;
+    color: $white-dim;
+    white-space: nowrap;
+  }
+
+  &__track {
+    height: 5px;
+    border-radius: $radius-pill;
+    background: $black-border;
+    overflow: hidden;
+  }
+
+  &__fill {
+    height: 100%;
+    background: linear-gradient(90deg, $gold-muted, $gold-bright);
+  }
+
+  &--urgent &__fill {
+    background: linear-gradient(90deg, #e5484d, #ff8a8a);
+  }
+}
+
+@keyframes marathonDotPulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.7);
+  }
+}
+
+@keyframes marathonUrgentPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(#e5484d, 0);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(#e5484d, 0.3);
+  }
+}
+
+.marathonQuestions {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+
+  // The whole quiz body is off-limits to selection/copy — question text,
+  // option text, and the numbering badges. Covers mouse drag-select,
+  // keyboard select-all, and iOS/Android's long-press "copy" callout.
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  cursor: default;
+}
+
+.marathonQuestion {
+  border: 1px solid $black-border;
+  border-radius: $radius-md;
+  padding: 18px 20px;
+  background: rgba($black-card, 0.5);
+
+  @media (max-width: 480px) {
+    padding: 16px;
+  }
+
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  &__num {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    background: rgba($gold-bright, 0.12);
+    border: 1px solid rgba($gold-bright, 0.3);
+    color: $gold-bright;
+  }
+
+  &__text {
+    font-size: 15px;
+    line-height: 1.6;
+    color: $white-warm;
+    font-weight: 600;
+  }
+
+  &__options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+
+    @media (max-width: 560px) {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.marathonOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: $radius-md;
+  border: 1px solid $black-border;
+  background: rgba($black-deep, 0.4);
+  color: $white-muted;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: $font-body;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color $duration-fast $ease-out,
+    background $duration-fast $ease-out,
+    color $duration-fast $ease-out;
+
+  &:hover {
+    border-color: rgba($gold-bright, 0.35);
+    color: $white-warm;
+  }
+
+  &--selected {
+    border-color: $gold-bright;
+    background: rgba($gold-bright, 0.14);
+    color: $white-warm;
+
+    .marathonOption__letter {
+      background: $gold-bright;
+      color: $black-deep;
+    }
+  }
+
+  &__letter {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    background: rgba($gold-bright, 0.15);
+    color: $gold-bright;
+    transition:
+      background $duration-fast $ease-out,
+      color $duration-fast $ease-out;
+  }
+
+  &__text {
+    line-height: 1.45;
+  }
+}
+
+.marathonQuizFooter {
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+
+  &__note {
+    font-size: 12px;
+    color: $white-dim;
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+
+    .submitBtn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}

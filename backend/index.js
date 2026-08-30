@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import UsersRouter from "./routes/users.js";
+import marathonRoutes from "./routes/marathon.js";
 import connectDB from "./db/connection.js";
 import helmet from "helmet";
 import { fileURLToPath } from "url";
@@ -19,7 +20,7 @@ app.use(
         scriptSrc: ["'self'", "https://plausible.io"],
         connectSrc: ["'self'", "https://plausible.io"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
-        fontSrc: ["'self'", "https://cdn.jsdelivr.net"], 
+        fontSrc: ["'self'", "https://cdn.jsdelivr.net"],
         imgSrc: ["'self'", "data:"],
       },
     },
@@ -37,6 +38,7 @@ app.use(
 app.use(express.json());
 
 app.use("/api/users", UsersRouter);
+app.use("/api/marathon", marathonRoutes);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
