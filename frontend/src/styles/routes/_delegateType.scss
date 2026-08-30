@@ -1,0 +1,357 @@
+@use '../abstracts' as *;
+
+.delegateType {
+  position: relative;
+  min-height: 100vh;
+  font-family: $font-body;
+  background-color: $black-deep;
+  color: $white-warm;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url('../../assets/banner.jpeg');
+    background-size: cover;
+    background-position: center 35%;
+    opacity: 0.28;
+    filter: grayscale(15%) contrast(1.05);
+    z-index: 0;
+  }
+
+  &::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba($gold-bright, 0.08), transparent 60%),
+      linear-gradient(180deg, rgba($black-deep, 0.55) 0%, rgba($black-deep, 0.88) 38%, $black-deep 75%);
+    z-index: 0;
+  }
+
+  &__inner {
+    position: relative;
+    z-index: 1;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 90px 24px;
+    width: 100%;
+  }
+}
+
+.delegateIntro {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+
+  &__badge {
+    display: inline-block;
+    padding: 8px 20px;
+    border-radius: $radius-pill;
+    border: 1px solid rgba($gold-bright, 0.35);
+    background: $gold-glow-sm;
+    color: $gold-bright;
+    font-family: $font-eng, $font-display;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-size: clamp(30px, 4vw, 44px);
+    font-weight: 700;
+    line-height: 1.2;
+
+    em {
+      font-style: normal;
+      @include gold-text;
+    }
+  }
+
+  &__desc {
+    font-size: 15px;
+    line-height: 1.75;
+    color: $white-muted;
+    max-width: 440px;
+  }
+
+  .submitBtn {
+    margin-top: 10px;
+  }
+}
+
+.delegateQuiz {
+  width: 100%;
+
+  &__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  &__back {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba($gold-bright, 0.08);
+    border: 1px solid rgba($gold-bright, 0.25);
+    color: $gold-bright;
+    cursor: pointer;
+    transition: background $duration-fast $ease-out;
+
+    &:hover {
+      background: rgba($gold-bright, 0.16);
+    }
+  }
+
+  &__count {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: $white-dim;
+  }
+
+  &__track {
+    height: 5px;
+    border-radius: $radius-pill;
+    background: $black-border;
+    overflow: hidden;
+    margin-bottom: 40px;
+  }
+
+  &__fill {
+    height: 100%;
+    background: linear-gradient(90deg, $gold-muted, $gold-bright);
+  }
+}
+
+.delegateQuestion {
+  &__text {
+    font-family: $font-display;
+    font-size: clamp(20px, 2.6vw, 26px);
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  &__options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+.delegateOption {
+  text-align: left;
+  padding: 16px 20px;
+  border-radius: $radius-md;
+  border: 1px solid $black-border;
+  background: rgba($black-card, 0.5);
+  color: $white-muted;
+  font-size: 14.5px;
+  line-height: 1.5;
+  font-family: $font-body;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color $duration-fast $ease-out,
+    background $duration-fast $ease-out,
+    color $duration-fast $ease-out,
+    transform $duration-fast $ease-out;
+
+  &:hover {
+    border-color: rgba($gold-bright, 0.4);
+    color: $white-warm;
+    background: rgba($gold-bright, 0.08);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.delegateResult {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+
+  &__icon {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    color: $gold-bright;
+    background: rgba($gold-bright, 0.1);
+    border: 1px solid rgba($gold-bright, 0.3);
+    margin-bottom: 10px;
+  }
+
+  &__label {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: $white-dim;
+  }
+
+  &__name {
+    font-family: $font-display;
+    font-size: clamp(32px, 5vw, 48px);
+    font-weight: 700;
+    @include gold-text;
+  }
+
+  &__tagline {
+    font-size: 14px;
+    font-style: italic;
+    color: $gold-muted;
+    margin-bottom: 14px;
+  }
+
+  &__desc {
+    font-size: 14.5px;
+    line-height: 1.8;
+    color: $white-muted;
+    max-width: 440px;
+    margin-bottom: 20px;
+  }
+
+  &__committees {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  &__chip {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: $gold-bright;
+    border: 1px solid rgba($gold-bright, 0.4);
+    border-radius: $radius-pill;
+    padding: 6px 14px;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 26px;
+  }
+
+  &__registerLink {
+    font-size: 13px;
+    color: $white-dim;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    transition: color $duration-fast $ease-out;
+
+    &:hover {
+      color: $gold-bright;
+    }
+  }
+}
+
+.shareModal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba($black-deep, 0.82);
+  backdrop-filter: blur(6px);
+
+  &__card {
+    position: relative;
+    width: 100%;
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 28px 24px;
+    border-radius: $radius-xl;
+    @include glass-card($from-opacity: 0.94, $to-opacity: 0.96);
+    border: 1px solid rgba($gold-bright, 0.32);
+    box-shadow: 0 24px 70px rgba($black-deep, 0.65);
+  }
+
+  &__close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba($white-warm, 0.06);
+    border: 1px solid $black-border;
+    color: $white-muted;
+    cursor: pointer;
+
+    &:hover {
+      color: $white-warm;
+      border-color: rgba($gold-bright, 0.3);
+    }
+  }
+
+  &__preview {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  &__canvas {
+    width: min(230px, 62vw);
+    height: auto;
+    aspect-ratio: 9 / 16;
+    border-radius: $radius-md;
+    border: 1px solid rgba($gold-bright, 0.25);
+    box-shadow: 0 10px 40px rgba($black-deep, 0.5);
+  }
+
+  &__actions {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+
+    .submitBtn,
+    .btn {
+      flex: 1;
+      justify-content: center;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .delegateType__inner {
+    padding: 70px 18px;
+  }
+}
