@@ -566,13 +566,13 @@ function MarathonPromo() {
 
           {phase === 'live' && (
             <span className="marathonPromo__live">
-              <span className="marathonPromo__liveDot" /> მარათონი ახლა მიმდინარეობს
+              <span className="marathonPromo__liveDot" /> მარათონი მიმდინარეობს
             </span>
           )}
 
           {phase === 'closed' && (
             <p className="marathonPromo__closed">
-              მარათონი დასრულებულია — შედეგები მალე გამოქვეყნდება.
+              მარათონი დასრულებულია. შედეგები მალე გამოქვეყნდება
             </p>
           )}
 
