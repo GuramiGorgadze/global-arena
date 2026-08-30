@@ -67,6 +67,10 @@
     z-index: 0;
   }
 
+  &--marathon {
+    z-index: 0;
+  }
+
   &__dot {
     position: absolute;
     bottom: -6%;
@@ -491,6 +495,210 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: $white-dim;
+  }
+}
+
+.marathonPromo {
+  position: relative;
+  max-width: 1100px;
+  margin: 100px auto 0;
+  padding: 48px 44px;
+  border-radius: $radius-xl;
+  overflow: hidden;
+  isolation: isolate;
+  @include ornate-panel(
+    $from-opacity: 0.75,
+    $to-opacity: 0.9,
+    $tint-opacity: 0.05,
+    $dot-opacity: 0.05,
+    $dot-size: 22px,
+    $line-opacity: 0.04,
+    $line-pitch: 8px
+  );
+  border: 1px solid rgba($gold-bright, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba($white-warm, 0.06),
+    0 20px 60px rgba($black-deep, 0.5);
+
+  &__inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+
+  &__text {
+    flex: 1 1 320px;
+    min-width: 260px;
+  }
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    border-radius: $radius-pill;
+    border: 1px solid rgba($gold-bright, 0.35);
+    background: $gold-glow-sm;
+    color: $gold-bright;
+    font-family: $font-eng, $font-display;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+
+  &__badgeDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: $gold-bright;
+    animation: marathonPromoDotPulse 1.6s ease-in-out infinite;
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-size: clamp(24px, 2.6vw, 32px);
+    font-weight: 700;
+    margin-bottom: 12px;
+
+    em {
+      font-style: normal;
+      @include gold-text;
+    }
+  }
+
+  &__desc {
+    font-size: 14px;
+    line-height: 1.75;
+    color: $white-muted;
+    max-width: 440px;
+  }
+
+  &__panel {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+  }
+
+  &__countdown {
+    display: flex;
+    gap: 10px;
+
+    &--placeholder {
+      opacity: 0.4;
+    }
+  }
+
+  &__unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 58px;
+    padding: 10px 6px;
+    border-radius: $radius-md;
+    border: 1px solid rgba($gold-bright, 0.28);
+    background: rgba($gold-bright, 0.06);
+  }
+
+  &__value {
+    font-family: $font-display;
+    font-size: 22px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    @include gold-text;
+  }
+
+  &__unitLabel {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: $white-dim;
+  }
+
+  &__live {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #e5484d;
+  }
+
+  &__liveDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e5484d;
+    animation: marathonPromoDotPulse 1.2s ease-in-out infinite;
+  }
+
+  &__closed {
+    font-size: 13px;
+    color: $white-dim;
+    text-align: center;
+    max-width: 200px;
+  }
+
+  @media (max-width: 860px) {
+    margin: 76px 20px 0;
+    padding: 36px 26px;
+
+    &__inner {
+      flex-direction: column;
+      text-align: center;
+      gap: 28px;
+    }
+
+    &__text {
+      min-width: 0;
+    }
+
+    &__desc {
+      margin: 0 auto;
+    }
+
+    &__panel {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 420px) {
+    &__unit {
+      min-width: 50px;
+      padding: 8px 4px;
+    }
+    &__value {
+      font-size: 18px;
+    }
+  }
+}
+
+@keyframes marathonPromoDotPulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.7);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marathonPromo__badgeDot,
+  .marathonPromo__liveDot {
+    animation: none;
   }
 }
 

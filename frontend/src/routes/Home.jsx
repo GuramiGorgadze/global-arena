@@ -12,6 +12,7 @@ import {
   useTransform,
 } from 'framer-motion';
 import logo from '../assets/logo.png';
+import { getMarathonStatus } from '../api/marathon';
 
 const EASE_OUT = [0.16, 1, 0.3, 1];
 const GEORGIAN_GLYPHS = 'აბგდევზთიკლმნოპჟრსტუფქღყშჩცძწჭხჯჰ';
@@ -454,6 +455,158 @@ function CommitteeTicker() {
   );
 }
 
+function pad2(n) {
+  return String(Math.max(0, n)).padStart(2, '0');
+}
+
+function splitDuration(ms) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  return {
+    days: Math.floor(totalSeconds / 86400),
+    hours: Math.floor((totalSeconds % 86400) / 3600),
+    minutes: Math.floor((totalSeconds % 3600) / 60),
+    seconds: totalSeconds % 60,
+  };
+}
+
+function MarathonPromo() {
+  const [status, setStatus] = useState('loading'); // loading | ready | error
+  const [startsAtMs, setStartsAtMs] = useState(null);
+  const [durationMs, setDurationMs] = useState(5 * 60 * 1000);
+  const [offsetMs, setOffsetMs] = useState(0);
+  const [now, setNow] = useState(Date.now());
+
+  // Fetch timing once — this is the same status endpoint the /marathon
+  // page uses, so the countdown here always matches reality.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await getMarathonStatus();
+        if (cancelled) return;
+        setStartsAtMs(new Date(data.startsAt).getTime());
+        setDurationMs(data.durationMs || 5 * 60 * 1000);
+        setOffsetMs(new Date(data.serverNow).getTime() - Date.now());
+        setStatus('ready');
+      } catch {
+        if (!cancelled) setStatus('error');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (status !== 'ready') return undefined;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [status]);
+
+  const adjustedNow = now + offsetMs;
+  const msUntilStart = startsAtMs !== null ? startsAtMs - adjustedNow : null;
+  const msRemaining = startsAtMs !== null ? startsAtMs + durationMs - adjustedNow : null;
+
+  const phase =
+    status !== 'ready'
+      ? status
+      : msUntilStart > 0
+        ? 'countdown'
+        : msRemaining > 0
+          ? 'live'
+          : 'closed';
+
+  const timeUnits = phase === 'countdown' ? splitDuration(msUntilStart) : null;
+
+  return (
+    <motion.section
+      className="marathonPromo"
+      initial={{ opacity: 0, y: 32 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.7, ease: EASE_OUT }}
+    >
+      <FloatingParticles
+        count={12}
+        className="particles--marathon"
+      />
+      <div className="marathonPromo__inner">
+        <div className="marathonPromo__text">
+          <span className="marathonPromo__badge">
+            <span className="marathonPromo__badgeDot" /> მარათონი
+          </span>
+          <h2 className="marathonPromo__title">
+            შეამოწმე შენი <em>ცოდნა</em>
+          </h2>
+          <p className="marathonPromo__desc">
+            15 კითხვა, 5 წუთი — გაარკვიე, რამდენად კარგად იცნობ საერთაშორისო ურთიერთობებსა და გაეროს
+            თემატიკას.
+          </p>
+        </div>
+
+        <div className="marathonPromo__panel">
+          {phase === 'countdown' && timeUnits && (
+            <div className="marathonPromo__countdown">
+              {[
+                { value: timeUnits.days, label: 'დღე' },
+                { value: timeUnits.hours, label: 'საათი' },
+                { value: timeUnits.minutes, label: 'წუთი' },
+                { value: timeUnits.seconds, label: 'წამი' },
+              ].map((u) => (
+                <div
+                  className="marathonPromo__unit"
+                  key={u.label}
+                >
+                  <span className="marathonPromo__value">{pad2(u.value)}</span>
+                  <span className="marathonPromo__unitLabel">{u.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {phase === 'live' && (
+            <span className="marathonPromo__live">
+              <span className="marathonPromo__liveDot" /> მარათონი ახლა მიმდინარეობს
+            </span>
+          )}
+
+          {phase === 'closed' && (
+            <p className="marathonPromo__closed">
+              მარათონი დასრულებულია — შედეგები მალე გამოქვეყნდება.
+            </p>
+          )}
+
+          {(phase === 'loading' || phase === 'error') && (
+            <div
+              className="marathonPromo__countdown marathonPromo__countdown--placeholder"
+              aria-hidden="true"
+            >
+              {['დღე', 'საათი', 'წუთი', 'წამი'].map((label) => (
+                <div
+                  className="marathonPromo__unit"
+                  key={label}
+                >
+                  <span className="marathonPromo__value">--</span>
+                  <span className="marathonPromo__unitLabel">{label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <BurstCTA
+            href="/marathon"
+            className="submitBtn"
+            strength={16}
+          >
+            {phase === 'live' ? 'შეუერთდი ახლავე' : 'მარათონზე გადასვლა'}{' '}
+            <i className="bi bi-arrow-right" />
+          </BurstCTA>
+        </div>
+      </div>
+    </motion.section>
+  );
+}
+
 export default function HomePage() {
   return (
     <MotionConfig reducedMotion="user">
@@ -477,6 +630,7 @@ export default function HomePage() {
           />
           <Stats />
           <CommitteeTicker />
+          <MarathonPromo />
           <About />
           <Committees />
           <CtaBanner />
