@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "/api/marathon";
+const BASE_URL = "http://localhost:3000/api/marathon";
 
 export const getMarathonStatus = async (email) => {
   try {

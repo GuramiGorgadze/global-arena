@@ -533,6 +533,11 @@
   &__text {
     flex: 1 1 320px;
     min-width: 260px;
+
+    @media (max-width: 860px) {
+    flex: 1 1 200px;
+
+    }
   }
 
   &__badge {
