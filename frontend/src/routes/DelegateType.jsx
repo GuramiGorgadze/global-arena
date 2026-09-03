@@ -223,7 +223,7 @@ function drawShareCard(canvas, result, logoImg) {
 
   ctx.fillStyle = '#d4af5a';
   ctx.font = "600 30px 'Helvetica Neue', Arial, sans-serif";
-  ctx.fillText('GAMUN 2026 · დელეგატის ტიპი', W / 2, 130);
+  ctx.fillText('GLOBAL ARENA MUN 2026', W / 2, 130);
 
   if (logoImg) {
     const logoW = 150;
@@ -279,7 +279,7 @@ function drawShareCard(canvas, result, logoImg) {
 
   ctx.fillStyle = 'rgba(255,255,255,0.55)';
   ctx.font = "500 28px 'Helvetica Neue', Arial, sans-serif";
-  ctx.fillText('გაარკვიე შენი ტიპი — gamun.ge/delegate-type', W / 2, H - 90);
+  ctx.fillText('გაარკვიე შენი ტიპი — g-arena.org/delegate-type', W / 2, H - 90);
 }
 
 const questionVariants = {
@@ -559,13 +559,12 @@ function IntroScreen({ onStart }) {
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.5, ease: EASE }}
     >
-      <span className="delegateIntro__badge">GAMUN 2026</span>
+      <span className="delegateIntro__badge">GLOBAL ARENA MUN 2026</span>
       <h1 className="delegateIntro__title">
-        რომელი ტიპის <em>დელეგატი</em> ხარ?
+        რა ტიპის <em>დელეგატი</em> ხარ?
       </h1>
       <p className="delegateIntro__desc">
-        უპასუხე 8 მოკლე კითხვას სხდომის სცენარებზე და გაარკვიე, რომელი დელეგატის არქეტიპი გამოხატავს
-        შენს სტილს საუკეთესოდ.
+        უპასუხე 8 მოკლე კითხვას და გაარკვიე, თუ რომელი დელეგატის ტიპი შეგეფერება შენ ყველაზე მეტად.
       </p>
       <motion.button
         type="button"
@@ -743,7 +742,7 @@ function RevealScreen({ result, onComplete }) {
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.25 }}
               >
-                დგინდება შენი დელეგატის ტიპი
+                ვადგენთ შენი დელეგატის ტიპს
                 <span
                   className="delegateReveal__dots"
                   aria-hidden="true"
@@ -808,7 +807,7 @@ function ResultScreen({ result, onRetake, onShare }) {
           whileHover={{ y: -2 }}
           whileTap={{ scale: 0.97 }}
         >
-          <i className="bi bi-instagram" /> გააზიარე Story-ზე
+          <i className="bi bi-instagram" /> გააზიარე ინსტაგრამზე
         </motion.button>
         <button
           type="button"
@@ -820,8 +819,9 @@ function ResultScreen({ result, onRetake, onShare }) {
       </div>
 
       <a
-        href="/#register"
+        href="https://applications.g-arena.org"
         className="delegateResult__registerLink"
+        target='blank'
       >
         მზად ხარ დარეგისტრირდე? <i className="bi bi-arrow-right" />
       </a>
@@ -863,7 +863,7 @@ function ShareModal({ result, canvasRef, onClose, onShare, onDownload }) {
             className="shareModal__canvas"
             role="img"
             aria-label={
-              result ? `${result.name} — GAMUN 2026 დელეგატის ტიპის შედეგი` : 'შედეგის სურათი'
+              result ? `${result.name} — GLOBAL ARENA MUN 2026 დელეგატის ტიპის შედეგი` : 'შედეგის სურათი'
             }
           />
         </div>
