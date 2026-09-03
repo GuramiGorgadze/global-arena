@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import logo from '../assets/logo.png';
 
 const EASE = [0.22, 1, 0.36, 1];
 
-// ---- Customize these two freely — content, tone, committee suggestions ----
 const TYPES = [
   {
     id: 'dip',
@@ -13,7 +12,7 @@ const TYPES = [
     icon: 'bi-people-fill',
     tagline: 'ალიანსების ოსტატი',
     description:
-      'შენ ხარ დარბაზის გული — ყველა გიცნობს და ყველა გენდობა. ალიანსების აგება შენთვის ბუნებრივი ნიჭია და ხშირად სწორედ შენ დგახარ კომპრომისის უკან.',
+      'შენ ხარ კომიტეტის ცენტრი. ყველა გიცნობს და ყველა გენდობა. ალიანსების შექმნა შენთვის ძალიან მარტივია და ხშირად სწორედ შენ ხარ მისი ლიდერი.',
     committees: ['UNHRC', 'SPECPOL'],
   },
   {
@@ -22,126 +21,134 @@ const TYPES = [
     icon: 'bi-diagram-3-fill',
     tagline: 'ყოველთვის სამი ნაბიჯით წინ',
     description:
-      'სანამ სხვები დებატობენ, შენ უკვე რამდენიმე ნაბიჯით წინ ხარ. ზუსტი გეგმა, ჭკვიანი კოალიცია და გამართული რეზოლუცია — ეს არის შენი ხელწერა.',
+      'სანამ სხვები დებატობენ, შენ უკვე რამდენიმე ნაბიჯით წინ ხარ. შენ უკვე გაქვს ზუსტი გეგმა და გონივრული იდეები.',
     committees: ['UNSC', 'DISEC'],
   },
   {
     id: 'ora',
     name: 'ორატორი',
     icon: 'bi-mic-fill',
-    tagline: 'ხმა, რომელსაც ყველა იხსენებს',
+    tagline: 'ხმა, რომელსაც მსოფლიო უსმენს',
     description:
-      'როცა შენ დგახარ პოდიუმთან, დარბაზი ჩუმდება. შენი სიტყვები არწმუნებს და შენი ვნება გადამდებია — შენ ხარ ხმა, რომელსაც ყველა იმახსოვრებს.',
+      'როცა შენ გამოდიხარ სიტყვით, დარბაზი ჩუმდება. ტექსტებს არ იზეპირებ, თუმცა მიკროფონის ხელში აღებისას ისე ჩანს თითქოს ყოველი სიტყვა და ემოცია წინასწარ გათვლილი გქონდა.',
     committees: ['HCC', 'Press Corps'],
   },
   {
     id: 'res',
     name: 'მკვლევარი',
     icon: 'bi-search',
-    tagline: 'ფაქტი ყოველთვის ხელთ არის',
+    tagline: 'დელეგატი, რომელიც ყოველთვის მზად არის',
     description:
-      'შენთვის არცერთი კითხვა არ არის მოულოდნელი — ფაქტები, სტატისტიკა და დეტალები ყოველთვის მზად გაქვს. სიღრმისეული მომზადება შენი ყველაზე ძლიერი იარაღია.',
+      'შენ არანაირი კითხვა არ გაშინებს, რადგან ფაქტები, სტატისტიკები და დეტალები ყოველთვის მზად გაქვს. სიღრმისეული  შენი ყველაზე ძლიერი მხარეა.',
     committees: ['DISEC', 'Press Corps'],
   },
   {
     id: 'imp',
     name: 'იმპროვიზატორი',
     icon: 'bi-lightning-charge-fill',
-    tagline: 'ქაოსში საუკეთესო',
+    tagline: 'საუკეთესო ქაოსში',
     description:
-      'კრიზისი შენთვის პრობლემა კი არა, შანსია. სანამ სხვები იბნევიან, შენ უკვე ახალ, გაუთვალისწინებელ გეგმას აწყობ — სპონტანურობა შენი ზეძალაა.',
+      'კრიზისი შენთვის არა გამოწვევა, არამედ უპირატესობაა. სანამ სხვები იბნევიან, შენ უკვე ახალ, გაუთვალისწინებელ გეგმას ქმნი. სპონტანურობა შენი იარაღია.',
     committees: ['HCC', 'UNSC'],
   },
   {
     id: 'med',
     name: 'შუამავალი',
     icon: 'bi-shield-check',
-    tagline: 'სიმშვიდის კუნძული',
+    tagline: 'დელეგატებს შორის ხიდი',
     description:
-      'დაძაბულ დარბაზში, შენ ხარ სიმშვიდის კუნძული. დაპირისპირებულ მხარეებს შორის საერთო ენის პოვნა შენი ნიჭია — ხშირად სწორედ ეს ინარჩუნებს კომიტეტს ერთად.',
+      'დაძაბულ სიტუაციაში შენ ხარ ის, ვინც ურთიერთობებს ალაგებს. დაპირისპირებულ მხარეებს შორის საერთო ენის პოვნა შენი ძლიერი მხარეა. ხშირად სწორედ ეს ხდება გადამწყვეტი ნაბიჯი კომიტეტში.',
     committees: ['UNHRC', 'SPECPOL'],
   },
 ];
 
 const QUESTIONS = [
   {
-    text: 'საბჭოს სხდომა იწყება — რას აკეთებ პირველი?',
+    text: 'იწყება პირველი საკომიტეტო სესია. რას აკეთებ პირველი?',
     options: [
-      { text: 'სხვა დელეგატებთან ვმეგობრდები და ალიანსებს ვქმნი', type: 'dip' },
-      { text: 'დღის წესრიგს ვსწავლობ და წინასწარ ვგეგმავ', type: 'str' },
-      { text: 'ჩემს გამოსვლას ვამზადებ — მინდა ყველამ დამიმახსოვროს', type: 'ora' },
-      { text: 'ბოლო სტატისტიკებსა და ფაქტებს ვამოწმებ', type: 'res' },
+      { text: 'სხვა დელეგატეს ვუმეგობრდები და ალიანსებს ვქმნი', type: 'dip' },
+      { text: 'თემას ვსწავლობ და წინასწარ ვგეგმავ', type: 'str' },
+      { text: 'ჩემს გახსნით სიტყვას ვიზეპირებ. მინდა ყველამ დამიმახსოვროს', type: 'ora' },
+      { text: 'სტატისტიკებსა და ფაქტებს ვამოწმებ', type: 'res' },
     ],
   },
   {
-    text: 'მოულოდნელი კრიზისის განახლება მოდის — შენი პირველი რეაქცია?',
+    text: 'მოულოდნელად კრიზისული დგება. რა არის შენი პირველი რეაქცია?',
     options: [
-      { text: 'მაშინვე ვითხოვ სიტყვას, რომ პოზიცია გამოვხატო', type: 'ora' },
-      { text: 'ვცდილობ გავიაზრო, რას ნიშნავს ეს ჩემი ქვეყნისთვის', type: 'res' },
-      { text: 'მომწონს — აი, სადაც საინტერესო ხდება', type: 'imp' },
-      { text: 'ვცდილობ დავამშვიდო დელეგატები, სანამ პანიკა დაიწყება', type: 'med' },
+      { text: 'მაშინვე მინდა სიტყვით გამოვიდე, რომ პოზიცია დავაფიქსირო', type: 'ora' },
+      { text: 'ვცდილობ აღვიქვა, რა გავლენა აქვს მას ჩემი ქვეყნისთვის', type: 'res' },
+      { text: 'მომწონს. კრიზისები ყველაზე საინტერესო ნაწილია', type: 'imp' },
+      {
+        text: 'ვცდილობ ყველა მხარის პოზიცია მალევე გავიგო, სანამ გადაწყვეტილებას მივიღებ',
+        type: 'med',
+      },
     ],
   },
   {
-    text: 'არაფორმალური (unmoderated) კაუკუსის დროს, სად ხარ?',
+    text: 'არაფორმალური დებატების დროს სად ხარ?',
     options: [
       { text: 'ყველა ჯგუფს ვესტუმრები, ურთიერთობებს ვამყარებ', type: 'dip' },
-      { text: 'ჩემს ბლოკთან ვზივარ და ტექსტზე ვმუშაობ', type: 'str' },
-      { text: 'სხვადასხვა ჯგუფში გადავრბივარ, იდეებს ვცვლი', type: 'imp' },
-      { text: 'ორ დაპირისპირებულ ჯგუფს შორის ხიდს ვამყარებ', type: 'med' },
+      { text: 'ჩემს ბლოკთან ვზივარ და ვმუშაობ', type: 'str' },
+      { text: 'სხვადასხვა ჯგუფთან მივდივარ და იდეებს ვისმენ', type: 'imp' },
+      { text: 'ვცდილობ ყველა მხარე გავაერთიანო', type: 'med' },
     ],
   },
   {
-    text: 'შენი პოზიცია ეწინააღმდეგება უმრავლესობას — რას აკეთებ?',
+    text: 'შენი პოზიცია ეწინააღმდეგება უმრავლესობას. რას აკეთებ?',
     options: [
-      { text: 'ვცდილობ ვინმეს დავარწმუნო, ჩემს მხარეს გადმოვიდეს', type: 'dip' },
-      { text: 'ვეძებ გზას კომპრომისისკენ, დანაკარგის გარეშე', type: 'str' },
-      { text: 'ვდგები და საჯაროდ ვიცავ პოზიციას ბოლომდე', type: 'ora' },
-      { text: 'მტკიცებულებებს ვაგროვებ, არგუმენტის გასამყარებლად', type: 'res' },
+      { text: 'ვცდილობ ვინმეს დავარწმუნო, რომ ჩემს მხარეს გადმოვიდეს', type: 'dip' },
+      { text: 'ვეძებ გზას კომპრომისისკენ რაც შეიძლება ნაკლები დანაკარგით', type: 'str' },
+      { text: 'ვდგები და საჯაროდ ვიცავ ჩემს პოზიციას ბოლომდე', type: 'ora' },
+      { text: 'მტკიცებულებებს ვაგროვებ პოზიციის გასამყარებლად', type: 'res' },
     ],
   },
   {
-    text: 'დოკუმენტში შესწორება შემოდის, რომელიც არავის მოსწონს',
+    text: 'დოკუმენტში შესწორებას აკეთებენ, რომელიც არავის მოსწონს',
     options: [
-      { text: 'ავდივარ და ვხსნი, რატომ არის ეს არასწორი გზა', type: 'ora' },
+      { text: 'გამოვდივარ და ვხსნი, თუ რატომ არის ეს არასწორი შესწორება', type: 'ora' },
       { text: 'დეტალურად ვამოწმებ, რას ცვლის ეს რეალურად', type: 'res' },
       { text: 'ვთავაზობ სულ ახალ, გაუთვალისწინებელ ალტერნატივას', type: 'imp' },
-      { text: 'ორივე მხარეს შუალედურ ვარიანტს ვთავაზობ', type: 'med' },
+      { text: 'ორივე მხარეს ისეთ ვარიანტს ვთავაზობ, რომელიც ორივეს მოსწონს', type: 'med' },
     ],
   },
   {
-    text: 'დრო იწურება, რეზოლუცია ჯერ არ არის მზად',
+    text: 'დრო იწურება და რეზოლუცია ჯერ არ არის მზად',
     options: [
-      { text: 'ყველას ერთად ვკრებ, სწრაფად შესათანხმებლად', type: 'dip' },
-      { text: 'ამოცანებს ვანაწილებ და პროცესს ბოლომდე ვმართავ', type: 'str' },
+      { text: 'ყველას ერთად ვიხმობ, რომ სწრაფად დავწეროთ', type: 'dip' },
+      { text: 'საქმეს ნაწილ-ნაწილ ვყოფ და დელეგატებს ვუნაწილებ', type: 'str' },
       { text: 'უკანასკნელ წუთს საუკეთესო იდეები მომდის', type: 'imp' },
-      { text: 'ვამშვიდებ დაძაბულობას და ვინარჩუნებ თანამშრომლობას', type: 'med' },
+      { text: 'ვამშვიდებ დაძაბულობას და ვინარჩუნებ სიმშვიდეს', type: 'med' },
     ],
   },
   {
-    text: 'კონფერენციის ბოლოს, რით დაგამახსოვრდებიან?',
+    text: 'კონფერენციის ბოლოს რითი დაგიმახსოვრებენ?',
     options: [
-      { text: 'ყველასთან მეგობრული ურთიერთობებით', type: 'dip' },
-      { text: 'ჭკვიანურად აწყობილი კოალიციითა და შედეგებით', type: 'str' },
+      { text: 'ყველასთან მეგობრული ურთიერთობით', type: 'dip' },
+      { text: 'გონივრულად გათვლილი აზრებითა და იდეებით', type: 'str' },
       { text: 'გამორჩეული, დამაჯერებელი გამოსვლებით', type: 'ora' },
       { text: 'სიღრმისეული ცოდნით ნებისმიერ საკითხზე', type: 'res' },
     ],
   },
   {
-    text: 'დელეგატი ბოლო წუთს დახმარებას გთხოვს',
+    text: 'შესვენების დროს უცნობ დელეგატთან საუბრის შესაძლებლობა მოგეცა. რას აკეთებ?',
     options: [
-      { text: 'ვეხმარები გამოსვლის მომზადებაში', type: 'ora' },
-      { text: 'ვუზიარებ ჩემს კვლევასა და ფაქტებს', type: 'res' },
-      { text: 'ერთად ვქმნით სულ ახალ მიდგომას', type: 'imp' },
-      { text: 'ვეხმარები, სხვა ჯგუფთანაც საერთო ენა რომ გამონახოს', type: 'med' },
+      { text: 'ვიწყებ საუბარს და ვცდილობ ახალი კავშირი დავამყარო', type: 'dip' },
+      { text: 'ვარკვევ, როგორ შეიძლება ჩვენი ინტერესები დაემთხვეს', type: 'str' },
+      { text: 'ვსაუბრობ იმაზე თუ რა ვჭამოთ', type: 'imp' },
+      { text: 'ვცდილობ საუბარი ორივესთვის კომფორტული და მეგობრული იყოს', type: 'med' },
     ],
   },
 ];
 
-// TODO: swap in your actual $font-display / $font-eng family names for a true brand match —
-// canvas can't read SCSS variables, so these are plain CSS font strings.
-const CANVAS_FONT_HEADING = "700 96px Georgia, 'PT Serif', serif";
-const CANVAS_FONT_BODY = "400 34px 'Helvetica Neue', Arial, sans-serif";
+const CANVAS_FONT_HEADING = "700 96px'DM Themestia', sans-serif";
+const CANVAS_FONT_BODY = "400 34px Extrasquare Mtavruli', sans-serif;";
+
+const REVEAL_INTERVALS = [
+  70, 70, 75, 80, 85, 90, 100, 110, 125, 140, 160, 185, 215, 250, 290, 340, 400, 470, 550,
+];
+const REVEAL_PARTICLE_COUNT = 30;
+const REVEAL_LOCK_HOLD_MS = 2500; // how long the locked result glows before the full ResultScreen takes over
+const TRANSITION_MS = 320; // how long the question-advance / lock-out window lasts
 
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
@@ -285,13 +292,31 @@ const questionVariants = {
   }),
 };
 
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduced(mq.matches);
+    const handler = (e) => setReduced(e.matches);
+    mq.addEventListener?.('change', handler);
+    return () => mq.removeEventListener?.('change', handler);
+  }, []);
+  return reduced;
+}
+
 export default function DelegateTypePage() {
-  const [phase, setPhase] = useState('intro'); // intro | quiz | result
+  const [phase, setPhase] = useState('intro'); // intro | quiz | reveal | result
   const [qIndex, setQIndex] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [direction, setDirection] = useState(1);
   const [result, setResult] = useState(null);
   const [shareOpen, setShareOpen] = useState(false);
+  // Guards against double-advancing when a question or the back button is
+  // clicked rapidly: without this, two clicks fired within the 320ms
+  // transition window can each schedule their own setQIndex(i => i + 1),
+  // which lets qIndex skip past the last valid index and makes
+  // QUESTIONS[qIndex] undefined — that's what crashed QuestionCard before.
+  const [isAdvancing, setIsAdvancing] = useState(false);
 
   const canvasRef = useRef(null);
   const logoImgRef = useRef(null);
@@ -339,24 +364,32 @@ export default function DelegateTypePage() {
       }
     });
     setResult(best);
-    setPhase('result');
+    setPhase('reveal');
   };
 
   const selectOption = (type) => {
+    if (isAdvancing) return; // ignore rapid re-clicks mid-transition
+    setIsAdvancing(true);
+
     const next = [...answers, type];
     setAnswers(next);
+
     if (qIndex + 1 < QUESTIONS.length) {
       setTimeout(() => {
         setDirection(1);
         setQIndex((i) => i + 1);
-      }, 320);
+        setIsAdvancing(false);
+      }, TRANSITION_MS);
     } else {
-      setTimeout(() => computeResult(next), 320);
+      setTimeout(() => computeResult(next), TRANSITION_MS);
+      // isAdvancing intentionally stays true here — the quiz phase is about
+      // to unmount in favor of the reveal screen, so there's nothing left
+      // to re-enable it for.
     }
   };
 
   const goBack = () => {
-    if (qIndex === 0) return;
+    if (qIndex === 0 || isAdvancing) return;
     setDirection(-1);
     setAnswers((prev) => prev.slice(0, -1));
     setQIndex((i) => i - 1);
@@ -367,6 +400,7 @@ export default function DelegateTypePage() {
     setQIndex(0);
     setDirection(-1);
     setResult(null);
+    setIsAdvancing(false);
     setPhase('intro');
   };
 
@@ -413,6 +447,7 @@ export default function DelegateTypePage() {
   };
 
   const progress = phase === 'quiz' ? (qIndex / QUESTIONS.length) * 100 : 0;
+  const currentQuestion = QUESTIONS[qIndex];
 
   return (
     <div className="delegateType">
@@ -425,7 +460,12 @@ export default function DelegateTypePage() {
             />
           )}
 
-          {phase === 'quiz' && (
+          {/* Defensive guard: only render the quiz once currentQuestion is a
+              real object. If qIndex were ever out of range (shouldn't happen
+              now that selectOption/goBack are locked during transitions,
+              but this keeps a stray edge case from crashing the page) we
+              simply render nothing for a frame instead of throwing. */}
+          {phase === 'quiz' && currentQuestion && (
             <motion.div
               key="quiz"
               className="delegateQuiz"
@@ -440,6 +480,7 @@ export default function DelegateTypePage() {
                     type="button"
                     className="delegateQuiz__back"
                     onClick={goBack}
+                    disabled={isAdvancing}
                     aria-label="წინა კითხვა"
                   >
                     <i className="bi bi-arrow-left" />
@@ -467,11 +508,20 @@ export default function DelegateTypePage() {
                 <QuestionCard
                   key={qIndex}
                   direction={direction}
-                  question={QUESTIONS[qIndex]}
+                  question={currentQuestion}
                   onSelect={selectOption}
+                  disabled={isAdvancing}
                 />
               </AnimatePresence>
             </motion.div>
+          )}
+
+          {phase === 'reveal' && result && (
+            <RevealScreen
+              key="reveal"
+              result={result}
+              onComplete={() => setPhase('result')}
+            />
           )}
 
           {phase === 'result' && result && (
@@ -530,7 +580,7 @@ function IntroScreen({ onStart }) {
   );
 }
 
-function QuestionCard({ question, onSelect, direction }) {
+function QuestionCard({ question, onSelect, direction, disabled }) {
   return (
     <motion.div
       className="delegateQuestion"
@@ -547,11 +597,176 @@ function QuestionCard({ question, onSelect, direction }) {
             type="button"
             key={opt.type}
             className="delegateOption"
+            disabled={disabled}
             onClick={() => onSelect(opt.type)}
           >
             {opt.text}
           </button>
         ))}
+      </div>
+    </motion.div>
+  );
+}
+
+// ---- The reveal sequence: a "sorting hat" style suspense beat between the
+// last question and the result screen. The icon cycles through every
+// delegate type like a decelerating slot reel, then locks onto the real
+// result with a burst of gold particles before handing off to ResultScreen.
+function RevealScreen({ result, onComplete }) {
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const [displayType, setDisplayType] = useState(result);
+  const [stage, setStage] = useState('spinning'); // spinning | locked
+
+  const particles = useMemo(
+    () =>
+      Array.from({ length: REVEAL_PARTICLE_COUNT }, (_, i) => {
+        const angle = (i / REVEAL_PARTICLE_COUNT) * Math.PI * 2 + Math.random() * 0.4;
+        const distance = 130 + Math.random() * 150;
+        return {
+          id: i,
+          x: Math.cos(angle) * distance,
+          y: Math.sin(angle) * distance,
+          delay: Math.random() * 0.18,
+          size: 3 + Math.random() * 5,
+        };
+      }),
+    [result.id]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    const timers = [];
+
+    if (prefersReducedMotion) {
+      setDisplayType(result);
+      setStage('locked');
+      timers.push(setTimeout(() => !cancelled && onComplete(), 700));
+      return () => {
+        cancelled = true;
+        timers.forEach(clearTimeout);
+      };
+    }
+
+    const pool = TYPES.filter((t) => t.id !== result.id);
+    let step = 0;
+
+    const runStep = () => {
+      if (cancelled) return;
+      if (step < REVEAL_INTERVALS.length - 1) {
+        const candidate = pool.length ? pool[Math.floor(Math.random() * pool.length)] : result;
+        setDisplayType(candidate);
+        step += 1;
+        timers.push(setTimeout(runStep, REVEAL_INTERVALS[step]));
+      } else {
+        setDisplayType(result);
+        setStage('locked');
+        timers.push(setTimeout(() => !cancelled && onComplete(), REVEAL_LOCK_HOLD_MS));
+      }
+    };
+
+    timers.push(setTimeout(runStep, REVEAL_INTERVALS[0]));
+
+    return () => {
+      cancelled = true;
+      timers.forEach(clearTimeout);
+    };
+  }, [result, onComplete, prefersReducedMotion]);
+
+  const locked = stage === 'locked';
+
+  return (
+    <motion.div
+      className={`delegateReveal${locked ? ' delegateReveal--locked' : ''}`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: { duration: 0.35, ease: EASE } }}
+      transition={{ duration: 0.4, ease: EASE }}
+    >
+      <div className="delegateReveal__stage">
+        {!prefersReducedMotion && (
+          <div
+            className="delegateReveal__rings"
+            aria-hidden="true"
+          >
+            <span className="delegateReveal__ring delegateReveal__ring--a" />
+            <span className="delegateReveal__ring delegateReveal__ring--b" />
+            <span className="delegateReveal__ring delegateReveal__ring--c" />
+          </div>
+        )}
+
+        {locked && !prefersReducedMotion && (
+          <>
+            <motion.span
+              className="delegateReveal__flash"
+              initial={{ opacity: 0.9, scale: 0.6 }}
+              animate={{ opacity: 0, scale: 2.2 }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+              aria-hidden="true"
+            />
+            {particles.map((p) => (
+              <motion.span
+                key={p.id}
+                className="delegateReveal__particle"
+                style={{ width: p.size, height: p.size }}
+                initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
+                animate={{ x: p.x, y: p.y, opacity: 0, scale: 1 }}
+                transition={{ duration: 1.15, delay: p.delay, ease: 'easeOut' }}
+                aria-hidden="true"
+              />
+            ))}
+          </>
+        )}
+
+        <div className="delegateReveal__iconWrap">
+          <AnimatePresence mode="popLayout">
+            <motion.span
+              key={displayType.id}
+              className="delegateReveal__icon"
+              initial={{ opacity: 0, scale: 0.7, rotate: -8 }}
+              animate={{ opacity: 1, scale: locked ? 1.12 : 1, rotate: 0 }}
+              exit={{ opacity: 0, scale: 0.7 }}
+              transition={{ duration: locked ? 0.5 : 0.12, ease: EASE }}
+            >
+              <i className={`bi ${displayType.icon}`} />
+            </motion.span>
+          </AnimatePresence>
+        </div>
+
+        <div className="delegateReveal__caption">
+          <AnimatePresence mode="wait">
+            {!locked ? (
+              <motion.p
+                key="determining"
+                className="delegateReveal__determining"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.25 }}
+              >
+                დგინდება შენი დელეგატის ტიპი
+                <span
+                  className="delegateReveal__dots"
+                  aria-hidden="true"
+                >
+                  <span />
+                  <span />
+                  <span />
+                </span>
+              </motion.p>
+            ) : (
+              <motion.div
+                key="locked"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.15, ease: EASE }}
+              >
+                <p className="delegateReveal__label">შენ ხარ</p>
+                <h2 className="delegateReveal__name">{result.name}</h2>
+                <p className="delegateReveal__tagline">{result.tagline}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </motion.div>
   );

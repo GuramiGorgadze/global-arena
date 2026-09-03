@@ -182,6 +182,214 @@
   }
 }
 
+// ---------------------------------------------------------------------------
+// Reveal sequence — the suspenseful beat between the last question and the
+// result screen. A slot-reel icon decelerates through every delegate type,
+// pulsing rings breathe behind it, and a burst of gold particles fires the
+// instant it locks onto the real result.
+// ---------------------------------------------------------------------------
+.delegateReveal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  width: 100%;
+
+  &__stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 34px;
+    width: 100%;
+  }
+
+  &__rings {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+  }
+
+  &__ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    border: 1px solid rgba($gold-bright, 0.35);
+    transform: translate(-50%, -50%) scale(0.8);
+    animation: delegateRingPulse 2.4s $ease-out infinite;
+  }
+
+  &__ring--a {
+    width: 160px;
+    height: 160px;
+    animation-delay: 0s;
+  }
+
+  &__ring--b {
+    width: 160px;
+    height: 160px;
+    animation-delay: 0.6s;
+  }
+
+  &__ring--c {
+    width: 160px;
+    height: 160px;
+    animation-delay: 1.2s;
+  }
+
+  &--locked &__ring {
+    animation-play-state: paused;
+    opacity: 0;
+    transition: opacity 0.4s $ease-out;
+  }
+
+  &__flash {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba($gold-bright, 0.85) 0%, rgba($gold-bright, 0) 72%);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  &__particle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    background: $gold-bright;
+    box-shadow: 0 0 10px 2px rgba($gold-bright, 0.7);
+    pointer-events: none;
+  }
+
+  &__iconWrap {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba($gold-bright, 0.08);
+    border: 1px solid rgba($gold-bright, 0.35);
+    box-shadow: 0 0 0 rgba($gold-bright, 0);
+    transition: box-shadow 0.5s $ease-out, border-color 0.5s $ease-out;
+  }
+
+  &--locked &__iconWrap {
+    border-color: rgba($gold-bright, 0.7);
+    box-shadow: 0 0 60px 6px rgba($gold-bright, 0.35);
+  }
+
+  &__icon {
+    display: flex;
+    color: $gold-bright;
+    font-size: 46px;
+  }
+
+  &__caption {
+    min-height: 96px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    text-align: center;
+  }
+
+  &__determining {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: $white-dim;
+  }
+
+  &__dots {
+    display: inline-flex;
+    gap: 3px;
+    margin-left: 2px;
+
+    span {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: $gold-bright;
+      animation: delegateDotBlink 1.2s ease-in-out infinite;
+
+      &:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+
+      &:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+    }
+  }
+
+  &__label {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: $white-dim;
+    margin-bottom: 2px;
+  }
+
+  &__name {
+    font-family: $font-display;
+    font-size: clamp(28px, 4.4vw, 40px);
+    font-weight: 700;
+    @include gold-text;
+  }
+
+  &__tagline {
+    font-size: 14px;
+    font-style: italic;
+    color: $gold-muted;
+    margin-top: 4px;
+  }
+}
+
+@keyframes delegateRingPulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.8);
+    opacity: 0;
+  }
+}
+
+@keyframes delegateDotBlink {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delegateReveal__ring,
+  .delegateReveal__particle,
+  .delegateReveal__flash {
+    animation: none !important;
+    display: none;
+  }
+}
+
 .delegateResult {
   display: flex;
   flex-direction: column;
