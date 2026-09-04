@@ -611,7 +611,6 @@ export default function HomePage() {
   return (
     <MotionConfig reducedMotion="user">
       <div className="home">
-        <ScrollProgress />
         <CursorAura />
         <GrainOverlay />
         <Hero />
