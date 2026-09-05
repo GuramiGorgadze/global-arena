@@ -27,11 +27,11 @@ export const getMarathonQuestions = async () => {
   }
 };
 
-export const submitMarathonResult = async ({ email, answers }) => {
+export const submitMarathonResult = async ({ email, answers, integrity }) => {
   try {
     const response = await axios.post(
       `${BASE_URL}/submit`,
-      { email, answers },
+      { email, answers, integrity },
       {
         headers: { "Content-Type": "application/json" },
         withCredentials: true,

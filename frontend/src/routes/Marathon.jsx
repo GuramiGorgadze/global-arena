@@ -3,12 +3,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { getMarathonStatus, getMarathonQuestions, submitMarathonResult } from '../api/marathon';
+import { useIntegritySignals } from '../hooks/useIntegritySignals';
 
 const EASE = [0.22, 1, 0.36, 1];
 const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
 const DRAFT_KEY = 'marathon:draft:v1';
 const FALLBACK_DURATION_MS = 5 * 60 * 1000;
 const OPTION_LETTERS = ['ა', 'ბ', 'გ', 'დ'];
+
+// Above this many tab-switches / focus-losses during the quiz, warn the
+// person in-app. This does NOT block submission — it's purely a nudge;
+// the actual review happens server-side against the logged events.
+const TAB_SWITCH_WARN_THRESHOLD = 1;
 
 const staggerContainer = {
   hidden: {},
@@ -127,6 +133,13 @@ export default function Marathon() {
   const autoLoadTriggeredRef = useRef(false);
   const autoSubmitTriggeredRef = useRef(false);
   const submittingRef = useRef(false);
+
+  // Anti-cheating signals — only actively listening while phase === 'quiz'.
+  // See hooks/useIntegritySignals.js for what this does and doesn't do.
+  const { tabSwitchCount, awayMs, events: integrityEvents } = useIntegritySignals(
+    phase === 'quiz',
+  );
+  const lastWarnedCountRef = useRef(0);
 
   // Prefill email from a previous session, if any.
   useEffect(() => {
@@ -253,12 +266,65 @@ export default function Marathon() {
     }
   }, [phase, msUntilStart, identifiedEmail, loadQuestions]);
 
+  // Nudge the person once they've switched away enough times. Purely
+  // informational — the count is submitted either way for server review.
+  useEffect(() => {
+    if (phase !== 'quiz') return;
+    if (tabSwitchCount > TAB_SWITCH_WARN_THRESHOLD && tabSwitchCount > lastWarnedCountRef.current) {
+      lastWarnedCountRef.current = tabSwitchCount;
+      toast('დაფიქსირდა ტაბის/ფანჯრის გადართვა. ეს აღირიცხება შედეგებთან ერთად.', {
+        icon: '⚠️',
+      });
+    }
+  }, [phase, tabSwitchCount]);
+
+  // Block copy, right-click, and the common devtools/view-source shortcuts
+  // while the quiz is on screen. This raises friction for casual copying;
+  // it is not — and can't be — a hard guarantee, since dev tools, browser
+  // reader modes, or a second device all sidestep it.
+  useEffect(() => {
+    if (phase !== 'quiz') return;
+
+    const blockCopy = (e) => e.preventDefault();
+    const blockContextMenu = (e) => e.preventDefault();
+    const blockDevtoolsKeys = (e) => {
+      const key = e.key?.toUpperCase();
+      const isDevtoolsCombo =
+        key === 'F12' ||
+        (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(key)) ||
+        (e.metaKey && e.altKey && ['I', 'J', 'C'].includes(key)) || // Safari/macOS
+        (e.ctrlKey && key === 'U') || // view-source
+        (e.metaKey && key === 'U');
+      if (isDevtoolsCombo) e.preventDefault();
+    };
+
+    document.addEventListener('copy', blockCopy);
+    document.addEventListener('cut', blockCopy);
+    document.addEventListener('contextmenu', blockContextMenu);
+    document.addEventListener('keydown', blockDevtoolsKeys);
+
+    return () => {
+      document.removeEventListener('copy', blockCopy);
+      document.removeEventListener('cut', blockCopy);
+      document.removeEventListener('contextmenu', blockContextMenu);
+      document.removeEventListener('keydown', blockDevtoolsKeys);
+    };
+  }, [phase]);
+
   const handleSubmit = useCallback(async () => {
     if (submittingRef.current) return;
     submittingRef.current = true;
     setSubmitting(true);
     try {
-      const data = await submitMarathonResult({ email: identifiedEmail, answers });
+      const data = await submitMarathonResult({
+        email: identifiedEmail,
+        answers,
+        integrity: {
+          tabSwitchCount,
+          awayMs,
+          events: integrityEvents,
+        },
+      });
       clearDraft();
       setResult(data);
       setPhase('result');
@@ -269,7 +335,7 @@ export default function Marathon() {
     } finally {
       setSubmitting(false);
     }
-  }, [identifiedEmail, answers]);
+  }, [identifiedEmail, answers, tabSwitchCount, awayMs, integrityEvents]);
 
   // Auto-submit the instant the 5-minute window runs out.
   useEffect(() => {

@@ -2,6 +2,24 @@ import mongoose from "mongoose";
 
 const { Schema } = mongoose;
 
+const integrityEventSchema = new Schema(
+  {
+    type: { type: String, trim: true },
+    at: { type: Date },
+    durationMs: { type: Number, min: 0 },
+  },
+  { _id: false },
+);
+
+const integritySchema = new Schema(
+  {
+    tabSwitchCount: { type: Number, default: 0, min: 0 },
+    awayMs: { type: Number, default: 0, min: 0 },
+    events: { type: [integrityEventSchema], default: [] },
+  },
+  { _id: false },
+);
+
 const marathonResultSchema = new Schema(
   {
     delegate: { type: Schema.Types.ObjectId, ref: "Delegate" },
@@ -14,8 +32,6 @@ const marathonResultSchema = new Schema(
     },
     fullNameLatin: { type: String, trim: true },
 
-    // Selected option index per question, in question order.
-    // -1 means "left unanswered".
     answers: {
       type: [Number],
       required: true,
@@ -24,16 +40,17 @@ const marathonResultSchema = new Schema(
     correctCount: { type: Number, required: true, min: 0 },
     totalQuestions: { type: Number, required: true, min: 0 },
 
-    // startedAt is the official marathon start (MARATHON_START_AT),
-    // finishedAt is when the server received the submission.
     startedAt: { type: Date, required: true },
     finishedAt: { type: Date, required: true },
     elapsedMs: { type: Number, required: true, min: 0 },
+
+    integrity: { type: integritySchema, default: () => ({}) },
   },
   { timestamps: true },
 );
 
-// Fast leaderboard sort: most correct first, then fastest finish.
 marathonResultSchema.index({ correctCount: -1, elapsedMs: 1 });
+
+marathonResultSchema.index({ "integrity.tabSwitchCount": -1 });
 
 export default mongoose.model("MarathonResult", marathonResultSchema);

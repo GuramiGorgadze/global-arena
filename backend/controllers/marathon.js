@@ -11,10 +11,46 @@ const startsAtMs = MARATHON_START_AT.getTime();
 const endsAtMs = startsAtMs + MARATHON_DURATION_MS;
 const cutoffMs = endsAtMs + MARATHON_GRACE_MS;
 
-// GET /api/marathon/status?email=optional
-// Always returns timing/config so the frontend can render a countdown.
-// If an email is provided, also reports whether that delegate is
-// registered and whether they've already completed the marathon.
+// Client-reported anti-cheating signals (tab switches, blur time, event
+// log) are untrusted input — a modified client can send anything, or
+// nothing at all. They are sanitized and stored purely for a human to
+// review later; they never affect correctCount, elapsedMs, or whether a
+// submission is accepted. Caps below stop a malicious payload from
+// bloating the DB.
+const MAX_INTEGRITY_EVENTS = 200;
+const MAX_INTEGRITY_EVENT_TYPE_LEN = 40;
+
+function sanitizeIntegrity(raw) {
+  const empty = { tabSwitchCount: 0, awayMs: 0, events: [] };
+  if (!raw || typeof raw !== "object") return empty;
+
+  const tabSwitchCount = Number.isFinite(raw.tabSwitchCount)
+    ? Math.max(0, Math.min(1000, Math.trunc(raw.tabSwitchCount)))
+    : 0;
+
+  const awayMs = Number.isFinite(raw.awayMs)
+    ? Math.max(0, Math.min(MARATHON_DURATION_MS, Math.trunc(raw.awayMs)))
+    : 0;
+
+  const events = Array.isArray(raw.events)
+    ? raw.events
+        .slice(0, MAX_INTEGRITY_EVENTS)
+        .filter((e) => e && typeof e === "object" && typeof e.type === "string")
+        .map((e) => {
+          const entry = {
+            type: e.type.slice(0, MAX_INTEGRITY_EVENT_TYPE_LEN),
+          };
+          if (Number.isFinite(e.at)) entry.at = new Date(e.at);
+          if (Number.isFinite(e.durationMs)) {
+            entry.durationMs = Math.max(0, Math.trunc(e.durationMs));
+          }
+          return entry;
+        })
+    : [];
+
+  return { tabSwitchCount, awayMs, events };
+}
+
 export const getMarathonStatus = async (req, res) => {
   try {
     const base = {
@@ -56,9 +92,6 @@ export const getMarathonStatus = async (req, res) => {
   }
 };
 
-// GET /api/marathon/questions
-// Only servable once the marathon has actually started, and only
-// returns question + options — never correctIndex.
 export const getMarathonQuestions = async (req, res) => {
   try {
     const now = Date.now();
@@ -88,12 +121,9 @@ export const getMarathonQuestions = async (req, res) => {
   }
 };
 
-// POST /api/marathon/submit
-// body: { email: string, answers: number[] } — answers.length must equal
-// MARATHON_QUESTIONS.length, each entry either -1 (unanswered) or 0-3.
 export const submitMarathonResult = async (req, res) => {
   try {
-    const { email, answers } = req.body;
+    const { email, answers, integrity } = req.body;
 
     if (typeof email !== "string" || !email.trim()) {
       return res.status(400).json({ message: "ელ. ფოსტა სავალდებულოა." });
@@ -111,6 +141,7 @@ export const submitMarathonResult = async (req, res) => {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+    const sanitizedIntegrity = sanitizeIntegrity(integrity);
 
     const delegate = await Delegates.findOne({ email: normalizedEmail });
     if (!delegate) {
@@ -147,6 +178,7 @@ export const submitMarathonResult = async (req, res) => {
       startedAt: MARATHON_START_AT,
       finishedAt: now,
       elapsedMs,
+      integrity: sanitizedIntegrity,
     });
 
     res.status(201).json({
