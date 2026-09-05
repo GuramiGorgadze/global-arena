@@ -4,7 +4,7 @@
 // if the schedule changes.
 
 // Georgia (country) does not observe DST, so Asia/Tbilisi is a fixed UTC+4.
-export const MARATHON_START_AT = new Date("2026-09-05T21:00:00+04:00");
+export const MARATHON_START_AT = new Date("2026-09-05T21:34:00+04:00");
 
 // The marathon lasts exactly 5 minutes from MARATHON_START_AT.
 export const MARATHON_DURATION_MS = 5 * 60 * 1000;
