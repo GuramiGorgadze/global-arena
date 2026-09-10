@@ -2,7 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import UsersRouter from "./routes/users.js";
-import marathonRoutes from "./routes/marathon.js";
+import MarathonRouter from "./routes/marathon.js";
+import AdminRouter from "./routes/admin.js";
 import connectDB from "./db/connection.js";
 import helmet from "helmet";
 import { fileURLToPath } from "url";
@@ -38,7 +39,8 @@ app.use(
 app.use(express.json());
 
 app.use("/api/users", UsersRouter);
-app.use("/api/marathon", marathonRoutes);
+app.use("/api/marathon", MarathonRouter);
+app.use("/api/admin", AdminRouter);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

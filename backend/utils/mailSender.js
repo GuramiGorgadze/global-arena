@@ -143,4 +143,53 @@ const sendAdminNotificationMail = async (delegate) => {
   });
 };
 
-export { sendDelegateConfirmationMail, sendAdminNotificationMail };
+const sendPaymentInfoMail = async (to) => {
+  const transporter = createTransporter();
+
+  const body = `
+    <p style="color: #9a7a35; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 20px 0;">მონაწილეობა დადასტურებულია</p>
+    <p style="color: #0F0F0F; font-size: 16px; line-height: 1.7; margin: 0 0 12px 0;">
+      გილოცავთ!
+    </p>
+    <p style="color: #6a5f52; font-size: 14px; line-height: 1.7; margin: 0 0 22px 0;">
+      მოხარულები ვართ გაცნობოთ, რომ თქვენ წარმატებით გაიარეთ Global Arena MUN-ის შერჩევის ეტაპი და ოფიციალურად გახდით კონფერენციის მონაწილე.
+    </p>
+    <p style="color: #6a5f52; font-size: 14px; line-height: 1.7; margin: 0 0 26px 0;">
+      მონაწილეობის დასადასტურებლად გთხოვთ გადაიხადოთ სარეგისტრაციო საფასური ქვემოთ მითითებულ ანგარიშებზე. გადახდის შემდეგ აუცილებელია ქვითრის ან ტრანზაქციის დამადასტურებელი სქრინშოტის გამოგზავნა.
+    </p>
+
+    <p style="color: #9a7a35; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 10px 0;">საბანკო ანგარიში</p>
+    <table cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
+      ${infoRow("საქართველოს ბანკი", "მიმღები: თემურ კაძელაშვილი")}
+      ${infoRow("ანგარიშის ნომერი", "GE27BG0000000613293009")}
+    </table>
+
+    <p style="color: #6a5f52; font-size: 14px; line-height: 1.7; margin: 0 0 22px 0;">
+      გადახდის დანიშნულებაში გთხოვთ მიუთითოთ: <strong style="color:#0F0F0F;">სახელი, გვარი და G-ARENA MUN'1</strong>
+    </p>
+
+    <div style="border-top: 1px solid #e8e0d0; margin: 28px 0 18px 0;"></div>
+    <p style="color: #6a5f52; font-size: 13px; line-height: 1.7; margin: 0 0 18px 0; text-align: center;">
+      გთხოვთ, გადახდა განახორციელოთ 14 სექტემბრამდე, რათა საბოლოოდ დადასტურდეს თქვენი მონაწილეობა კონფერენციაში.
+    </p>
+    <p style="color: #0F0F0F; font-size: 14px; line-height: 1.7; margin: 0 0 4px 0; text-align: center;">
+      გისურვებთ წარმატებას და მოუთმენლად ველით თქვენთან შეხვედრას!
+    </p>
+    <p style="color: #b0a090; font-size: 12px; line-height: 1.6; margin: 20px 0 0 0; text-align: center;">
+      პატივისცემით,<br />Global Arena Team
+    </p>
+  `;
+
+  await transporter.sendMail({
+    from: process.env.MAIL_SENDER_EMAIL,
+    to,
+    subject: "[GLOBAL ARENA] გადახდის ინფორმაცია",
+    html: emailShell("Payment Details", body),
+  });
+};
+
+export {
+  sendDelegateConfirmationMail,
+  sendAdminNotificationMail,
+  sendPaymentInfoMail,
+};

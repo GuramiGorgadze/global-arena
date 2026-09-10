@@ -1,0 +1,202 @@
+@use '../abstracts' as *;
+
+.paymentPage {
+  position: relative;
+  min-height: 100vh;
+  font-family: $font-body;
+  background-color: $black-deep;
+  color: $white-warm;
+  overflow: hidden;
+
+  padding: 120px 20px 100px;
+
+  &::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url('../../assets/banner.jpeg');
+    background-size: cover;
+    background-position: center 35%;
+    background-repeat: no-repeat;
+    opacity: 0.28;
+    filter: grayscale(15%) contrast(1.05);
+    z-index: 0;
+  }
+
+  &::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 0%, rgba($gold-bright, 0.08), transparent 60%),
+      linear-gradient(
+        180deg,
+        rgba($black-deep, 0.55) 0%,
+        rgba($black-deep, 0.88) 38%,
+        $black-deep 75%
+      );
+    z-index: 0;
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+.paymentEmailSender {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  margin: 40px auto;
+
+  @media (max-width: 640px) {
+    margin: 24px auto;
+  }
+
+  &__results {
+    margin-top: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: paymentResultsIn 0.4s $ease-out;
+  }
+
+  &__resultBlock {
+    border-radius: $radius-md;
+    border: 1px solid $black-border;
+    background: rgba($black-deep, 0.4);
+    padding: 16px 18px;
+
+    &--success {
+      border-color: rgba(#4ade80, 0.3);
+      background: rgba(#4ade80, 0.06);
+    }
+
+    &--failed {
+      border-color: rgba(#e5484d, 0.3);
+      background: rgba(#e5484d, 0.06);
+    }
+  }
+
+  &__resultHead {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  &__resultIcon {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+
+    .paymentEmailSender__resultBlock--success & {
+      background: rgba(#4ade80, 0.16);
+      color: #4ade80;
+    }
+    .paymentEmailSender__resultBlock--failed & {
+      background: rgba(#e5484d, 0.16);
+      color: #e5484d;
+    }
+  }
+
+  &__resultTitle {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+
+    .paymentEmailSender__resultBlock--success & {
+      color: #4ade80;
+    }
+    .paymentEmailSender__resultBlock--failed & {
+      color: #e5484d;
+    }
+  }
+
+  &__resultCount {
+    margin-left: auto;
+    font-size: 11px;
+    color: $white-dim;
+    font-variant-numeric: tabular-nums;
+
+    @media (max-width: 480px) {
+      display: none;
+    }
+  }
+
+  &__chipList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    padding: 6px 12px;
+    border-radius: $radius-pill;
+    font-size: 12.5px;
+    line-height: 1.3;
+    border: 1px solid $black-border;
+    background: rgba($black-card, 0.6);
+    color: $white-warm;
+    transition: border-color $duration-fast $ease-out;
+
+    &--success {
+      border-color: rgba(#4ade80, 0.28);
+    }
+
+    &--failed {
+      border-color: rgba(#e5484d, 0.28);
+      cursor: help;
+
+      &:hover {
+        border-color: rgba(#e5484d, 0.5);
+      }
+    }
+  }
+
+  &__chipEmail {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__chipError {
+    flex-shrink: 0;
+    font-size: 11px;
+    color: rgba(#e5484d, 0.85);
+    padding-left: 6px;
+    border-left: 1px solid rgba(#e5484d, 0.25);
+  }
+}
+
+@keyframes paymentResultsIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paymentEmailSender__results {
+    animation: none;
+  }
+}

@@ -5,10 +5,10 @@ import {
   submitMarathonResult,
 } from "../controllers/marathon.js";
 
-const router = Router();
+const MarathonRouter = Router();
 
-router.get("/status", getMarathonStatus);
-router.get("/questions", getMarathonQuestions);
-router.post("/submit", submitMarathonResult);
+MarathonRouter.get("/status", getMarathonStatus);
+MarathonRouter.get("/questions", getMarathonQuestions);
+MarathonRouter.post("/submit", submitMarathonResult);
 
-export default router;
+export default MarathonRouter;

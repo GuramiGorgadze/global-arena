@@ -11,12 +11,6 @@ const startsAtMs = MARATHON_START_AT.getTime();
 const endsAtMs = startsAtMs + MARATHON_DURATION_MS;
 const cutoffMs = endsAtMs + MARATHON_GRACE_MS;
 
-// Client-reported anti-cheating signals (tab switches, blur time, event
-// log) are untrusted input — a modified client can send anything, or
-// nothing at all. They are sanitized and stored purely for a human to
-// review later; they never affect correctCount, elapsedMs, or whether a
-// submission is accepted. Caps below stop a malicious payload from
-// bloating the DB.
 const MAX_INTEGRITY_EVENTS = 200;
 const MAX_INTEGRITY_EVENT_TYPE_LEN = 40;
 
