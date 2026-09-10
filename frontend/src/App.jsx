@@ -63,10 +63,6 @@ function App() {
               element={<DelegateType />}
             />
             <Route
-              path="/command"
-              element={<CommandPage />}
-            />
-            <Route
               path="/admin-page-twvnlr4m8dqunb9kqdi6"
               element={<Admin />}
             />
