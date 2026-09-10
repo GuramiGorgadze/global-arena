@@ -4,7 +4,7 @@ import './styles/style.scss';
 import { Toaster } from 'react-hot-toast';
 import { Routes, Route } from 'react-router-dom';
 import { Navbar, Footer, Main } from './layouts';
-import { Registration, Home, Marathon, DelegateType, CommandPage, Admin } from './routes';
+import { Registration, Home, Marathon, DelegateType, Admin } from './routes';
 import useDocumentTitle from './hooks/useDocumentTitle';
 import useScrollTop from './hooks/useScrollTop';
 
