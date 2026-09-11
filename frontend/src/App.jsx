@@ -4,7 +4,7 @@ import './styles/style.scss';
 import { Toaster } from 'react-hot-toast';
 import { Routes, Route } from 'react-router-dom';
 import { Navbar, Footer, Main } from './layouts';
-import { Registration, Home, Marathon, DelegateType, Admin, NotFoundPage } from './routes';
+import { Registration, Home, Marathon, CommitteeMatchPage, Admin, NotFoundPage } from './routes';
 import useDocumentTitle from './hooks/useDocumentTitle';
 import useScrollTop from './hooks/useScrollTop';
 
@@ -59,8 +59,8 @@ function App() {
               element={<Marathon />}
             />
             <Route
-              path="/delegate-type"
-              element={<DelegateType />}
+              path="/committee-match"
+              element={<CommitteeMatchPage />}
             />
             <Route
               path="/admin-page-twvnlr4m8dqunb9kqdi6"
