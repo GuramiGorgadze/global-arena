@@ -188,8 +188,38 @@ const sendPaymentInfoMail = async (to) => {
   });
 };
 
+const sendPaymentConfirmedMail = async (to) => {
+  const transporter = createTransporter();
+
+  const body = `
+    <p style="color: #9a7a35; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 20px 0;">გადახდა დადასტურებულია</p>
+    <p style="color: #0F0F0F; font-size: 16px; line-height: 1.7; margin: 0 0 12px 0;">
+      გმადლობთ!
+    </p>
+    <p style="color: #6a5f52; font-size: 14px; line-height: 1.7; margin: 0 0 26px 0;">
+      თქვენი გადახდა მიღებულია და თქვენი მონაწილეობა Global Arena MUN-ში საბოლოოდ დადასტურებულია. მალე მიიღებთ დამატებით ინფორმაციას კონფერენციასთან დაკავშირებით.
+    </p>
+
+    <div style="border-top: 1px solid #e8e0d0; margin: 28px 0 18px 0;"></div>
+    <p style="color: #0F0F0F; font-size: 14px; line-height: 1.7; margin: 0 0 4px 0; text-align: center;">
+      გისურვებთ წარმატებას და მოუთმენლად ველით თქვენთან შეხვედრას!
+    </p>
+    <p style="color: #b0a090; font-size: 12px; line-height: 1.6; margin: 20px 0 0 0; text-align: center;">
+      პატივისცემით,<br />Global Arena Team
+    </p>
+  `;
+
+  await transporter.sendMail({
+    from: process.env.MAIL_SENDER_EMAIL,
+    to,
+    subject: "[GLOBAL ARENA] მონაწილეობა დადასტურებულია",
+    html: emailShell("Participation Confirmed", body),
+  });
+};
+
 export {
   sendDelegateConfirmationMail,
   sendAdminNotificationMail,
   sendPaymentInfoMail,
+  sendPaymentConfirmedMail,
 };

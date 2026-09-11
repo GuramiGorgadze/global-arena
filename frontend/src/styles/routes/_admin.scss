@@ -54,6 +54,169 @@
     margin: 24px auto;
   }
 
+  input[type='checkbox'] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    border: 1.5px solid $black-border;
+    background: rgba($black-deep, 0.5);
+    cursor: pointer;
+    transition:
+      background-color $duration-fast $ease-out,
+      border-color $duration-fast $ease-out,
+      box-shadow $duration-fast $ease-out;
+
+    &:hover {
+      border-color: rgba($gold-bright, 0.55);
+    }
+
+    &:focus-visible {
+      outline: none;
+      border-color: rgba($gold-bright, 0.7);
+      box-shadow: 0 0 0 3px rgba($gold-bright, 0.25);
+    }
+
+    &:checked {
+      background: $gold-bright;
+      border-color: $gold-bright;
+
+      &::after {
+        content: '';
+        width: 5px;
+        height: 9px;
+        border: solid $black-deep;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg) translate(-1px, -1px);
+      }
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  .submitBtn {
+    display: block;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  &__counters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    margin: -4px 0 20px 0;
+    font-size: 12.5px;
+    color: $white-dim;
+  }
+
+  &__counter {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+  }
+
+  &__counterValue {
+    color: $white-warm;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__checklistHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  &__selectAll {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 12.5px;
+    color: $white-dim;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  &__checklist {
+    max-height: 260px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px;
+    margin-bottom: 20px;
+    border: 1px solid $black-border;
+    border-radius: $radius-md;
+    background: rgba($black-deep, 0.4);
+
+    scrollbar-width: thin;
+    scrollbar-color: rgba($gold-bright, 0.35) transparent;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: rgba($gold-bright, 0.35);
+      border-radius: $radius-pill;
+
+      &:hover {
+        background-color: rgba($gold-bright, 0.55);
+      }
+    }
+  }
+
+  &__checkRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: $radius-md;
+    transition: background-color $duration-fast $ease-out;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba($black-card, 0.6);
+    }
+  }
+
+  &__checkRowEmail {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    color: $white-warm;
+  }
+
+  &__checkRowDate {
+    flex-shrink: 0;
+    font-size: 11px;
+    color: $white-dim;
+  }
+
+  &__emptyNote {
+    font-size: 13px;
+    color: $white-dim;
+    padding: 14px 4px 20px 4px;
+    text-align: center;
+  }
+
   &__results {
     margin-top: 28px;
     display: flex;
