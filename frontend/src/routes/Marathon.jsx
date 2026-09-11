@@ -11,9 +11,6 @@ const DRAFT_KEY = 'marathon:draft:v1';
 const FALLBACK_DURATION_MS = 5 * 60 * 1000;
 const OPTION_LETTERS = ['ა', 'ბ', 'გ', 'დ'];
 
-// Above this many tab-switches / focus-losses during the quiz, warn the
-// person in-app. This does NOT block submission — it's purely a nudge;
-// the actual review happens server-side against the logged events.
 const TAB_SWITCH_WARN_THRESHOLD = 1;
 
 const staggerContainer = {
@@ -69,9 +66,6 @@ function formatStartLabel(startsAtMs) {
   }
 }
 
-// Converts a /status or /questions response into local timing state,
-// including a client/server clock offset so the countdown and the
-// in-quiz timer stay accurate even if the visitor's device clock is off.
 function parseConfig({ startsAt, durationMs, questionCount, serverNow }) {
   const startsAtMs = new Date(startsAt).getTime();
   const serverNowMs = new Date(serverNow).getTime();
@@ -98,17 +92,13 @@ function loadDraft() {
 function saveDraft(data) {
   try {
     localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
-  } catch {
-    // best-effort only
-  }
+  } catch {}
 }
 
 function clearDraft() {
   try {
     localStorage.removeItem(DRAFT_KEY);
-  } catch {
-    // best-effort only
-  }
+  } catch {}
 }
 
 export default function Marathon() {
@@ -134,27 +124,19 @@ export default function Marathon() {
   const autoSubmitTriggeredRef = useRef(false);
   const submittingRef = useRef(false);
 
-  // Anti-cheating signals — only actively listening while phase === 'quiz'.
-  // See hooks/useIntegritySignals.js for what this does and doesn't do.
-  const { tabSwitchCount, awayMs, events: integrityEvents } = useIntegritySignals(
-    phase === 'quiz',
-  );
+  const { tabSwitchCount, awayMs, events: integrityEvents } = useIntegritySignals(phase === 'quiz');
   const lastWarnedCountRef = useRef(0);
 
-  // Prefill email from a previous session, if any.
   useEffect(() => {
     const draft = loadDraft();
     if (draft?.email) setEmail(draft.email);
   }, []);
 
-  // Tick the clock for the countdown / in-quiz timer.
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 250);
     return () => clearInterval(id);
   }, []);
 
-  // Initial load: fetch timing config so we can render a countdown teaser
-  // even before the delegate identifies themselves.
   useEffect(() => {
     (async () => {
       try {
@@ -253,7 +235,6 @@ export default function Marathon() {
   const msUntilStart = startsAtMs !== null ? startsAtMs - adjustedNow : null;
   const msRemaining = startsAtMs !== null ? startsAtMs + durationMs - adjustedNow : null;
 
-  // Auto-transition from countdown -> quiz the instant the clock hits zero.
   useEffect(() => {
     if (
       phase === 'countdown' &&
@@ -266,8 +247,6 @@ export default function Marathon() {
     }
   }, [phase, msUntilStart, identifiedEmail, loadQuestions]);
 
-  // Nudge the person once they've switched away enough times. Purely
-  // informational — the count is submitted either way for server review.
   useEffect(() => {
     if (phase !== 'quiz') return;
     if (tabSwitchCount > TAB_SWITCH_WARN_THRESHOLD && tabSwitchCount > lastWarnedCountRef.current) {
@@ -278,10 +257,6 @@ export default function Marathon() {
     }
   }, [phase, tabSwitchCount]);
 
-  // Block copy, right-click, and the common devtools/view-source shortcuts
-  // while the quiz is on screen. This raises friction for casual copying;
-  // it is not — and can't be — a hard guarantee, since dev tools, browser
-  // reader modes, or a second device all sidestep it.
   useEffect(() => {
     if (phase !== 'quiz') return;
 
@@ -292,8 +267,8 @@ export default function Marathon() {
       const isDevtoolsCombo =
         key === 'F12' ||
         (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(key)) ||
-        (e.metaKey && e.altKey && ['I', 'J', 'C'].includes(key)) || // Safari/macOS
-        (e.ctrlKey && key === 'U') || // view-source
+        (e.metaKey && e.altKey && ['I', 'J', 'C'].includes(key)) ||
+        (e.ctrlKey && key === 'U') ||
         (e.metaKey && key === 'U');
       if (isDevtoolsCombo) e.preventDefault();
     };
@@ -337,7 +312,6 @@ export default function Marathon() {
     }
   }, [identifiedEmail, answers, tabSwitchCount, awayMs, integrityEvents]);
 
-  // Auto-submit the instant the 5-minute window runs out.
   useEffect(() => {
     if (
       phase === 'quiz' &&
@@ -379,7 +353,10 @@ export default function Marathon() {
           <h2>
             <em>მარათონი</em>
           </h2>
-          <p>15 კითხვა, 5 წუთი - ვნახოთ, თუ რამდენად კარგად ერკვევი საერთაშორისო ურთიერთობებსა და გაეროს თემატიკაში</p>
+          <p>
+            15 კითხვა, 5 წუთი - ვნახოთ, თუ რამდენად კარგად ერკვევი საერთაშორისო ურთიერთობებსა და
+            გაეროს თემატიკაში
+          </p>
         </div>
 
         <div className="marathonCard">
@@ -646,7 +623,15 @@ function CountdownDisplay({ msUntilStart, startLabel }) {
   );
 }
 
-function QuizScreen({ questions, answers, onSelect, onSubmit, submitting, msRemaining, durationMs }) {
+function QuizScreen({
+  questions,
+  answers,
+  onSelect,
+  onSubmit,
+  submitting,
+  msRemaining,
+  durationMs,
+}) {
   const answeredCount = answers.filter((a) => a !== -1).length;
   const remainingRatio = durationMs > 0 ? Math.max(0, Math.min(1, msRemaining / durationMs)) : 0;
   const isUrgent = msRemaining <= 30000;
@@ -770,7 +755,10 @@ function ResultScreen({ result }) {
       </div>
       <h3 className="marathonStatus__title">მადლობა მონაწილეობისთვის!</h3>
       <p className="marathonStatus__message">
-        სწორი პასუხები: <strong>{result.correctCount} / {result.totalQuestions}</strong>
+        სწორი პასუხები:{' '}
+        <strong>
+          {result.correctCount} / {result.totalQuestions}
+        </strong>
         <br />
         დასრულების დრო: <strong>{formatElapsed(result.elapsedMs)}</strong>
       </p>

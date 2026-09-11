@@ -630,7 +630,7 @@ export default function HomePage() {
           <Stats />
           <CommitteeTicker />
           <MarathonPromo />
-          <About />
+          <Info />
           <Committees />
           <CtaBanner />
         </div>
@@ -821,7 +821,7 @@ function StatItem({ stat, index }) {
   );
 }
 
-function About() {
+function Info() {
   const sectionRef = useRef(null);
   const emblemRef = useRef(null);
   const { scrollYProgress } = useScroll({
@@ -854,12 +854,12 @@ function About() {
 
   return (
     <section
-      className="about"
-      id="about"
+      className="info"
+      id="info"
       ref={sectionRef}
     >
       <motion.div
-        className="about__emblem"
+        className="info__emblem"
         ref={emblemRef}
         onMouseMove={handleEmblemMove}
         onMouseLeave={handleEmblemLeave}
@@ -869,9 +869,9 @@ function About() {
         transition={{ duration: 0.8, ease: EASE_OUT }}
         style={{ perspective: 900 }}
       >
-        <div className="about__emblemGlow" />
+        <div className="info__emblemGlow" />
         <motion.div
-          className="about__emblemParallax"
+          className="info__emblemParallax"
           style={{ y: emblemY, rotateX: emblemRotateX, rotateY: emblemRotateY }}
         >
           <motion.img
@@ -884,7 +884,7 @@ function About() {
         </motion.div>
       </motion.div>
       <motion.div
-        className="about__content"
+        className="info__content"
         initial={{ opacity: 0, x: 36 }}
         whileInView={{ opacity: 1, x: 0 }}
         viewport={{ once: true, amount: 0.3 }}
@@ -893,57 +893,55 @@ function About() {
         <div className="formDivider">
           <span>ჩვენ შესახებ</span>
         </div>
-        <h2 className="about__title">რა არის გაეროს მოდელირება?</h2>
-        <p className="about__text">
+        <h2 className="info__title">რა არის გაეროს მოდელირება?</h2>
+        <p className="info__text">
           გაეროს მოდელირება (MUN) არის საგანმანათლებლო სიმულაცია, სადაც მონაწილეები სხვადასხვა
           ქვეყნის დელეგატების როლს ირგებენ, განიხილავენ საერთაშორისო საკითხებს, მონაწილეობენ
           დებატებში, აწარმოებენ მოლაპარაკებებს და ამზადებენ რეზოლუციებს გენერაულ ანსამბლეაზე
           წარსადგენად.
         </p>
         <motion.div
-          className="about__features"
+          className="info__features"
           variants={staggerContainer}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.5 }}
         >
           <motion.div
-            className="about__feature"
+            className="info__feature"
             variants={fadeUpItem}
             whileHover={{ x: 4 }}
           >
             <i className="bi bi-mic" />
             <div>
-              <p className="about__featureTitle">საჯარო გამოსვლა</p>
-              <p className="about__featureText">
+              <p className="info__featureTitle">საჯარო გამოსვლა</p>
+              <p className="info__featureText">
                 დაიცავი ქვეყნის პოზიცია ყველას წინაშე დამაჯერებლად.
               </p>
             </div>
           </motion.div>
           <motion.div
-            className="about__feature"
+            className="info__feature"
             variants={fadeUpItem}
             whileHover={{ x: 4 }}
           >
             <i className="bi bi-diagram-3" />
             <div>
-              <p className="about__featureTitle">მოლაპარაკება</p>
-              <p className="about__featureText">
+              <p className="info__featureTitle">მოლაპარაკება</p>
+              <p className="info__featureText">
                 ითანამშრომლე სხვა დელეგატებთან და იპოვე საერთო ენა.
               </p>
             </div>
           </motion.div>
           <motion.div
-            className="about__feature"
+            className="info__feature"
             variants={fadeUpItem}
             whileHover={{ x: 4 }}
           >
             <i className="bi bi-globe" />
             <div>
-              <p className="about__featureTitle">გლობალური აზროვნება</p>
-              <p className="about__featureText">
-                გაეცანი თანამედროვე მსოფლიოს აქტუალურ პრობლემებს.
-              </p>
+              <p className="info__featureTitle">გლობალური აზროვნება</p>
+              <p className="info__featureText">გაეცანი თანამედროვე მსოფლიოს აქტუალურ პრობლემებს.</p>
             </div>
           </motion.div>
         </motion.div>

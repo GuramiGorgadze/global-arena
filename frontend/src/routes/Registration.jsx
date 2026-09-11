@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
-import * as api from '../api/api';
+import { registerDelegate } from '../api/user';
 
 const COMMITTEES = [
   { id: 'unsc', name: 'UNSC' },
@@ -528,7 +528,7 @@ export default function RegistrationPage() {
     const toastId = toast.loading('რეგისტრაცია მიმდინარეობს...');
 
     try {
-      await api.registerDelegate(payload);
+      await registerDelegate(payload);
       toast.success('წარმატებით დარეგისტრირდით!', { id: toastId });
       skipNextSaveRef.current = true;
       clearDraft();

@@ -382,9 +382,6 @@ export default function DelegateTypePage() {
       }, TRANSITION_MS);
     } else {
       setTimeout(() => computeResult(next), TRANSITION_MS);
-      // isAdvancing intentionally stays true here — the quiz phase is about
-      // to unmount in favor of the reveal screen, so there's nothing left
-      // to re-enable it for.
     }
   };
 

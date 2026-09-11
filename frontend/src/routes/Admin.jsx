@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-import * as api from '../api/api';
+import { sendPaymentEmails } from '../api/admin';
 
 const parseEmails = (raw) =>
   raw
@@ -25,7 +25,7 @@ export default function PaymentEmailSender() {
     setResult(null);
     const toastId = toast.loading(`იგზავნება ${emails.length} მისამართზე...`);
     try {
-      const data = await api.sendPaymentEmails(emails);
+      const data = await sendPaymentEmails(emails);
       setResult(data);
       if (data.failed?.length) {
         toast.error(`${data.sent.length} გაიგზავნა, ${data.failed.length} ვერ გაიგზავნა`, {

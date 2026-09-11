@@ -8,7 +8,7 @@ const MAIN_SITE_URL = 'https://g-arena.org';
 const APPLICATIONS_HOST = 'applications.g-arena.org';
 
 const SECTION_LINKS = [
-  { id: 'about', label: 'ჩვენ შესახებ' },
+  { id: 'info', label: 'ინფორმაცია' },
   { id: 'committees', label: 'კომიტეტები' },
 ];
 
