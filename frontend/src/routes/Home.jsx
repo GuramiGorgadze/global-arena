@@ -607,6 +607,65 @@ function MarathonPromo() {
   );
 }
 
+// Same card treatment as MarathonPromo, promoting the committee-match quiz
+// instead. There's no live/countdown state here since the quiz isn't tied
+// to a scheduled event, so the panel shows a small icon reel of all six
+// committees in place of the countdown units.
+function CommitteeMatchPromo() {
+  return (
+    <motion.section
+      className="committeeMatchPromo"
+      initial={{ opacity: 0, y: 32 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.7, ease: EASE_OUT }}
+    >
+      <FloatingParticles
+        count={12}
+        className="particles--committeeMatch"
+      />
+      <div className="committeeMatchPromo__inner">
+        <div className="committeeMatchPromo__text">
+          <span className="committeeMatchPromo__badge">
+            <span className="committeeMatchPromo__badgeDot" /> ტესტი
+          </span>
+          <h2 className="committeeMatchPromo__title">
+            იპოვე შენი <em>კომიტეტი</em>
+          </h2>
+          <p className="committeeMatchPromo__desc">
+            10 მოკლე კითხვა - გაარკვიე, რომელი კომიტეტი შეგეფერება შენ
+            ყველაზე მეტად
+          </p>
+        </div>
+
+        <div className="committeeMatchPromo__panel">
+          <div
+            className="committeeMatchPromo__icons"
+            aria-hidden="true"
+          >
+            {COMMITTEES.map((c) => (
+              <span
+                className="committeeMatchPromo__iconChip"
+                key={c.id}
+              >
+                <i className={`bi ${c.icon}`} />
+              </span>
+            ))}
+          </div>
+
+          <BurstCTA
+            href="/committee-match"
+            className="submitBtn"
+            strength={16}
+          >
+            ტესტის დაწყება <i className="bi bi-arrow-right" />
+          </BurstCTA>
+        </div>
+      </div>
+    </motion.section>
+  );
+}
+
 export default function HomePage() {
   return (
     <MotionConfig reducedMotion="user">
@@ -630,6 +689,7 @@ export default function HomePage() {
           <Stats />
           <CommitteeTicker />
           <MarathonPromo />
+          <CommitteeMatchPromo />
           <Info />
           <Committees />
           <CtaBanner />

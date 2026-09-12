@@ -71,6 +71,10 @@
     z-index: 0;
   }
 
+  &--committeeMatch {
+    z-index: 0;
+  }
+
   &__dot {
     position: absolute;
     bottom: -6%;
@@ -704,6 +708,143 @@
   .marathonPromo__badgeDot,
   .marathonPromo__liveDot {
     animation: none;
+  }
+}
+
+.committeeMatchPromo {
+  position: relative;
+  max-width: 1100px;
+  margin: 40px auto 0;
+  padding: 48px 44px;
+  border-radius: $radius-xl;
+  overflow: hidden;
+  isolation: isolate;
+  @include ornate-panel(
+    $from-opacity: 0.75,
+    $to-opacity: 0.9,
+    $tint-opacity: 0.05,
+    $dot-opacity: 0.05,
+    $dot-size: 22px,
+    $line-opacity: 0.04,
+    $line-pitch: 8px
+  );
+  border: 1px solid rgba($gold-bright, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba($white-warm, 0.06),
+    0 20px 60px rgba($black-deep, 0.5);
+
+  &__inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+
+  &__text {
+    flex: 1 1 320px;
+    min-width: 260px;
+
+    @media (max-width: 860px) {
+      flex: 1 1 200px;
+    }
+  }
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    border-radius: $radius-pill;
+    border: 1px solid rgba($gold-bright, 0.35);
+    background: $gold-glow-sm;
+    color: $gold-bright;
+    font-family: $font-eng, $font-display;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+
+  &__badgeDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: $gold-bright;
+    animation: marathonPromoDotPulse 1.6s ease-in-out infinite;
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-size: clamp(24px, 2.6vw, 32px);
+    font-weight: 700;
+    margin-bottom: 12px;
+
+    em {
+      font-style: normal;
+      @include gold-text;
+    }
+  }
+
+  &__desc {
+    font-size: 14px;
+    line-height: 1.75;
+    color: $white-muted;
+    max-width: 340px;
+  }
+
+  &__panel {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+  }
+
+  &__icons {
+    display: grid;
+    grid-template-columns: repeat(3, 44px);
+    gap: 10px;
+    justify-content: center;
+  }
+
+  &__iconChip {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba($gold-bright, 0.08);
+    border: 1px solid rgba($gold-bright, 0.3);
+    color: $gold-bright;
+    font-size: 17px;
+  }
+
+  @media (max-width: 860px) {
+    margin: 30px 20px 0;
+    padding: 36px 26px;
+
+    &__inner {
+      flex-direction: column;
+      text-align: center;
+      gap: 28px;
+    }
+
+    &__text {
+      min-width: 0;
+    }
+
+    &__desc {
+      margin: 0 auto;
+    }
+
+    &__panel {
+      width: 100%;
+    }
   }
 }
 

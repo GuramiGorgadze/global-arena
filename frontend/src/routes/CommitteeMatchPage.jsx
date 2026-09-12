@@ -28,7 +28,7 @@ const COMMITTEES = [
   {
     id: 'press',
     abbr: 'PRESS CORPS',
-    name: 'პრეს-კორპსი',
+    name: 'პრეს-კორპუსი',
     icon: 'bi-newspaper',
   },
   {
@@ -40,7 +40,7 @@ const COMMITTEES = [
   {
     id: 'hcc',
     abbr: 'HCC',
-    name: 'ისტორიული კრიზისების კომიტეტი',
+    name: 'ისტორიული კრიზისის კომიტეტი',
     icon: 'bi-clock-history',
   },
 ];
@@ -234,6 +234,7 @@ const CANVAS_FONT_HEADING = "700 126px 'Montserrat', sans-serif";
 const CANVAS_FONT_BODY = "400 54px 'Extrasquare Mtavruli', sans-serif";
 const CANVAS_FONT_LABEL = "600 36px 'Extrasquare Mtavruli', sans-serif";
 const CANVAS_FONT_FOOTER = "500 28px 'Extrasquare Mtavruli', sans-serif";
+const CANVAS_FONT_CTA = "700 46px 'Extrasquare Mtavruli', sans-serif";
 
 const REVEAL_INTERVALS = [
   70, 70, 75, 80, 85, 90, 100, 110, 125, 140, 160, 185, 215, 250, 290, 340, 400, 470, 550,
@@ -389,9 +390,24 @@ function drawShareCard(canvas, result, logoImg, bannerImg) {
   ctx.font = CANVAS_FONT_BODY;
   wrapCenteredText(ctx, result.name, W / 2, 900, W - 220, 64);
 
-  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  drawFittedText(ctx, 'გაიგე რომელი კომიტეტი შეგეფერება', W / 2, H - 320, W - 160, CANVAS_FONT_CTA, 30);
+
+  // Underlined so it reads as a link — note this is a flat PNG, so it isn't
+  // actually clickable; Instagram doesn't parse links out of image pixels.
+  // Anyone posting it would still need to add their own Link Sticker.
+  const linkText = 'https://g-arena.org/committee-match';
+  const linkY = H - 260;
+  ctx.fillStyle = 'rgba(212,175,90,0.85)';
   ctx.font = CANVAS_FONT_FOOTER;
-  ctx.fillText('გაარკვიე შენი კომიტეტი — g-arena.org/committee-match', W / 2, H - 90);
+  ctx.fillText(linkText, W / 2, linkY);
+  const linkWidth = ctx.measureText(linkText).width;
+  ctx.strokeStyle = 'rgba(212,175,90,0.6)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(W / 2 - linkWidth / 2, linkY + 8);
+  ctx.lineTo(W / 2 + linkWidth / 2, linkY + 8);
+  ctx.stroke();
 }
 
 const questionVariants = {
