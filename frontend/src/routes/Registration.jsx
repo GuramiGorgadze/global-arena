@@ -846,7 +846,7 @@ export default function RegistrationPage() {
                       </Field>
                       <Field
                         id="facebook"
-                        label="Facebook გვერდის ბმული"
+                        label="თქვენი პირადი Facebook გვერდის ბმული"
                         required
                         error={errors.facebook?.message}
                       >

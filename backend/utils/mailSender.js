@@ -168,6 +168,12 @@ const sendPaymentInfoMail = async (to) => {
       გადახდის დანიშნულებაში გთხოვთ მიუთითოთ: <strong style="color:#0F0F0F;">სახელი, გვარი და G-ARENA MUN'1</strong>
     </p>
 
+    <div style="background-color: #fdf3ee; border: 1px solid #e8c9c0; padding: 12px 16px; border-radius: 4px; margin: 0 0 22px 0;">
+      <p style="color: #9a3a2f; font-size: 13px; line-height: 1.6; margin: 0; text-align: center;">
+        <strong>გადახდილი თანხა არ ბრუნდება.</strong>
+      </p>
+    </div>
+
     <div style="border-top: 1px solid #e8e0d0; margin: 28px 0 18px 0;"></div>
     <p style="color: #6a5f52; font-size: 13px; line-height: 1.7; margin: 0 0 18px 0; text-align: center;">
       გთხოვთ, გადახდა განახორციელოთ 14 სექტემბრამდე, რათა საბოლოოდ დადასტურდეს თქვენი მონაწილეობა კონფერენციაში.
