@@ -9,27 +9,11 @@
   display: flex;
   align-items: center;
   overflow: hidden;
+  @include page-banner-shell();
 
-  &::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url('../../assets/banner.jpeg');
-    background-size: cover;
-    background-position: center 35%;
-    opacity: 0.28;
-    filter: grayscale(15%) contrast(1.05);
-    z-index: 0;
-  }
-
+  &::before,
   &::after {
-    content: '';
     position: fixed;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 80% 50% at 50% 0%, rgba($gold-bright, 0.08), transparent 60%),
-      linear-gradient(180deg, rgba($black-deep, 0.55) 0%, rgba($black-deep, 0.88) 38%, $black-deep 75%);
-    z-index: 0;
   }
 
   &__inner {

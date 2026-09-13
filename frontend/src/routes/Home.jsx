@@ -1,21 +1,22 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  AnimatePresence,
-  motion,
   MotionConfig,
   animate,
+  motion,
   useInView,
   useMotionValue,
-  useReducedMotion,
   useScroll,
   useSpring,
   useTransform,
 } from 'framer-motion';
 import logo from '../assets/logo.png';
 import { getMarathonStatus } from '../api/marathon';
+import AmbientParticles from '../components/decor/AmbientParticles';
+import GlobalNetwork from '../components/decor/GlobalNetwork';
+import ScrambleText from '../components/decor/ScrambleText';
+import { BurstCTA } from '../components/decor/MagneticCTA';
 
 const EASE_OUT = [0.16, 1, 0.3, 1];
-const GEORGIAN_GLYPHS = 'აბგდევზთიკლმნოპჟრსტუფქღყშჩცძწჭხჯჰ';
 
 const COMMITTEES = [
   {
@@ -65,34 +66,8 @@ const COMMITTEES = [
 
 const STATS = [
   { target: 6, suffix: '', label: 'კომიტეტი' },
-  { target: 100, suffix: '%', label: 'დიპლომატია' },
   { target: 3, suffix: '', label: 'დღე' },
   { target: 193, suffix: '', label: 'ქვეყანა' },
-];
-
-const SCHEDULE = [
-  {
-    day: 'I',
-    title: 'გახსნა',
-    time: '10:00 – 19:00',
-    items: ['რეგისტრაცია და აკრედიტაცია', 'გახსნის ცერემონია', 'კომიტეტების პირველი სხდომა'],
-  },
-  {
-    day: 'II',
-    title: 'კრიზისი',
-    time: '09:00 – 20:00',
-    items: [
-      'სრულდღიანი კომიტეტის სხდომები',
-      'კრიზისის განახლებები',
-      'სამუშაო დოკუმენტების მომზადება',
-    ],
-  },
-  {
-    day: 'III',
-    title: 'დახურვა',
-    time: '09:00 – 18:00',
-    items: ['საბოლოო რეზოლუციების კენჭისყრა', 'დახურვის ცერემონია', 'დაჯილდოება'],
-  },
 ];
 
 const staggerContainer = {
@@ -123,72 +98,6 @@ function useCountUp(target, active, duration = 1.4) {
   return value;
 }
 
-function FloatingParticles({ count = 18, className = '' }) {
-  const particles = useMemo(
-    () =>
-      Array.from({ length: count }, (_, i) => ({
-        id: i,
-        left: Math.random() * 100,
-        size: 2 + Math.random() * 3,
-        duration: 7 + Math.random() * 9,
-        delay: Math.random() * 6,
-      })),
-    [count]
-  );
-
-  return (
-    <div
-      className={`particles ${className}`}
-      aria-hidden="true"
-    >
-      {particles.map((p) => (
-        <motion.span
-          key={p.id}
-          className="particles__dot"
-          style={{ left: `${p.left}%`, width: p.size, height: p.size }}
-          animate={{ y: ['0%', '-140%'], opacity: [0, 0.9, 0] }}
-          transition={{
-            duration: p.duration,
-            delay: p.delay,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-function CursorAura() {
-  const reduce = useReducedMotion();
-  const x = useMotionValue(-400);
-  const y = useMotionValue(-400);
-  const springX = useSpring(x, { stiffness: 120, damping: 26, mass: 0.6 });
-  const springY = useSpring(y, { stiffness: 120, damping: 26, mass: 0.6 });
-
-  useEffect(() => {
-    if (reduce) return undefined;
-
-    function handleMove(e) {
-      x.set(e.clientX);
-      y.set(e.clientY);
-    }
-
-    window.addEventListener('pointermove', handleMove);
-    return () => window.removeEventListener('pointermove', handleMove);
-  }, [reduce, x, y]);
-
-  if (reduce) return null;
-
-  return (
-    <motion.div
-      className="cursorAura"
-      style={{ x: springX, y: springY }}
-      aria-hidden="true"
-    />
-  );
-}
-
 function GrainOverlay() {
   return (
     <div
@@ -198,249 +107,15 @@ function GrainOverlay() {
   );
 }
 
-function ScrambleText({ text, className, duration = 900 }) {
-  const reduce = useReducedMotion();
-  const [display, setDisplay] = useState(text);
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, amount: 0.6 });
-
-  useEffect(() => {
-    if (!inView) return undefined;
-    if (reduce) {
-      setDisplay(text);
-      return undefined;
-    }
-
-    const length = text.length;
-    const totalFrames = Math.max(12, Math.round(duration / 40));
-    let frame = 0;
-
-    const interval = setInterval(() => {
-      frame += 1;
-      const revealCount = Math.floor((frame / totalFrames) * length);
-      const next = text
-        .split('')
-        .map((ch, i) => {
-          if (ch === ' ') return ' ';
-          if (i < revealCount) return ch;
-          return GEORGIAN_GLYPHS[Math.floor(Math.random() * GEORGIAN_GLYPHS.length)];
-        })
-        .join('');
-
-      setDisplay(next);
-
-      if (frame >= totalFrames) {
-        setDisplay(text);
-        clearInterval(interval);
-      }
-    }, 40);
-
-    return () => clearInterval(interval);
-  }, [inView, reduce, text, duration]);
-
-  return (
-    <span
-      className={className}
-      ref={ref}
-    >
-      {display}
-    </span>
-  );
-}
-
-function MagneticButton({ href, className, children, strength = 22 }) {
-  const ref = useRef(null);
-  const x = useSpring(0, { stiffness: 220, damping: 16, mass: 0.4 });
-  const y = useSpring(0, { stiffness: 220, damping: 16, mass: 0.4 });
-
-  function handleMouseMove(e) {
-    const rect = ref.current.getBoundingClientRect();
-    const relX = e.clientX - rect.left - rect.width / 2;
-    const relY = e.clientY - rect.top - rect.height / 2;
-    x.set((relX / rect.width) * strength);
-    y.set((relY / rect.height) * strength);
-  }
-
-  function handleMouseLeave() {
-    x.set(0);
-    y.set(0);
-  }
-
-  return (
-    <motion.a
-      ref={ref}
-      href={href}
-      className={className}
-      style={{ x, y }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      whileTap={{ scale: 0.96 }}
-    >
-      {children}
-    </motion.a>
-  );
-}
-
-function BurstCTA({ href, className, children, strength }) {
-  const reduce = useReducedMotion();
-  const [bursts, setBursts] = useState([]);
-
-  function trigger() {
-    if (reduce) return;
-    const id = Date.now();
-    const particles = Array.from({ length: 10 }, (_, i) => ({
-      id: `${id}-${i}`,
-      angle: (i / 10) * Math.PI * 2,
-    }));
-    setBursts((prev) => [...prev, { id, particles }]);
-    setTimeout(() => {
-      setBursts((prev) => prev.filter((b) => b.id !== id));
-    }, 650);
-  }
-
-  return (
-    <span
-      className="burstCTA"
-      onMouseEnter={trigger}
-    >
-      <MagneticButton
-        href={href}
-        className={className}
-        strength={strength}
-      >
-        {children}
-      </MagneticButton>
-      <AnimatePresence>
-        {bursts.flatMap((b) =>
-          b.particles.map((p) => (
-            <motion.span
-              key={p.id}
-              className="burstCTA__particle"
-              initial={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-              animate={{
-                opacity: 0,
-                x: Math.cos(p.angle) * 48,
-                y: Math.sin(p.angle) * 48,
-                scale: 0,
-              }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.6, ease: EASE_OUT }}
-            />
-          ))
-        )}
-      </AnimatePresence>
-    </span>
-  );
-}
-
-function DirectionalHoverButton({ href, className, children }) {
-  const [origin, setOrigin] = useState('left');
-
-  function handleEnter(e) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const relX = e.clientX - rect.left;
-    setOrigin(relX < rect.width / 2 ? 'left' : 'right');
-  }
-
-  return (
-    <motion.a
-      href={href}
-      className={`${className} dirBtn dirBtn--${origin}`}
-      onMouseEnter={handleEnter}
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.97 }}
-    >
-      <span
-        className="dirBtn__fill"
-        aria-hidden="true"
-      />
-      <span className="dirBtn__label">{children}</span>
-    </motion.a>
-  );
-}
-
-function TiltCard({ children, className, index = 0 }) {
-  const ref = useRef(null);
-  const px = useMotionValue(0);
-  const py = useMotionValue(0);
-
-  const rotateX = useSpring(useTransform(py, [-0.5, 0.5], [9, -9]), {
-    stiffness: 220,
-    damping: 22,
-  });
-  const rotateY = useSpring(useTransform(px, [-0.5, 0.5], [-9, 9]), {
-    stiffness: 220,
-    damping: 22,
-  });
-  const spotlightX = useSpring(useTransform(px, [-0.5, 0.5], ['15%', '85%']), {
-    stiffness: 200,
-    damping: 26,
-  });
-  const spotlightY = useSpring(useTransform(py, [-0.5, 0.5], ['15%', '85%']), {
-    stiffness: 200,
-    damping: 26,
-  });
-
-  function handleMouseMove(e) {
-    const rect = ref.current.getBoundingClientRect();
-    px.set((e.clientX - rect.left) / rect.width - 0.5);
-    py.set((e.clientY - rect.top) / rect.height - 0.5);
-  }
-
-  function handleMouseLeave() {
-    px.set(0);
-    py.set(0);
-  }
-
-  return (
-    <motion.div
-      ref={ref}
-      className={className}
-      style={{
-        rotateX,
-        rotateY,
-        '--mx': spotlightX,
-        '--my': spotlightY,
-      }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      initial={{ opacity: 0, y: 32 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -6 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.6, delay: index * 0.08, ease: EASE_OUT }}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-function ScrollProgress() {
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, {
-    stiffness: 210,
-    damping: 34,
-    restDelta: 0.001,
-  });
-
-  return (
-    <motion.div
-      className="scrollProgress"
-      style={{ scaleX }}
-    />
-  );
-}
-
 function CommitteeTicker() {
-  const reduce = useReducedMotion();
-  const loopItems = useMemo(() => [...COMMITTEES, ...COMMITTEES], []);
+  const loopItems = [...COMMITTEES, ...COMMITTEES];
 
   return (
     <div
       className="ticker"
       aria-hidden="true"
     >
-      <div className={`ticker__track ${reduce ? 'ticker__track--paused' : ''}`}>
+      <div className="ticker__track">
         {loopItems.map((c, i) => (
           <span
             className="ticker__item"
@@ -469,6 +144,50 @@ function splitDuration(ms) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Shared shell for the two "take our quiz" teaser cards (marathon +
+// committee match). These were two ~100-line blocks of near-identical JSX
+// and SCSS differing only in badge label, copy, and what sits in the
+// right-hand panel — now it's one component, and each quiz just supplies
+// its badge text/copy/panel content/CTA.
+// ---------------------------------------------------------------------------
+function PromoCard({ badgeText, title, desc, panel, ctaHref, ctaLabel, className = '' }) {
+  return (
+    <motion.section
+      className={`promoCard ${className}`.trim()}
+      initial={{ opacity: 0, y: 32 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.7, ease: EASE_OUT }}
+    >
+      <AmbientParticles
+        count={12}
+        className="particles--promo"
+      />
+      <div className="promoCard__inner">
+        <div className="promoCard__text">
+          <span className="promoCard__badge">
+            <span className="promoCard__badgeDot" /> {badgeText}
+          </span>
+          <h2 className="promoCard__title">{title}</h2>
+          <p className="promoCard__desc">{desc}</p>
+        </div>
+
+        <div className="promoCard__panel">
+          {panel}
+          <BurstCTA
+            href={ctaHref}
+            className="submitBtn"
+            strength={16}
+          >
+            {ctaLabel} <i className="bi bi-arrow-right" />
+          </BurstCTA>
+        </div>
+      </div>
+    </motion.section>
+  );
+}
+
 function MarathonPromo() {
   const [status, setStatus] = useState('loading'); // loading | ready | error
   const [startsAtMs, setStartsAtMs] = useState(null);
@@ -476,8 +195,8 @@ function MarathonPromo() {
   const [offsetMs, setOffsetMs] = useState(0);
   const [now, setNow] = useState(Date.now());
 
-  // Fetch timing once — this is the same status endpoint the /marathon
-  // page uses, so the countdown here always matches reality.
+  // Same status endpoint the /marathon page uses, so this countdown always
+  // matches reality.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -518,151 +237,106 @@ function MarathonPromo() {
 
   const timeUnits = phase === 'countdown' ? splitDuration(msUntilStart) : null;
 
-  return (
-    <motion.section
-      className="marathonPromo"
-      initial={{ opacity: 0, y: 32 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.7, ease: EASE_OUT }}
-    >
-      <FloatingParticles
-        count={12}
-        className="particles--marathon"
-      />
-      <div className="marathonPromo__inner">
-        <div className="marathonPromo__text">
-          <span className="marathonPromo__badge">
-            <span className="marathonPromo__badgeDot" /> მარათონი
-          </span>
-          <h2 className="marathonPromo__title">
-            შეამოწმე შენი <em>ცოდნა</em>
-          </h2>
-          <p className="marathonPromo__desc">
-            15 კითხვა, 5 წუთი - ვნახოთ, თუ რამდენად კარგად ერკვევი საერთაშორისო ურთიერთობებსა და
-            გაეროს თემატიკაში
-          </p>
-        </div>
-
-        <div className="marathonPromo__panel">
-          {phase === 'countdown' && timeUnits && (
-            <div className="marathonPromo__countdown">
-              {[
-                { value: timeUnits.days, label: 'დღე' },
-                { value: timeUnits.hours, label: 'საათი' },
-                { value: timeUnits.minutes, label: 'წუთი' },
-                { value: timeUnits.seconds, label: 'წამი' },
-              ].map((u) => (
-                <div
-                  className="marathonPromo__unit"
-                  key={u.label}
-                >
-                  <span className="marathonPromo__value">{pad2(u.value)}</span>
-                  <span className="marathonPromo__unitLabel">{u.label}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {phase === 'live' && (
-            <span className="marathonPromo__live">
-              <span className="marathonPromo__liveDot" /> მარათონი მიმდინარეობს
-            </span>
-          )}
-
-          {phase === 'closed' && (
-            <p className="marathonPromo__closed">
-              მარათონი დასრულებულია. შედეგები მალე გამოქვეყნდება
-            </p>
-          )}
-
-          {(phase === 'loading' || phase === 'error') && (
+  const panel = (
+    <>
+      {phase === 'countdown' && timeUnits && (
+        <div className="promoCard__countdown">
+          {[
+            { value: timeUnits.days, label: 'დღე' },
+            { value: timeUnits.hours, label: 'საათი' },
+            { value: timeUnits.minutes, label: 'წუთი' },
+            { value: timeUnits.seconds, label: 'წამი' },
+          ].map((u) => (
             <div
-              className="marathonPromo__countdown marathonPromo__countdown--placeholder"
-              aria-hidden="true"
+              className="promoCard__unit"
+              key={u.label}
             >
-              {['დღე', 'საათი', 'წუთი', 'წამი'].map((label) => (
-                <div
-                  className="marathonPromo__unit"
-                  key={label}
-                >
-                  <span className="marathonPromo__value">--</span>
-                  <span className="marathonPromo__unitLabel">{label}</span>
-                </div>
-              ))}
+              <span className="promoCard__unitValue">{pad2(u.value)}</span>
+              <span className="promoCard__unitLabel">{u.label}</span>
             </div>
-          )}
-
-          <BurstCTA
-            href="/marathon"
-            className="submitBtn"
-            strength={16}
-          >
-            {phase === 'live' ? 'შეუერთდი ახლავე' : 'მარათონზე გადასვლა'}{' '}
-            <i className="bi bi-arrow-right" />
-          </BurstCTA>
+          ))}
         </div>
-      </div>
-    </motion.section>
+      )}
+
+      {phase === 'live' && (
+        <span className="promoCard__live">
+          <span className="promoCard__liveDot" /> მარათონი მიმდინარეობს
+        </span>
+      )}
+
+      {phase === 'closed' && (
+        <p className="promoCard__closed">მარათონი დასრულებულია. შედეგები მალე გამოქვეყნდება</p>
+      )}
+
+      {(phase === 'loading' || phase === 'error') && (
+        <div
+          className="promoCard__countdown promoCard__countdown--placeholder"
+          aria-hidden="true"
+        >
+          {['დღე', 'საათი', 'წუთი', 'წამი'].map((label) => (
+            <div
+              className="promoCard__unit"
+              key={label}
+            >
+              <span className="promoCard__unitValue">--</span>
+              <span className="promoCard__unitLabel">{label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+
+  return (
+    <PromoCard
+      className="promoCard--first"
+      badgeText="მარათონი"
+      title={
+        <>
+          შეამოწმე შენი <em>ცოდნა</em>
+        </>
+      }
+      desc="15 კითხვა, 5 წუთი - ვნახოთ, თუ რამდენად კარგად ერკვევი საერთაშორისო ურთიერთობებსა და გაეროს თემატიკაში"
+      panel={panel}
+      ctaHref="/marathon"
+      ctaLabel={phase === 'live' ? 'შეუერთდი ახლავე' : 'მარათონზე გადასვლა'}
+    />
   );
 }
 
-// Same card treatment as MarathonPromo, promoting the committee-match quiz
-// instead. There's no live/countdown state here since the quiz isn't tied
-// to a scheduled event, so the panel shows a small icon reel of all six
-// committees in place of the countdown units.
+// Same card, promoting the committee-match quiz instead. No live/countdown
+// state here since the quiz isn't tied to a scheduled event, so the panel
+// shows a small icon reel of all six committees in place of the countdown.
 function CommitteeMatchPromo() {
-  return (
-    <motion.section
-      className="committeeMatchPromo"
-      initial={{ opacity: 0, y: 32 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.7, ease: EASE_OUT }}
+  const panel = (
+    <div
+      className="promoCard__icons"
+      aria-hidden="true"
     >
-      <FloatingParticles
-        count={12}
-        className="particles--committeeMatch"
-      />
-      <div className="committeeMatchPromo__inner">
-        <div className="committeeMatchPromo__text">
-          <span className="committeeMatchPromo__badge">
-            <span className="committeeMatchPromo__badgeDot" /> ტესტი
-          </span>
-          <h2 className="committeeMatchPromo__title">
-            იპოვე შენი <em>კომიტეტი</em>
-          </h2>
-          <p className="committeeMatchPromo__desc">
-            10 მოკლე კითხვა - გაარკვიე, რომელი კომიტეტი შეგეფერება შენ
-            ყველაზე მეტად
-          </p>
-        </div>
+      {COMMITTEES.map((c) => (
+        <span
+          className="promoCard__iconChip"
+          key={c.id}
+        >
+          <i className={`bi ${c.icon}`} />
+        </span>
+      ))}
+    </div>
+  );
 
-        <div className="committeeMatchPromo__panel">
-          <div
-            className="committeeMatchPromo__icons"
-            aria-hidden="true"
-          >
-            {COMMITTEES.map((c) => (
-              <span
-                className="committeeMatchPromo__iconChip"
-                key={c.id}
-              >
-                <i className={`bi ${c.icon}`} />
-              </span>
-            ))}
-          </div>
-
-          <BurstCTA
-            href="/committee-match"
-            className="submitBtn"
-            strength={16}
-          >
-            ტესტის დაწყება <i className="bi bi-arrow-right" />
-          </BurstCTA>
-        </div>
-      </div>
-    </motion.section>
+  return (
+    <PromoCard
+      badgeText="ტესტი"
+      title={
+        <>
+          იპოვე შენი <em>კომიტეტი</em>
+        </>
+      }
+      desc="10 მოკლე კითხვა - გაარკვიე, რომელი კომიტეტი შეგეფერება შენ ყველაზე მეტად"
+      panel={panel}
+      ctaHref="/committee-match"
+      ctaLabel="ტესტის დაწყება"
+    />
   );
 }
 
@@ -670,7 +344,6 @@ export default function HomePage() {
   return (
     <MotionConfig reducedMotion="user">
       <div className="home">
-        <CursorAura />
         <GrainOverlay />
         <Hero />
         <div className="pageBody">
@@ -704,14 +377,6 @@ function Hero() {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
-  const ringsX = useSpring(useTransform(mouseX, [-1, 1], [-18, 18]), {
-    stiffness: 60,
-    damping: 20,
-  });
-  const ringsY = useSpring(useTransform(mouseY, [-1, 1], [-18, 18]), {
-    stiffness: 60,
-    damping: 20,
-  });
   const meshX = useSpring(useTransform(mouseX, [-1, 1], [16, -16]), {
     stiffness: 50,
     damping: 22,
@@ -740,7 +405,7 @@ function Hero() {
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      <FloatingParticles
+      <AmbientParticles
         count={22}
         className="particles--hero"
       />
@@ -751,48 +416,7 @@ function Hero() {
         aria-hidden="true"
       />
 
-      <motion.div
-        className="hero__rings"
-        style={{ x: ringsX, y: ringsY }}
-        aria-hidden="true"
-      >
-        <svg
-          viewBox="0 0 600 600"
-          className="hero__ringsSvg"
-        >
-          <g className="hero__ringsOuter">
-            <circle
-              cx="300"
-              cy="300"
-              r="280"
-            />
-            <circle
-              cx="300"
-              cy="300"
-              r="200"
-            />
-          </g>
-          <g className="hero__ringsInner">
-            <circle
-              cx="300"
-              cy="300"
-              r="120"
-            />
-            <line
-              x1="40"
-              y1="300"
-              x2="560"
-              y2="300"
-            />
-            <line
-              x1="300"
-              y1="40"
-              x2="300"
-              y2="560"
-            />
-          </g>
-        </svg>
-      </motion.div>
+      <GlobalNetwork />
 
       <motion.div
         className="hero__content"
@@ -812,7 +436,10 @@ function Hero() {
         >
           გახდი{' '}
           <em className="hero__titleShine">
-            <ScrambleText text="ხმა" />
+            <ScrambleText
+              text="ხმა"
+              triggerOnView
+            />
           </em>
           , რომელსაც მსოფლიო უსმენს
         </motion.h1>
@@ -833,12 +460,12 @@ function Hero() {
           >
             დარეგისტრირდი <i className="bi bi-arrow-right" />
           </BurstCTA>
-          <DirectionalHoverButton
+          <a
             href="#committees"
             className="btn btn--ghost"
           >
             კომიტეტების ნახვა
-          </DirectionalHoverButton>
+          </a>
         </motion.div>
       </motion.div>
     </section>
@@ -934,12 +561,10 @@ function Info() {
           className="info__emblemParallax"
           style={{ y: emblemY, rotateX: emblemRotateX, rotateY: emblemRotateY }}
         >
-          <motion.img
+          <img
             src={logo}
             alt=""
             aria-hidden="true"
-            animate={{ y: [0, -14, 0] }}
-            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
           />
         </motion.div>
       </motion.div>
@@ -970,7 +595,6 @@ function Info() {
           <motion.div
             className="info__feature"
             variants={fadeUpItem}
-            whileHover={{ x: 4 }}
           >
             <i className="bi bi-mic" />
             <div>
@@ -983,7 +607,6 @@ function Info() {
           <motion.div
             className="info__feature"
             variants={fadeUpItem}
-            whileHover={{ x: 4 }}
           >
             <i className="bi bi-diagram-3" />
             <div>
@@ -996,7 +619,6 @@ function Info() {
           <motion.div
             className="info__feature"
             variants={fadeUpItem}
-            whileHover={{ x: 4 }}
           >
             <i className="bi bi-globe" />
             <div>
@@ -1007,6 +629,68 @@ function Info() {
         </motion.div>
       </motion.div>
     </section>
+  );
+}
+
+function CommitteeCard({ committee, index }) {
+  const ref = useRef(null);
+  const px = useMotionValue(0);
+  const py = useMotionValue(0);
+
+  const rotateX = useSpring(useTransform(py, [-0.5, 0.5], [6, -6]), {
+    stiffness: 220,
+    damping: 22,
+  });
+  const rotateY = useSpring(useTransform(px, [-0.5, 0.5], [-6, 6]), {
+    stiffness: 220,
+    damping: 22,
+  });
+  const spotlightX = useSpring(useTransform(px, [-0.5, 0.5], ['15%', '85%']), {
+    stiffness: 200,
+    damping: 26,
+  });
+  const spotlightY = useSpring(useTransform(py, [-0.5, 0.5], ['15%', '85%']), {
+    stiffness: 200,
+    damping: 26,
+  });
+
+  function handleMouseMove(e) {
+    const rect = ref.current.getBoundingClientRect();
+    px.set((e.clientX - rect.left) / rect.width - 0.5);
+    py.set((e.clientY - rect.top) / rect.height - 0.5);
+  }
+
+  function handleMouseLeave() {
+    px.set(0);
+    py.set(0);
+  }
+
+  return (
+    <motion.div
+      ref={ref}
+      className="committeeCard"
+      style={{ rotateX, rotateY, '--mx': spotlightX, '--my': spotlightY }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.5, delay: index * 0.06, ease: EASE_OUT }}
+    >
+      <span
+        className="committeeCard__sheen"
+        aria-hidden="true"
+      />
+      <div className="committeeCard__top">
+        <span className="committeeCard__icon">
+          <i className={`bi ${committee.icon}`} />
+        </span>
+        {committee.tag && <span className="committeeCard__tag">{committee.tag}</span>}
+      </div>
+      <p className="committeeCard__abbr">{committee.name}</p>
+      <p className="committeeCard__full">{committee.fullName}</p>
+      <p className="committeeCard__desc">{committee.desc}</p>
+    </motion.div>
   );
 }
 
@@ -1025,21 +709,11 @@ function Committees() {
 
       <div className="committees__grid">
         {COMMITTEES.map((c, i) => (
-          <TiltCard
-            className="committeeCard"
+          <CommitteeCard
             key={c.id}
+            committee={c}
             index={i}
-          >
-            <div className="committeeCard__top">
-              <span className="committeeCard__icon">
-                <i className={`bi ${c.icon}`} />
-              </span>
-              {c.tag && <span className="committeeCard__tag">{c.tag}</span>}
-            </div>
-            <p className="committeeCard__abbr">{c.name}</p>
-            <p className="committeeCard__full">{c.fullName}</p>
-            <p className="committeeCard__desc">{c.desc}</p>
-          </TiltCard>
+          />
         ))}
       </div>
     </section>
@@ -1055,7 +729,7 @@ function CtaBanner() {
       viewport={{ once: true, amount: 0.4 }}
       transition={{ duration: 0.7, ease: EASE_OUT }}
     >
-      <FloatingParticles
+      <AmbientParticles
         count={14}
         className="particles--cta"
       />

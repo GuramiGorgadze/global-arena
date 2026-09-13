@@ -1,0 +1,141 @@
+@use '../abstracts' as *;
+
+.ambientParticles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+
+  &__dot {
+    position: absolute;
+    bottom: -6%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba($gold-bright, 0.95), rgba($gold-bright, 0) 70%);
+    filter: blur(0.4px);
+  }
+}
+
+.burstCTA {
+  position: relative;
+  display: inline-flex;
+
+  &__particle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    margin: -3px 0 0 -3px;
+    border-radius: 50%;
+    background: $gold-bright;
+    box-shadow: 0 0 8px rgba($gold-bright, 0.7);
+    pointer-events: none;
+    z-index: 3;
+  }
+}
+
+.globalNetwork {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.6;
+
+  &__svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  &__spin {
+    transform-box: view-box;
+    transform-origin: 300px 300px;
+    animation: globalNetworkSpin 220s linear infinite;
+
+    &--static {
+      animation: none;
+    }
+  }
+
+  &__meridian {
+    fill: none;
+    stroke: rgba($gold-bright, 0.16);
+    stroke-width: 1;
+  }
+
+  &__route {
+    fill: none;
+    stroke: rgba($gold-bright, 0.22);
+    stroke-width: 1;
+  }
+
+  &__pulse {
+    fill: none;
+    stroke: $gold-bright;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-dasharray: 0.05 1;
+    filter: drop-shadow(0 0 3px rgba($gold-bright, 0.85));
+    animation: globalNetworkComet 4.5s linear infinite;
+  }
+
+  &__node {
+    fill: $gold-bright;
+    transform-box: fill-box;
+    transform-origin: center;
+
+    &--far {
+      fill: rgba($gold-bright, 0.4);
+    }
+
+    &--hub {
+      fill: #fff3d6;
+      filter: drop-shadow(0 0 7px rgba($gold-bright, 0.75));
+    }
+
+    &--near {
+      filter: drop-shadow(0 0 4px rgba($gold-bright, 0.5));
+    }
+
+    &--pulse {
+      animation: globalNetworkNodePulse 3.2s ease-in-out infinite;
+    }
+  }
+}
+
+@keyframes globalNetworkSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes globalNetworkComet {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: -1;
+  }
+}
+
+@keyframes globalNetworkNodePulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambientParticles {
+    display: none;
+  }
+}

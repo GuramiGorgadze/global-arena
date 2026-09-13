@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { registerDelegate } from '../api/user';
+import AmbientParticles from '../components/decor/AmbientParticles';
 
 const COMMITTEES = [
   { id: 'unsc', name: 'UNSC' },
@@ -286,54 +287,6 @@ const itemVariants = {
 
 const SHAKE_KEYFRAMES = { x: [0, -9, 8, -6, 5, -3, 2, 0] };
 
-function FloatingParticles() {
-  const prefersReducedMotion =
-    typeof window !== 'undefined' &&
-    window.matchMedia &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  const particles = useMemo(
-    () =>
-      Array.from({ length: 16 }, (_, i) => ({
-        id: i,
-        left: Math.round(Math.random() * 1000) / 10,
-        size: 2 + Math.random() * 3,
-        duration: 14 + Math.random() * 12,
-        delay: Math.random() * -20,
-        drift: (Math.random() - 0.5) * 60,
-      })),
-    []
-  );
-
-  if (prefersReducedMotion) return null;
-
-  return (
-    <div
-      className="ambientParticles"
-      aria-hidden="true"
-    >
-      {particles.map((p) => (
-        <motion.span
-          key={p.id}
-          className="ambientParticles__dot"
-          style={{ left: `${p.left}%`, width: p.size, height: p.size }}
-          animate={{
-            y: ['0vh', '-105vh'],
-            x: [0, p.drift],
-            opacity: [0, 0.7, 0.7, 0],
-          }}
-          transition={{
-            duration: p.duration,
-            delay: p.delay,
-            repeat: Infinity,
-            ease: 'linear',
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
 export default function RegistrationPage() {
   const formTopRef = useRef(null);
   const stepContentRef = useRef(null);
@@ -377,7 +330,7 @@ export default function RegistrationPage() {
         setStep(Math.min(Math.max(draft.step, 0), STEPS.length - 1));
       }
       setDraftRestored(true);
-      toast('ფორმა აღდგენილია', { icon: '📝' });
+      toast('ფორმა აღდგენილია', { icon: <i className="bi bi-clock-history" /> });
     }
   }, []);
 
@@ -501,7 +454,7 @@ export default function RegistrationPage() {
     setDirection(-1);
     setStep(0);
     setDraftRestored(false);
-    toast('ფორმა გასუფთავდა', { icon: '🗑️' });
+    toast('ფორმა გასუფთავდა', { icon: <i className="bi bi-trash3" /> });
     scrollTop();
   };
 
@@ -553,7 +506,10 @@ export default function RegistrationPage() {
 
   return (
     <div className="munReg">
-      <FloatingParticles />
+      <AmbientParticles
+        count={16}
+        durationRange={[14, 26]}
+      />
       <section
         className="formSection"
         id="register"

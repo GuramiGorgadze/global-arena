@@ -25,21 +25,24 @@ function Footer() {
           <div className="footer__socials">
             <a
               href="https://www.facebook.com/people/G-Arena-%E1%83%AF%E1%83%98-%E1%83%90%E1%83%A0%E1%83%94%E1%83%9C%E1%83%90/61592075967871/"
-              target="blank"
+              target="_blank"
+              rel="noreferrer"
               aria-label="facebook"
             >
               <i className="bi bi-facebook" />
             </a>
             <a
               href="https://www.instagram.com/globalarena.mun/"
-              target="blank"
+              target="_blank"
+              rel="noreferrer"
               aria-label="Instagram"
             >
               <i className="bi bi-instagram" />
             </a>
             <a
               href="https://www.tiktok.com/@g_arenamun?_r=1&_t=ZS-97wupUsEXyB"
-              target="blank"
+              target="_blank"
+              rel="noreferrer"
               aria-label="TikTok"
             >
               <i className="bi bi-tiktok" />

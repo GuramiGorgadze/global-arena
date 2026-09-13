@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import logo from '../assets/logo.png';
 import banner from '../assets/banner.jpeg';
@@ -391,7 +391,15 @@ function drawShareCard(canvas, result, logoImg, bannerImg) {
   wrapCenteredText(ctx, result.name, W / 2, 900, W - 220, 64);
 
   ctx.fillStyle = 'rgba(255,255,255,0.95)';
-  drawFittedText(ctx, 'გაიგე რომელი კომიტეტი შეგეფერება', W / 2, H - 320, W - 160, CANVAS_FONT_CTA, 30);
+  drawFittedText(
+    ctx,
+    'გაიგე რომელი კომიტეტი შეგეფერება',
+    W / 2,
+    H - 320,
+    W - 160,
+    CANVAS_FONT_CTA,
+    30
+  );
 
   // Underlined so it reads as a link — note this is a flat PNG, so it isn't
   // actually clickable; Instagram doesn't parse links out of image pixels.
@@ -419,18 +427,6 @@ const questionVariants = {
     transition: { duration: 0.25, ease: [0.4, 0, 1, 1] },
   }),
 };
-
-function usePrefersReducedMotion() {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReduced(mq.matches);
-    const handler = (e) => setReduced(e.matches);
-    mq.addEventListener?.('change', handler);
-    return () => mq.removeEventListener?.('change', handler);
-  }, []);
-  return reduced;
-}
 
 export default function CommitteeMatchPage() {
   const [phase, setPhase] = useState('intro'); // intro | quiz | reveal | result
@@ -586,7 +582,9 @@ export default function CommitteeMatchPage() {
           }
         } else {
           downloadBlob(blob, `gamun-committee-${result.id}.png`);
-          toast('სურათი გადმოწერილია — ატვირთე Instagram Story-ზე', { icon: '📥' });
+          toast('სურათი გადმოწერილია — ატვირთე Instagram Story-ზე', {
+            icon: <i className="bi bi-download" />,
+          });
         }
       },
       'image/png',
@@ -757,10 +755,11 @@ function QuestionCard({ question, onSelect, direction, disabled }) {
 
 // ---- The reveal sequence: a "sorting hat" style suspense beat between the
 // last question and the result screen. The icon cycles through every
-// committee like a decelerating slot reel, then locks onto the real result
-// with a burst of gold particles before handing off to ResultScreen.
+// committee like a decelerating slot reel, pulsing rings breathe behind it,
+// and a burst of gold particles fires the instant it locks onto the real
+// result.
 function RevealScreen({ result, onComplete }) {
-  const prefersReducedMotion = usePrefersReducedMotion();
+  const reduce = useReducedMotion();
   const [displayCommittee, setDisplayCommittee] = useState(result);
   const [stage, setStage] = useState('spinning'); // spinning | locked
 
@@ -784,7 +783,7 @@ function RevealScreen({ result, onComplete }) {
     let cancelled = false;
     const timers = [];
 
-    if (prefersReducedMotion) {
+    if (reduce) {
       setDisplayCommittee(result);
       setStage('locked');
       timers.push(setTimeout(() => !cancelled && onComplete(), 700));
@@ -817,7 +816,7 @@ function RevealScreen({ result, onComplete }) {
       cancelled = true;
       timers.forEach(clearTimeout);
     };
-  }, [result, onComplete, prefersReducedMotion]);
+  }, [result, onComplete, reduce]);
 
   const locked = stage === 'locked';
 
@@ -830,7 +829,7 @@ function RevealScreen({ result, onComplete }) {
       transition={{ duration: 0.4, ease: EASE }}
     >
       <div className="committeeReveal__stage">
-        {!prefersReducedMotion && (
+        {!reduce && (
           <div
             className="committeeReveal__rings"
             aria-hidden="true"
@@ -841,7 +840,7 @@ function RevealScreen({ result, onComplete }) {
           </div>
         )}
 
-        {locked && !prefersReducedMotion && (
+        {locked && !reduce && (
           <>
             <motion.span
               className="committeeReveal__flash"
@@ -957,7 +956,8 @@ function ResultScreen({ result, onRetake, onShare }) {
       <a
         href="https://applications.g-arena.org"
         className="committeeResult__registerLink"
-        target='blank'
+        target="_blank"
+        rel="noreferrer"
       >
         მზად ხარ დარეგისტრირდე? <i className="bi bi-arrow-right" />
       </a>

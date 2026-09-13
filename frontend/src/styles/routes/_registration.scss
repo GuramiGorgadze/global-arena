@@ -8,55 +8,11 @@
   min-height: 100vh;
   line-height: 1.6;
   overflow: hidden;
-
-  &::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url('../../assets/banner.jpeg');
-    background-size: cover;
-    background-position: center 35%;
-    background-repeat: no-repeat;
-    opacity: 0.32;
-    filter: grayscale(15%) contrast(1.05);
-    z-index: 0;
-  }
-
-  &::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 80% 50% at 50% 0%, rgba($gold-bright, 0.08), transparent 60%),
-      linear-gradient(
-        180deg,
-        rgba($black-deep, 0.55) 0%,
-        rgba($black-deep, 0.88) 38%,
-        $black-deep 75%
-      );
-    z-index: 0;
-  }
+  @include page-banner-shell($banner-opacity: 0.32);
 
   > * {
     position: relative;
     z-index: 1;
-  }
-}
-
-.ambientParticles {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  overflow: hidden;
-
-  &__dot {
-    position: absolute;
-    bottom: -4vh;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba($gold-bright, 0.95) 0%, rgba($gold-bright, 0) 70%);
-    box-shadow: 0 0 6px 1px rgba($gold-bright, 0.5);
-    will-change: transform, opacity;
   }
 }
 

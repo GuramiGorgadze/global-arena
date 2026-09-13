@@ -55,6 +55,10 @@ function App() {
               element={<Home />}
             />
             <Route
+              path="/register"
+              element={<Registration />}
+            />
+            <Route
               path="/marathon"
               element={<Marathon />}
             />
