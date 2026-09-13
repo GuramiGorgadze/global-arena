@@ -1,10 +1,9 @@
-import axios from "axios";
 import Delegates from "../models/delegates.js";
 import {
   sendDelegateConfirmationMail,
   sendAdminNotificationMail,
 } from "../utils/mailSender.js";
-import { formatDateOnly, formatDateTime } from "../utils/dateFormat.js";
+import { syncDelegateToSheets } from "../utils/googleSheets.js";
 
 const MINOR_AGE_THRESHOLD = 18;
 
@@ -18,43 +17,6 @@ const isMinor = (dobValue) => {
     (today.getMonth() === dob.getMonth() && today.getDate() >= dob.getDate());
   if (!hasHadBirthdayThisYear) age -= 1;
   return age < MINOR_AGE_THRESHOLD;
-};
-
-const pushToGoogleSheets = async (delegate) => {
-  const webhookUrl = process.env.GOOGLE_SHEETS_WEBHOOK_URL;
-
-  if (!webhookUrl) {
-    console.warn("GOOGLE_SHEETS_WEBHOOK_URL is not set — skipping sheet sync.");
-    return;
-  }
-
-  try {
-    await axios.post(webhookUrl, {
-      firstName: delegate.firstName,
-      lastName: delegate.lastName,
-      firstNameLatin: delegate.firstNameLatin,
-      lastNameLatin: delegate.lastNameLatin,
-      email: delegate.email,
-      phone: delegate.phone,
-      dob: formatDateOnly(delegate.dob),
-      school: delegate.school,
-      nationalId: delegate.nationalId,
-      facebook: delegate.facebook,
-      experience: delegate.experience,
-      parentName: delegate.parentName || "",
-      parentPhone: delegate.parentPhone || "",
-      committee1: delegate.committees?.[0] || "",
-      committee2: delegate.committees?.[1] || "",
-      committee3: delegate.committees?.[2] || "",
-      country1: delegate.countries?.[0] || "",
-      country2: delegate.countries?.[1] || "",
-      country3: delegate.countries?.[2] || "",
-      promoCode: delegate.promoCode || "",
-      createdAt: formatDateTime(delegate.createdAt),
-    });
-  } catch (err) {
-    console.error("Failed to sync delegate to Google Sheets:", err.message);
-  }
 };
 
 export const registerDelegate = async (req, res) => {
@@ -176,7 +138,7 @@ export const registerDelegate = async (req, res) => {
       promoCode: promoCode?.trim() || undefined,
     });
 
-    pushToGoogleSheets(delegate);
+    syncDelegateToSheets(delegate);
 
     Promise.allSettled([
       sendDelegateConfirmationMail(delegate),

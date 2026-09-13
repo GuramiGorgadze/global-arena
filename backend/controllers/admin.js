@@ -3,6 +3,7 @@ import {
   sendPaymentConfirmedMail,
 } from "../utils/mailSender.js";
 import SentEmail from "../models/SentEmails.js";
+import { syncPaymentStatus } from "../utils/googleSheets.js";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -68,6 +69,7 @@ export const sendPaymentEmails = async (req, res) => {
     });
 
     await saveSentEmails(sent, "payment");
+    syncPaymentStatus(sent, "paymentSent");
 
     res.status(200).json({ sent, failed });
   } catch (err) {
@@ -141,6 +143,7 @@ export const sendConfirmationEmails = async (req, res) => {
     });
 
     await saveSentEmails(sent, "confirmation");
+    syncPaymentStatus(sent, "paid");
 
     res.status(200).json({ sent, failed });
   } catch (err) {

@@ -54,6 +54,18 @@
     margin: 24px auto;
   }
 
+  // Second/third stacked cards sit closer together than the page's
+  // lead-in card. Kept as its own class (instead of inline styles)
+  // so the mobile override below still applies — inline styles would
+  // otherwise beat the media query above regardless of viewport.
+  &--tight {
+    margin: 24px auto;
+
+    @media (max-width: 640px) {
+      margin: 16px auto;
+    }
+  }
+
   input[type='checkbox'] {
     appearance: none;
     -webkit-appearance: none;
@@ -215,6 +227,109 @@
     color: $white-dim;
     padding: 14px 4px 20px 4px;
     text-align: center;
+  }
+
+  &__tableWrap {
+    max-height: 320px;
+    overflow-y: auto;
+    overflow-x: auto;
+    border: 1px solid $black-border;
+    border-radius: $radius-md;
+
+    scrollbar-width: thin;
+    scrollbar-color: rgba($gold-bright, 0.35) transparent;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: rgba($gold-bright, 0.35);
+      border-radius: $radius-pill;
+
+      &:hover {
+        background-color: rgba($gold-bright, 0.55);
+      }
+    }
+  }
+
+  &__table {
+    width: 100%;
+    min-width: 340px;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 13px;
+
+    th,
+    td {
+      text-align: left;
+      padding: 11px 14px;
+      border-bottom: 1px solid $black-border;
+    }
+
+    th:first-child,
+    td:first-child {
+      width: 62%;
+    }
+
+    th:last-child,
+    td:last-child {
+      width: 38%;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    th {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: $white-dim;
+      position: sticky;
+      top: 0;
+      background: $black-deep;
+    }
+
+    td {
+      color: $white-warm;
+    }
+
+    tbody tr:nth-child(even) td {
+      background: rgba($black-card, 0.25);
+    }
+
+    tbody tr:hover td {
+      background: rgba($gold-bright, 0.06);
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+  }
+
+  &__tableEmail {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
+
+    i {
+      flex-shrink: 0;
+      font-size: 13px;
+      color: #4ade80;
+    }
+
+    span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   &__results {

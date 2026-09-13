@@ -16,6 +16,16 @@ const formatDate = (iso) =>
     year: 'numeric',
   });
 
+const formatDateTime = (iso) =>
+  new Date(iso).toLocaleString('ka-GE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+
 const ResultLists = ({ result }) => {
   if (!result) return null;
 
@@ -174,10 +184,7 @@ export default function PaymentEmailSender() {
 
   return (
     <div className="paymentPage">
-      <div
-        className="formCard paymentEmailSender"
-        style={{ maxWidth: 640, margin: '40px auto' }}
-      >
+      <div className="formCard paymentEmailSender">
         <div className="formDivider">
           <span>გადახდის მეილის გაგზავნა</span>
         </div>
@@ -223,10 +230,7 @@ export default function PaymentEmailSender() {
         <ResultLists result={result} />
       </div>
 
-      <div
-        className="formCard paymentEmailSender"
-        style={{ maxWidth: 640, margin: '24px auto' }}
-      >
+      <div className="formCard paymentEmailSender paymentEmailSender--tight">
         <div className="formDivider">
           <span>დადასტურების მეილის გაგზავნა</span>
         </div>
@@ -311,6 +315,56 @@ export default function PaymentEmailSender() {
         </motion.button>
 
         <ResultLists result={confirmResult} />
+      </div>
+
+      <div className="formCard paymentEmailSender paymentEmailSender--tight">
+        <div className="formDivider">
+          <span>დადასტურებული დელეგატები</span>
+        </div>
+
+        <div className="paymentEmailSender__counters">
+          <span className="paymentEmailSender__counter">
+            სულ დადასტურებულია{' '}
+            <span className="paymentEmailSender__counterValue">
+              {loadingSentEmails ? '—' : sentConfirmation.length}
+            </span>
+          </span>
+        </div>
+
+        {loadingSentEmails ? (
+          <p className="paymentEmailSender__emptyNote">იტვირთება...</p>
+        ) : sentConfirmation.length === 0 ? (
+          <p className="paymentEmailSender__emptyNote">
+            დადასტურების მეილი ჯერ არავის გაუგზავნია.
+          </p>
+        ) : (
+          <div className="paymentEmailSender__tableWrap">
+            <table className="paymentEmailSender__table">
+              <thead>
+                <tr>
+                  <th scope="col">ელ. ფოსტა</th>
+                  <th scope="col">გაგზავნის თარიღი</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sentConfirmation.map((c) => (
+                  <tr key={c.email}>
+                    <td>
+                      <span className="paymentEmailSender__tableEmail">
+                        <i
+                          className="bi bi-check-circle-fill"
+                          aria-hidden="true"
+                        />
+                        <span title={c.email}>{c.email}</span>
+                      </span>
+                    </td>
+                    <td>{c.sentAt ? formatDateTime(c.sentAt) : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
