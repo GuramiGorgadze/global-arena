@@ -21,6 +21,7 @@ function App() {
       <Toaster
         position="top-center"
         toastOptions={{
+          style: { textAlign: 'center' },
           className: 'customToast',
           duration: 4000,
           success: {

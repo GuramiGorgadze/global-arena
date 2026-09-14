@@ -189,102 +189,10 @@ function PromoCard({ badgeText, title, desc, panel, ctaHref, ctaLabel, className
 }
 
 function MarathonPromo() {
-  const [status, setStatus] = useState('loading'); // loading | ready | error
-  const [startsAtMs, setStartsAtMs] = useState(null);
-  const [durationMs, setDurationMs] = useState(5 * 60 * 1000);
-  const [offsetMs, setOffsetMs] = useState(0);
-  const [now, setNow] = useState(Date.now());
-
-  // Same status endpoint the /marathon page uses, so this countdown always
-  // matches reality.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const data = await getMarathonStatus();
-        if (cancelled) return;
-        setStartsAtMs(new Date(data.startsAt).getTime());
-        setDurationMs(data.durationMs || 5 * 60 * 1000);
-        setOffsetMs(new Date(data.serverNow).getTime() - Date.now());
-        setStatus('ready');
-      } catch {
-        if (!cancelled) setStatus('error');
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (status !== 'ready') return undefined;
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, [status]);
-
-  const adjustedNow = now + offsetMs;
-  const msUntilStart = startsAtMs !== null ? startsAtMs - adjustedNow : null;
-  const msRemaining = startsAtMs !== null ? startsAtMs + durationMs - adjustedNow : null;
-
-  const phase =
-    status !== 'ready'
-      ? status
-      : msUntilStart > 0
-        ? 'countdown'
-        : msRemaining > 0
-          ? 'live'
-          : 'closed';
-
-  const timeUnits = phase === 'countdown' ? splitDuration(msUntilStart) : null;
-
   const panel = (
-    <>
-      {phase === 'countdown' && timeUnits && (
-        <div className="promoCard__countdown">
-          {[
-            { value: timeUnits.days, label: 'დღე' },
-            { value: timeUnits.hours, label: 'საათი' },
-            { value: timeUnits.minutes, label: 'წუთი' },
-            { value: timeUnits.seconds, label: 'წამი' },
-          ].map((u) => (
-            <div
-              className="promoCard__unit"
-              key={u.label}
-            >
-              <span className="promoCard__unitValue">{pad2(u.value)}</span>
-              <span className="promoCard__unitLabel">{u.label}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {phase === 'live' && (
-        <span className="promoCard__live">
-          <span className="promoCard__liveDot" /> მარათონი მიმდინარეობს
-        </span>
-      )}
-
-      {phase === 'closed' && (
-        <p className="promoCard__closed">მარათონი დასრულებულია. შედეგები მალე გამოქვეყნდება</p>
-      )}
-
-      {(phase === 'loading' || phase === 'error') && (
-        <div
-          className="promoCard__countdown promoCard__countdown--placeholder"
-          aria-hidden="true"
-        >
-          {['დღე', 'საათი', 'წუთი', 'წამი'].map((label) => (
-            <div
-              className="promoCard__unit"
-              key={label}
-            >
-              <span className="promoCard__unitValue">--</span>
-              <span className="promoCard__unitLabel">{label}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </>
+    <span className="promoCard__live">
+      <span className="promoCard__liveDot" /> ღიაა ნებისმიერ დროს
+    </span>
   );
 
   return (
@@ -299,14 +207,11 @@ function MarathonPromo() {
       desc="15 კითხვა, 5 წუთი - ვნახოთ, თუ რამდენად კარგად ერკვევი საერთაშორისო ურთიერთობებსა და გაეროს თემატიკაში"
       panel={panel}
       ctaHref="/marathon"
-      ctaLabel={phase === 'live' ? 'შეუერთდი ახლავე' : 'მარათონზე გადასვლა'}
+      ctaLabel="დაიწყე ახლავე"
     />
   );
 }
 
-// Same card, promoting the committee-match quiz instead. No live/countdown
-// state here since the quiz isn't tied to a scheduled event, so the panel
-// shows a small icon reel of all six committees in place of the countdown.
 function CommitteeMatchPromo() {
   const panel = (
     <div
