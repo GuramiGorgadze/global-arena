@@ -76,6 +76,23 @@ const ResultLists = ({ result }) => {
   );
 };
 
+const OverviewStats = ({ loading, totalSent, totalConfirmed, totalPending }) => (
+  <div className="paymentEmailSender__overview">
+    <div className="paymentEmailSender__overviewStat">
+      <span className="paymentEmailSender__overviewValue">{loading ? '—' : totalSent}</span>
+      <span className="paymentEmailSender__overviewLabel">გაგზავნილია</span>
+    </div>
+    <div className="paymentEmailSender__overviewStat">
+      <span className="paymentEmailSender__overviewValue">{loading ? '—' : totalConfirmed}</span>
+      <span className="paymentEmailSender__overviewLabel">დადასტურებულია</span>
+    </div>
+    <div className="paymentEmailSender__overviewStat">
+      <span className="paymentEmailSender__overviewValue">{loading ? '—' : totalPending}</span>
+      <span className="paymentEmailSender__overviewLabel">მოლოდინში</span>
+    </div>
+  </div>
+);
+
 export default function PaymentEmailSender() {
   const [raw, setRaw] = useState('');
   const [sending, setSending] = useState(false);
@@ -184,18 +201,16 @@ export default function PaymentEmailSender() {
 
   return (
     <div className="paymentPage">
+      <OverviewStats
+        loading={loadingSentEmails}
+        totalSent={sentPayment.length}
+        totalConfirmed={sentConfirmation.length}
+        totalPending={pending.length}
+      />
+
       <div className="formCard paymentEmailSender">
         <div className="formDivider">
           <span>გადახდის მეილის გაგზავნა</span>
-        </div>
-
-        <div className="paymentEmailSender__counters">
-          <span className="paymentEmailSender__counter">
-            სულ გაგზავნილია{' '}
-            <span className="paymentEmailSender__counterValue">
-              {loadingSentEmails ? '—' : sentPayment.length}
-            </span>
-          </span>
         </div>
 
         <div className="formGroup">
@@ -233,27 +248,6 @@ export default function PaymentEmailSender() {
       <div className="formCard paymentEmailSender paymentEmailSender--tight">
         <div className="formDivider">
           <span>დადასტურების მეილის გაგზავნა</span>
-        </div>
-
-        <div className="paymentEmailSender__counters">
-          <span className="paymentEmailSender__counter">
-            გადახდის მეილი{' '}
-            <span className="paymentEmailSender__counterValue">
-              {loadingSentEmails ? '—' : sentPayment.length}
-            </span>
-          </span>
-          <span className="paymentEmailSender__counter">
-            დადასტურებულია{' '}
-            <span className="paymentEmailSender__counterValue">
-              {loadingSentEmails ? '—' : sentConfirmation.length}
-            </span>
-          </span>
-          <span className="paymentEmailSender__counter">
-            მოლოდინში{' '}
-            <span className="paymentEmailSender__counterValue">
-              {loadingSentEmails ? '—' : pending.length}
-            </span>
-          </span>
         </div>
 
         {loadingSentEmails ? (
@@ -322,48 +316,35 @@ export default function PaymentEmailSender() {
           <span>დადასტურებული დელეგატები</span>
         </div>
 
-        <div className="paymentEmailSender__counters">
-          <span className="paymentEmailSender__counter">
-            სულ დადასტურებულია{' '}
-            <span className="paymentEmailSender__counterValue">
-              {loadingSentEmails ? '—' : sentConfirmation.length}
-            </span>
-          </span>
-        </div>
-
         {loadingSentEmails ? (
           <p className="paymentEmailSender__emptyNote">იტვირთება...</p>
         ) : sentConfirmation.length === 0 ? (
-          <p className="paymentEmailSender__emptyNote">
-            დადასტურების მეილი ჯერ არავის გაუგზავნია.
-          </p>
+          <p className="paymentEmailSender__emptyNote">დადასტურების მეილი ჯერ არავის გაუგზავნია.</p>
         ) : (
-          <div className="paymentEmailSender__tableWrap">
-            <table className="paymentEmailSender__table">
-              <thead>
-                <tr>
-                  <th scope="col">ელ. ფოსტა</th>
-                  <th scope="col">გაგზავნის თარიღი</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sentConfirmation.map((c) => (
-                  <tr key={c.email}>
-                    <td>
-                      <span className="paymentEmailSender__tableEmail">
-                        <i
-                          className="bi bi-check-circle-fill"
-                          aria-hidden="true"
-                        />
-                        <span title={c.email}>{c.email}</span>
-                      </span>
-                    </td>
-                    <td>{c.sentAt ? formatDateTime(c.sentAt) : '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ul className="paymentEmailSender__confirmedList">
+            {sentConfirmation.map((c) => (
+              <li
+                key={c.email}
+                className="paymentEmailSender__confirmedRow"
+              >
+                <i
+                  className="bi bi-check-circle-fill"
+                  aria-hidden="true"
+                />
+                <div className="paymentEmailSender__confirmedInfo">
+                  <span
+                    className="paymentEmailSender__confirmedEmail"
+                    title={c.email}
+                  >
+                    {c.email}
+                  </span>
+                  <span className="paymentEmailSender__confirmedDate">
+                    {c.sentAt ? formatDateTime(c.sentAt) : '—'}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
     </div>

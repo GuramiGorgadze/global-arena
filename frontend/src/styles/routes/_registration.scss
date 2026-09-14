@@ -90,6 +90,7 @@
 }
 
 .formCard {
+  position: relative;
   @include glass-card($from-opacity: 0.92, $to-opacity: 0.94);
   backdrop-filter: blur(6px);
   border: 1px solid rgba($gold-bright, 0.35);
@@ -100,6 +101,36 @@
   border-radius: $radius-xl;
   padding: 48px 40px;
   overflow: hidden;
+
+  // Faint engine-turned / guilloché lattice — the interlocking-ring
+  // motif engraved on formal certificates, passports and diplomatic
+  // seals. Reinforces the conference's gold-on-black, "official
+  // document" identity instead of a generic dot-grid or noise
+  // texture. Stroke color matches the gold already used for the
+  // card's glow/shimmer elsewhere (rgb(212,175,90) = #D4AF5A).
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cdefs%3E%3Cpattern id='p' width='120' height='120' patternUnits='userSpaceOnUse'%3E%3Ccircle cx='0' cy='0' r='60' fill='none' stroke='%23D4AF5A' stroke-width='1'/%3E%3Ccircle cx='120' cy='0' r='60' fill='none' stroke='%23D4AF5A' stroke-width='1'/%3E%3Ccircle cx='0' cy='120' r='60' fill='none' stroke='%23D4AF5A' stroke-width='1'/%3E%3Ccircle cx='120' cy='120' r='60' fill='none' stroke='%23D4AF5A' stroke-width='1'/%3E%3Ccircle cx='60' cy='60' r='60' fill='none' stroke='%23D4AF5A' stroke-width='1'/%3E%3Ccircle cx='60' cy='60' r='30' fill='none' stroke='%23D4AF5A' stroke-width='0.75'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='120' height='120' fill='url(%23p)'/%3E%3C/svg%3E");
+    background-size: 120px 120px;
+    background-position: center;
+
+    @media (max-width: 768px) {
+      background-size: 90px 90px;
+      opacity: 0.045;
+    }
+  }
+
+  // Keep real content above the pattern layer, same convention
+  // already used on .munReg for its banner background.
+  > * {
+    position: relative;
+    z-index: 1;
+  }
 
   @media (max-width: 768px) {
     padding: 32px 15px;
