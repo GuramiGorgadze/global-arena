@@ -92,21 +92,17 @@
   position: relative;
   width: 100%;
   max-width: 640px;
-  margin: 40px auto;
+  margin: 40px auto 0;
 
   @media (max-width: 640px) {
-    margin: 24px auto;
+    margin-top: 24px;
   }
 
-  // Second/third stacked cards sit closer together than the page's
-  // lead-in card. Kept as its own class (instead of inline styles)
-  // so the mobile override below still applies — inline styles would
-  // otherwise beat the media query above regardless of viewport.
   &--tight {
-    margin: 24px auto;
+    margin-top: 24px;
 
     @media (max-width: 640px) {
-      margin: 16px auto;
+      margin-top: 16px;
     }
   }
 
