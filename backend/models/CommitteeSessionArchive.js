@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { sessionFields } from "./schemas/sessionFields.js";
+import { sessionFields } from "./schemas/SessionFields.js";
 
 const { Schema } = mongoose;
 
