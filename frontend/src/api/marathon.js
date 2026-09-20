@@ -27,12 +27,16 @@ export const getMarathonQuestions = async () => {
   }
 };
 
-export const submitMarathonResult = async (payload) => {
+export const submitMarathonResult = async ({ email, answers, integrity }) => {
   try {
-    const response = await axios.post(`${BASE_URL}/api/marathon/submit`, payload, {
-      headers: { 'Content-Type': 'application/json' },
-      withCredentials: true,
-    });
+    const response = await axios.post(
+      `${BASE_URL}/api/marathon/submit`,
+      { email, answers, integrity },
+      {
+        headers: { 'Content-Type': 'application/json' },
+        withCredentials: true,
+      }
+    );
     return response.data;
   } catch (err) {
     const msg = err.response?.data?.message || 'პასუხების გაგზავნა ვერ მოხერხდა';

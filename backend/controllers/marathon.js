@@ -1,10 +1,24 @@
+import Delegates from "../models/delegates.js";
 import MarathonResult from "../models/marathonResults.js";
-import { MARATHON_DURATION_MS, MARATHON_GRACE_MS } from "../config/marathon.js";
+import {
+  MARATHON_START_AT,
+  MARATHON_DURATION_MS,
+  MARATHON_GRACE_MS,
+} from "../config/marathon.js";
 import { MARATHON_QUESTIONS } from "../data/marathonQuestions.js";
 
+const startsAtMs = MARATHON_START_AT.getTime();
+const endsAtMs = startsAtMs + MARATHON_DURATION_MS;
+const cutoffMs = endsAtMs + MARATHON_GRACE_MS;
+
+// Client-reported anti-cheating signals (tab switches, blur time, event
+// log) are untrusted input — a modified client can send anything, or
+// nothing at all. They are sanitized and stored purely for a human to
+// review later; they never affect correctCount, elapsedMs, or whether a
+// submission is accepted. Caps below stop a malicious payload from
+// bloating the DB.
 const MAX_INTEGRITY_EVENTS = 200;
 const MAX_INTEGRITY_EVENT_TYPE_LEN = 40;
-const EMAIL_REGEX = /^\S+@\S+\.\S+$/;
 
 function sanitizeIntegrity(raw) {
   const empty = { tabSwitchCount: 0, awayMs: 0, events: [] };
@@ -40,23 +54,27 @@ function sanitizeIntegrity(raw) {
 export const getMarathonStatus = async (req, res) => {
   try {
     const base = {
+      startsAt: MARATHON_START_AT.toISOString(),
       durationMs: MARATHON_DURATION_MS,
       questionCount: MARATHON_QUESTIONS.length,
       serverNow: new Date().toISOString(),
     };
 
-    const email =
-      typeof req.query.email === "string"
-        ? req.query.email.trim().toLowerCase()
-        : "";
+    const email = typeof req.query.email === "string" ? req.query.email.trim().toLowerCase() : "";
     if (!email) {
       return res.json(base);
+    }
+
+    const delegate = await Delegates.findOne({ email }).select("_id");
+    if (!delegate) {
+      return res.json({ ...base, registered: false });
     }
 
     const existingResult = await MarathonResult.findOne({ email });
     if (existingResult) {
       return res.json({
         ...base,
+        registered: true,
         alreadyCompleted: true,
         result: {
           correctCount: existingResult.correctCount,
@@ -67,7 +85,7 @@ export const getMarathonStatus = async (req, res) => {
       });
     }
 
-    return res.json({ ...base, alreadyCompleted: false });
+    return res.json({ ...base, registered: true, alreadyCompleted: false });
   } catch (err) {
     console.error("getMarathonStatus error:", err);
     res.status(500).json({ message: "სერვერზე მოხდა შეცდომა." });
@@ -76,6 +94,15 @@ export const getMarathonStatus = async (req, res) => {
 
 export const getMarathonQuestions = async (req, res) => {
   try {
+    const now = Date.now();
+
+    if (now < startsAtMs) {
+      return res.status(403).json({ message: "მარათონი ჯერ არ დაწყებულა." });
+    }
+    if (now > cutoffMs) {
+      return res.status(403).json({ message: "მარათონი დასრულებულია." });
+    }
+
     const sanitized = MARATHON_QUESTIONS.map(({ id, question, options }) => ({
       id,
       question,
@@ -84,6 +111,7 @@ export const getMarathonQuestions = async (req, res) => {
 
     res.json({
       questions: sanitized,
+      startsAt: MARATHON_START_AT.toISOString(),
       durationMs: MARATHON_DURATION_MS,
       serverNow: new Date().toISOString(),
     });
@@ -95,21 +123,14 @@ export const getMarathonQuestions = async (req, res) => {
 
 export const submitMarathonResult = async (req, res) => {
   try {
-    const { email, answers, integrity, startedAt } = req.body;
+    const { email, answers, integrity } = req.body;
 
-    if (typeof email !== "string" || !EMAIL_REGEX.test(email.trim())) {
-      return res
-        .status(400)
-        .json({ message: "ვალიდური ელ. ფოსტა სავალდებულოა." });
+    if (typeof email !== "string" || !email.trim()) {
+      return res.status(400).json({ message: "ელ. ფოსტა სავალდებულოა." });
     }
 
-    if (
-      !Array.isArray(answers) ||
-      answers.length !== MARATHON_QUESTIONS.length
-    ) {
-      return res
-        .status(400)
-        .json({ message: "პასუხების რაოდენობა არასწორია." });
+    if (!Array.isArray(answers) || answers.length !== MARATHON_QUESTIONS.length) {
+      return res.status(400).json({ message: "პასუხების რაოდენობა არასწორია." });
     }
 
     const validAnswers = answers.every(
@@ -120,41 +141,41 @@ export const submitMarathonResult = async (req, res) => {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+    const sanitizedIntegrity = sanitizeIntegrity(integrity);
+
+    const delegate = await Delegates.findOne({ email: normalizedEmail });
+    if (!delegate) {
+      return res.status(404).json({ message: "თქვენ არ ხართ რეგისტრირებული დელეგატი." });
+    }
+
+    const now = new Date();
+    if (now.getTime() < startsAtMs) {
+      return res.status(403).json({ message: "მარათონი ჯერ არ დაწყებულა." });
+    }
+    if (now.getTime() > cutoffMs) {
+      return res.status(403).json({ message: "დრო ამოიწურა — მარათონი დასრულებულია." });
+    }
 
     const existing = await MarathonResult.findOne({ email: normalizedEmail });
     if (existing) {
-      return res
-        .status(409)
-        .json({ message: "თქვენ უკვე დაასრულეთ მარათონი." });
+      return res.status(409).json({ message: "თქვენ უკვე დაასრულეთ მარათონი." });
     }
-
-    const sanitizedIntegrity = sanitizeIntegrity(integrity);
-
-    const now = new Date();
-    const parsedStart = new Date(startedAt);
-    if (!Number.isFinite(parsedStart.getTime())) {
-      return res
-        .status(400)
-        .json({ message: "დროის მონაცემები არასწორია. სცადეთ თავიდან." });
-    }
-    const startedAtMs = parsedStart.getTime();
-
-    const elapsedMs = Math.min(
-      Math.max(0, now.getTime() - startedAtMs),
-      MARATHON_DURATION_MS + MARATHON_GRACE_MS,
-    );
 
     let correctCount = 0;
     MARATHON_QUESTIONS.forEach((q, i) => {
       if (answers[i] === q.correctIndex) correctCount += 1;
     });
 
+    const elapsedMs = Math.max(0, now.getTime() - startsAtMs);
+
     const result = await MarathonResult.create({
+      delegate: delegate._id,
       email: normalizedEmail,
+      fullNameLatin: `${delegate.firstNameLatin || ""} ${delegate.lastNameLatin || ""}`.trim(),
       answers,
       correctCount,
       totalQuestions: MARATHON_QUESTIONS.length,
-      startedAt: new Date(startedAtMs),
+      startedAt: MARATHON_START_AT,
       finishedAt: now,
       elapsedMs,
       integrity: sanitizedIntegrity,
@@ -168,13 +189,9 @@ export const submitMarathonResult = async (req, res) => {
     });
   } catch (err) {
     if (err.code === 11000) {
-      return res
-        .status(409)
-        .json({ message: "თქვენ უკვე დაასრულეთ მარათონი." });
+      return res.status(409).json({ message: "თქვენ უკვე დაასრულეთ მარათონი." });
     }
     console.error("submitMarathonResult error:", err);
-    res
-      .status(500)
-      .json({ message: "სერვერზე მოხდა შეცდომა. სცადეთ ხელახლა." });
+    res.status(500).json({ message: "სერვერზე მოხდა შეცდომა. სცადეთ ხელახლა." });
   }
 };

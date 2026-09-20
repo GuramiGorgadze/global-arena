@@ -11,6 +11,9 @@ const DRAFT_KEY = 'marathon:draft:v1';
 const FALLBACK_DURATION_MS = 5 * 60 * 1000;
 const OPTION_LETTERS = ['ა', 'ბ', 'გ', 'დ'];
 
+// Above this many tab-switches / focus-losses during the quiz, warn the
+// person in-app. This does NOT block submission — it's purely a nudge;
+// the actual review happens server-side against the logged events.
 const TAB_SWITCH_WARN_THRESHOLD = 1;
 
 const staggerContainer = {
@@ -25,6 +28,16 @@ const fadeUpItem = {
 
 function pad2(n) {
   return String(Math.max(0, n)).padStart(2, '0');
+}
+
+function formatDuration(ms) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  return {
+    days: Math.floor(totalSeconds / 86400),
+    hours: Math.floor((totalSeconds % 86400) / 3600),
+    minutes: Math.floor((totalSeconds % 3600) / 60),
+    seconds: totalSeconds % 60,
+  };
 }
 
 function formatClock(ms) {
@@ -42,12 +55,30 @@ function formatElapsed(ms) {
   return `${minutes} წუთი ${seconds} წამი`;
 }
 
-function parseConfig({ durationMs, questionCount, serverNow }) {
+function formatStartLabel(startsAtMs) {
+  try {
+    return new Intl.DateTimeFormat('ka-GE', {
+      day: 'numeric',
+      month: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Asia/Tbilisi',
+    }).format(new Date(startsAtMs));
+  } catch {
+    return new Date(startsAtMs).toISOString();
+  }
+}
+
+// Converts a /status or /questions response into local timing state,
+// including a client/server clock offset so the countdown and the
+// in-quiz timer stay accurate even if the visitor's device clock is off.
+function parseConfig({ startsAt, durationMs, questionCount, serverNow }) {
+  const startsAtMs = new Date(startsAt).getTime();
   const serverNowMs = new Date(serverNow).getTime();
   return {
+    startsAtMs,
     durationMs: durationMs || FALLBACK_DURATION_MS,
     questionCount: questionCount || 0,
-    serverNowMs,
     offsetMs: serverNowMs - Date.now(),
   };
 }
@@ -67,22 +98,25 @@ function loadDraft() {
 function saveDraft(data) {
   try {
     localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
-  } catch {}
+  } catch {
+    // best-effort only
+  }
 }
 
 function clearDraft() {
   try {
     localStorage.removeItem(DRAFT_KEY);
-  } catch {}
+  } catch {
+    // best-effort only
+  }
 }
 
 export default function Marathon() {
-  const [phase, setPhase] = useState('identify');
+  const [phase, setPhase] = useState('loading');
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
   const [identifying, setIdentifying] = useState(false);
   const [identifiedEmail, setIdentifiedEmail] = useState('');
-  const [alreadyResult, setAlreadyResult] = useState(null);
 
   const [config, setConfig] = useState(null);
   const [offsetMs, setOffsetMs] = useState(0);
@@ -93,23 +127,45 @@ export default function Marathon() {
   const [submitting, setSubmitting] = useState(false);
 
   const [result, setResult] = useState(null);
+  const [alreadyResult, setAlreadyResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const quizStartAtMsRef = useRef(null);
+  const autoLoadTriggeredRef = useRef(false);
   const autoSubmitTriggeredRef = useRef(false);
   const submittingRef = useRef(false);
 
+  // Anti-cheating signals — only actively listening while phase === 'quiz'.
+  // See hooks/useIntegritySignals.js for what this does and doesn't do.
   const { tabSwitchCount, awayMs, events: integrityEvents } = useIntegritySignals(phase === 'quiz');
   const lastWarnedCountRef = useRef(0);
 
+  // Prefill email from a previous session, if any.
   useEffect(() => {
     const draft = loadDraft();
     if (draft?.email) setEmail(draft.email);
   }, []);
 
+  // Tick the clock for the countdown / in-quiz timer.
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 250);
     return () => clearInterval(id);
+  }, []);
+
+  // Initial load: fetch timing config so we can render a countdown teaser
+  // even before the delegate identifies themselves.
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getMarathonStatus();
+        const cfg = parseConfig(data);
+        setConfig(cfg);
+        setOffsetMs(cfg.offsetMs);
+        setPhase('identify');
+      } catch (err) {
+        setErrorMsg(err.message);
+        setPhase('error');
+      }
+    })();
   }, []);
 
   const loadQuestions = useCallback(async (forEmail) => {
@@ -117,13 +173,13 @@ export default function Marathon() {
     try {
       const data = await getMarathonQuestions();
       const cfg = parseConfig({
+        startsAt: data.startsAt,
         durationMs: data.durationMs,
         questionCount: data.questions.length,
         serverNow: data.serverNow,
       });
       setConfig(cfg);
       setOffsetMs(cfg.offsetMs);
-      quizStartAtMsRef.current = cfg.serverNowMs;
       setQuestions(data.questions);
 
       const draft = loadDraft();
@@ -135,11 +191,6 @@ export default function Marathon() {
         draft.answers.length === data.questions.length;
 
       setAnswers(canRestore ? draft.answers : new Array(data.questions.length).fill(-1));
-
-      autoSubmitTriggeredRef.current = false;
-      lastWarnedCountRef.current = 0;
-      submittingRef.current = false;
-
       setPhase('quiz');
     } catch (err) {
       setErrorMsg(err.message);
@@ -158,16 +209,34 @@ export default function Marathon() {
     setIdentifying(true);
     try {
       const data = await getMarathonStatus(trimmed);
+      const cfg = parseConfig(data);
+      setConfig(cfg);
+      setOffsetMs(cfg.offsetMs);
+
+      if (data.registered === false) {
+        clearDraft();
+        setPhase('notRegistered');
+        return;
+      }
+
       if (data.alreadyCompleted) {
         clearDraft();
-        setIdentifiedEmail(trimmed);
         setAlreadyResult(data.result);
         setPhase('alreadyDone');
         return;
       }
+
       setIdentifiedEmail(trimmed);
       saveDraft({ email: trimmed, answers: [] });
-      await loadQuestions(trimmed);
+
+      const adjustedNow = Date.now() + cfg.offsetMs;
+      if (adjustedNow < cfg.startsAtMs) {
+        setPhase('countdown');
+      } else if (adjustedNow <= cfg.startsAtMs + cfg.durationMs) {
+        await loadQuestions(trimmed);
+      } else {
+        setPhase('closed');
+      }
     } catch (err) {
       setErrorMsg(err.message);
       setPhase('error');
@@ -176,11 +245,27 @@ export default function Marathon() {
     }
   };
 
+  const startsAtMs = config?.startsAtMs ?? null;
   const durationMs = config?.durationMs ?? FALLBACK_DURATION_MS;
   const adjustedNow = now + offsetMs;
-  const msRemaining =
-    quizStartAtMsRef.current !== null ? quizStartAtMsRef.current + durationMs - adjustedNow : null;
+  const msUntilStart = startsAtMs !== null ? startsAtMs - adjustedNow : null;
+  const msRemaining = startsAtMs !== null ? startsAtMs + durationMs - adjustedNow : null;
 
+  // Auto-transition from countdown -> quiz the instant the clock hits zero.
+  useEffect(() => {
+    if (
+      phase === 'countdown' &&
+      msUntilStart !== null &&
+      msUntilStart <= 0 &&
+      !autoLoadTriggeredRef.current
+    ) {
+      autoLoadTriggeredRef.current = true;
+      loadQuestions(identifiedEmail);
+    }
+  }, [phase, msUntilStart, identifiedEmail, loadQuestions]);
+
+  // Nudge the person once they've switched away enough times. Purely
+  // informational — the count is submitted either way for server review.
   useEffect(() => {
     if (phase !== 'quiz') return;
     if (tabSwitchCount > TAB_SWITCH_WARN_THRESHOLD && tabSwitchCount > lastWarnedCountRef.current) {
@@ -191,6 +276,10 @@ export default function Marathon() {
     }
   }, [phase, tabSwitchCount]);
 
+  // Block copy, right-click, and the common devtools/view-source shortcuts
+  // while the quiz is on screen. This raises friction for casual copying;
+  // it is not — and can't be — a hard guarantee, since dev tools, browser
+  // reader modes, or a second device all sidestep it.
   useEffect(() => {
     if (phase !== 'quiz') return;
 
@@ -201,8 +290,8 @@ export default function Marathon() {
       const isDevtoolsCombo =
         key === 'F12' ||
         (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(key)) ||
-        (e.metaKey && e.altKey && ['I', 'J', 'C'].includes(key)) ||
-        (e.ctrlKey && key === 'U') ||
+        (e.metaKey && e.altKey && ['I', 'J', 'C'].includes(key)) || // Safari/macOS
+        (e.ctrlKey && key === 'U') || // view-source
         (e.metaKey && key === 'U');
       if (isDevtoolsCombo) e.preventDefault();
     };
@@ -233,7 +322,6 @@ export default function Marathon() {
           awayMs,
           events: integrityEvents,
         },
-        startedAt: new Date(quizStartAtMsRef.current ?? Date.now()).toISOString(),
       });
       clearDraft();
       setResult(data);
@@ -247,6 +335,7 @@ export default function Marathon() {
     }
   }, [identifiedEmail, answers, tabSwitchCount, awayMs, integrityEvents]);
 
+  // Auto-submit the instant the 5-minute window runs out.
   useEffect(() => {
     if (
       phase === 'quiz' &&
@@ -273,10 +362,7 @@ export default function Marathon() {
     handleSubmit();
   };
 
-  const handleBackToIdentify = () => {
-    setAlreadyResult(null);
-    setIdentifiedEmail('');
-    setEmail('');
+  const handleRetryIdentify = () => {
     setErrorMsg('');
     setPhase('identify');
   };
@@ -299,6 +385,19 @@ export default function Marathon() {
 
         <div className="marathonCard">
           <AnimatePresence mode="wait">
+            {phase === 'loading' && (
+              <motion.div
+                key="loading"
+                className="marathonStatus"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <div className="marathonSpinner" />
+                <p className="marathonStatus__message">იტვირთება...</p>
+              </motion.div>
+            )}
+
             {phase === 'identify' && (
               <IdentifyForm
                 key="identify"
@@ -310,25 +409,48 @@ export default function Marathon() {
               />
             )}
 
+            {phase === 'notRegistered' && (
+              <StatusScreen
+                key="notRegistered"
+                icon="bi-person-x"
+                tone="warning"
+                title="ვერ მოიძებნა რეგისტრაცია"
+                message="ამ ელ. ფოსტით რეგისტრირებული დელეგატი ვერ მოიძებნა. გადაამოწმეთ ელფოსტის სისწორე ან გაიარეთ რეგისტრაცია."
+              >
+                <button
+                  type="button"
+                  className="btn btn--ghost"
+                  onClick={handleRetryIdentify}
+                >
+                  სცადე თავიდან
+                </button>
+                <a
+                  href="https://applications.g-arena.org"
+                  className="submitBtn"
+                >
+                  რეგისტრაცია
+                </a>
+              </StatusScreen>
+            )}
+
             {phase === 'alreadyDone' && alreadyResult && (
               <StatusScreen
                 key="alreadyDone"
                 icon="bi-check-circle"
                 tone="success"
-                title="თქვენ მონაწილეობა უკვე მიღებული გაქვთ"
+                title="თქვენ უკვე დაასრულეთ მარათონი"
                 message={`სწორი პასუხები: ${alreadyResult.correctCount} / ${alreadyResult.totalQuestions} · დრო: ${formatElapsed(alreadyResult.elapsedMs)}`}
               >
-                <p className="marathonStatus__note">
-                  ეს ელ. ფოსტა უკვე გამოყენებულია. თითოეულ მონაწილეს მხოლოდ ერთი მცდელობა აქვს.
-                </p>
-                <button
-                  type="button"
-                  className="btn btn--ghost"
-                  onClick={handleBackToIdentify}
-                >
-                  სხვა ელ. ფოსტით
-                </button>
+                <p className="marathonStatus__note">შედეგები გამოცხადდება ჩვენს გვერდზე.</p>
               </StatusScreen>
+            )}
+
+            {phase === 'countdown' && msUntilStart !== null && (
+              <CountdownDisplay
+                key="countdown"
+                msUntilStart={msUntilStart}
+                startLabel={startsAtMs ? formatStartLabel(startsAtMs) : ''}
+              />
             )}
 
             {phase === 'loadingQuestions' && (
@@ -361,6 +483,16 @@ export default function Marathon() {
               <ResultScreen
                 key="result"
                 result={result}
+              />
+            )}
+
+            {phase === 'closed' && (
+              <StatusScreen
+                key="closed"
+                icon="bi-hourglass-bottom"
+                tone="neutral"
+                title="მარათონი დასრულებულია"
+                message="სამწუხაროდ, მონაწილეობის მიღების ვადა ამოიწურა."
               />
             )}
 
@@ -399,15 +531,16 @@ function IdentifyForm({ email, setEmail, onSubmit, loading, error }) {
       transition={{ duration: 0.45, ease: EASE }}
     >
       <p className="marathonIdentify__intro">
-        მარათონი ღიაა <strong>ნებისმიერ დროს</strong> - 15 კითხვა საერთაშორისო ურთიერთობებზე, 5
-        წუთში. უპასუხე რაც შეიძლება სწრაფად და ზუსტად.
+        მარათონი დაიწყება <strong>20 სექტემბერს, 23:00 საათზე</strong> (თბილისის დრო) და გასტანს
+        ზუსტად 5 წუთს - 15 კითხვა საერთაშორისო ურთიერთობებზე. უპასუხეთ რაც შეიძლება სწრაფად და
+        ზუსტად.
       </p>
       <div className="formGroup">
         <label
           className="formLabel"
           htmlFor="marathonEmail"
         >
-          ელ. ფოსტა <span className="formLabel__req">*</span>
+          ელ. ფოსტა (რომლითაც დარეგისტრირდით) <span className="formLabel__req">*</span>
         </label>
         <input
           id="marathonEmail"
@@ -438,7 +571,7 @@ function IdentifyForm({ email, setEmail, onSubmit, loading, error }) {
           'მოწმდება...'
         ) : (
           <>
-            დაწყება <i className="bi bi-arrow-right" />
+            გაგრძელება <i className="bi bi-arrow-right" />
           </>
         )}
       </motion.button>
@@ -461,6 +594,55 @@ function StatusScreen({ icon, tone = 'neutral', title, message, children }) {
       <h3 className="marathonStatus__title">{title}</h3>
       {message && <p className="marathonStatus__message">{message}</p>}
       {children && <div className="marathonStatus__actions">{children}</div>}
+    </motion.div>
+  );
+}
+
+function CountdownDisplay({ msUntilStart, startLabel }) {
+  const { days, hours, minutes, seconds } = formatDuration(msUntilStart);
+  const units = [
+    { value: days, label: 'დღე' },
+    { value: hours, label: 'საათი' },
+    { value: minutes, label: 'წუთი' },
+    { value: seconds, label: 'წამი' },
+  ];
+
+  return (
+    <motion.div
+      className="marathonCountdown"
+      initial="hidden"
+      animate="visible"
+      exit={{ opacity: 0 }}
+      variants={staggerContainer}
+    >
+      <motion.p
+        className="marathonCountdown__label"
+        variants={fadeUpItem}
+      >
+        მარათონი დაიწყება
+      </motion.p>
+      <motion.div
+        className="marathonCountdown__units"
+        variants={fadeUpItem}
+      >
+        {units.map((u) => (
+          <div
+            className="marathonCountdown__unit"
+            key={u.label}
+          >
+            <span className="marathonCountdown__value">{pad2(u.value)}</span>
+            <span className="marathonCountdown__unitLabel">{u.label}</span>
+          </div>
+        ))}
+      </motion.div>
+      {startLabel && (
+        <motion.p
+          className="marathonCountdown__date"
+          variants={fadeUpItem}
+        >
+          {startLabel}
+        </motion.p>
+      )}
     </motion.div>
   );
 }
@@ -526,7 +708,7 @@ function QuizScreen({
         <p className="marathonQuizFooter__note">
           {answeredCount < questions.length
             ? `დარჩენილია ${questions.length - answeredCount} კითხვა`
-            : 'ყველა კითხვა შევსებულია'}
+            : 'ყველა კითხვას გაეცით პასუხი — გააგზავნეთ, როცა მზად ხართ.'}
         </p>
         <motion.button
           type="button"
@@ -604,7 +786,7 @@ function ResultScreen({ result }) {
         <br />
         დასრულების დრო: <strong>{formatElapsed(result.elapsedMs)}</strong>
       </p>
-      <p className="marathonStatus__note">შედეგი შენახულია. მადლობა მონაწილეობისთვის!</p>
+      <p className="marathonStatus__note">შედეგები საბოლოოდ გამოცხადდება ცერემონიაზე.</p>
     </motion.div>
   );
 }

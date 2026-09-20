@@ -2084,9 +2084,7 @@ function MotionsPanel({ session, committee, counts, actions, onGoToVote }) {
         {motionType?.fields.includes('totalMs') &&
           motionType?.fields.includes('speechMs') &&
           speechMs > 0 && (
-            <p className="motionForm__hint">
-              That is {Math.floor(totalMs / speechMs)} speakers.
-            </p>
+            <p className="motionForm__hint">That is {Math.floor(totalMs / speechMs)} speakers.</p>
           )}
 
         <button
@@ -2841,7 +2839,9 @@ function DelegateModal({ session, delegate, actions, onClose }) {
               type="button"
               className="commandGhostBtn"
               disabled={!canTakeFloor}
-              title={canTakeFloor ? undefined : 'Nobody holds the floor during an unmoderated caucus'}
+              title={
+                canTakeFloor ? undefined : 'Nobody holds the floor during an unmoderated caucus'
+              }
               onClick={() => {
                 actions.setSpeaker(delegate.id, 'chair', activeSpeechMs(session));
                 onClose();

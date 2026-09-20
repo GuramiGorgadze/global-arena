@@ -266,8 +266,8 @@ export default function HomePage() {
           />
           <Stats />
           <CommitteeTicker />
-          <MarathonPromo />
-          <CommitteeMatchPromo />
+          {/* <MarathonPromo />
+          <CommitteeMatchPromo /> */}
           <Info />
           <Committees />
           <CtaBanner />
