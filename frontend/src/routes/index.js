@@ -4,3 +4,4 @@ export { default as Marathon } from './Marathon';
 export { default as CommitteeMatchPage } from './CommitteeMatchPage';
 export { default as Admin } from './Admin';
 export { default as NotFoundPage } from './NotFoundPage';
+export { default as SessionCommandPage } from './SessionCommandPage';

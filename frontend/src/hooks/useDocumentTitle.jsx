@@ -26,6 +26,10 @@ const useDocumentTitle = () => {
         document.title = 'Global Arena - Admin';
         break;
 
+      case '/command':
+        document.title = 'Global Arena - MUN Command';
+        break;
+
       default:
         document.title = 'Global Arena - Page Not Found';
         break;
