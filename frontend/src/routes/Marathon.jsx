@@ -786,7 +786,7 @@ function ResultScreen({ result }) {
         <br />
         დასრულების დრო: <strong>{formatElapsed(result.elapsedMs)}</strong>
       </p>
-      <p className="marathonStatus__note">შედეგები საბოლოოდ გამოცხადდება ცერემონიაზე.</p>
+      <p className="marathonStatus__note">შედეგები საბოლოოდ გამოცხადდება ჩვენს გვერდზე.</p>
     </motion.div>
   );
 }
