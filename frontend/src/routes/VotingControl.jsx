@@ -211,7 +211,7 @@ export default function VotingControl() {
                 className="formLabel"
                 htmlFor="chairKey"
               >
-                თავმჯდომარის გასაღები
+                შეიყვანეთ პაროლი
               </label>
               <input
                 id="chairKey"
