@@ -5,3 +5,5 @@ export { default as CommitteeMatchPage } from './CommitteeMatchPage';
 export { default as Admin } from './Admin';
 export { default as NotFoundPage } from './NotFoundPage';
 export { default as SessionCommandPage } from './SessionCommandPage';
+export { default as Vote } from './Vote';
+export { default as VotingControl } from './VotingControl';

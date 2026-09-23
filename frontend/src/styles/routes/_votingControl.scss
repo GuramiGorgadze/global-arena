@@ -1,0 +1,293 @@
+@use '../abstracts' as *;
+@use './votingShared' as *;
+
+// ---------------------------------------------------------------------------
+// Voting — chair control (.votingControl)
+//
+// Rendered on the chair's own admin page. Now built on the exact same page
+// shell and glass-card chrome as .vote — same lattice engraving, same gold
+// ring shadow, same hairline top rule, same staggered rise-in, same badge
+// pill and text-link — so the two screens read as one product's front and
+// back office rather than two differently-styled apps. It's wider, and it's
+// tuned for an operator screen rather than a phone (bigger content area,
+// a live status board, a form to open the next resolution), but the skin
+// underneath is identical.
+//
+// Shared colours, font roles, the page/card shells, and the vote-tones /
+// vote-focus / vote-tally mixins all live in _votingShared.scss — this file
+// only holds what's specific to the panel.
+// ---------------------------------------------------------------------------
+
+@include vote-pulse-ring(voteLivePulse, $vote-ok, 8px, 0.6);
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.votingControl {
+  @include vote-page-shell($banner-opacity: 0.26);
+
+  .formInput {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .submitBtn {
+    width: 100%;
+    min-height: 50px;
+    justify-content: center;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.35;
+  }
+
+  &__card {
+    @include vote-card-shell($max-width: 680px);
+  }
+
+  &__badge {
+    @include vote-badge-pill;
+  }
+
+  &__note {
+    @include vote-note;
+  }
+
+  &__gate {
+    width: min(100%, 380px);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  &__lock {
+    @include vote-text-link;
+  }
+
+  // The live board: one bordered panel holding status, title, turnout and
+  // tally. While a vote is open the panel picks up a green edge, echoing
+  // the card's own hairline rule in the same gold/green language.
+  &__status {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 22px 20px 20px;
+    overflow: hidden;
+    border-radius: $radius-md;
+    border: 1px solid $black-border;
+    background: rgba($black-deep, 0.5);
+    transition: border-color $duration-mid $ease-out;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      pointer-events: none;
+      background: linear-gradient(90deg, transparent, rgba($gold-bright, 0.45), transparent);
+    }
+
+    &:has(.votingControl__statusPill--open) {
+      border-color: rgba($vote-ok, 0.35);
+
+      &::before {
+        background: linear-gradient(90deg, transparent, $vote-ok, transparent);
+      }
+    }
+
+    > .votingControl__note {
+      padding: 6px 0;
+    }
+  }
+
+  &__statusRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  // Open/closed pill inside the status board — distinct from &__badge (the
+  // page's top identity pill) so the two never collide under one name.
+  &__statusPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px 5px 10px;
+    border-radius: $radius-pill;
+    border: 1px solid transparent;
+    font-family: $vote-font-label;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+
+    &::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    &--open {
+      color: $vote-ok;
+      background: rgba($vote-ok, 0.12);
+      border-color: rgba($vote-ok, 0.3);
+
+      &::before {
+        animation: voteLivePulse 1.6s ease-out infinite;
+      }
+    }
+
+    &--closed {
+      color: $white-muted;
+      background: rgba($white-warm, 0.06);
+      border-color: $black-border;
+    }
+  }
+
+  &__committee {
+    padding: 4px 11px;
+    border-radius: $radius-pill;
+    border: 1px solid rgba($gold-bright, 0.3);
+    font-family: $vote-font-label;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: $gold-text-safe;
+  }
+
+  &__title {
+    margin: 0;
+    font-family: $font-body; 
+    font-size: clamp(18px, 2.4vw, 22px);
+    font-weight: 700;
+    line-height: 1.35;
+    color: $white-warm;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+  }
+
+  &__meta {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.55;
+    color: $white-muted;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__tally {
+    @include vote-tally-grid;
+    margin: 6px 0 2px;
+  }
+
+  &__tallyItem {
+    @include vote-tally-item;
+  }
+
+  // Closing is the one destructive action here, so it reads red rather than
+  // gold. Prefixed selector so it always beats the global .submitBtn gradient.
+  .submitBtn.votingControl__closeBtn {
+    margin-top: 6px;
+    background: linear-gradient(135deg, #e0565b 0%, #c93a3f 55%, #a82d32 100%);
+    color: $white-warm;
+    box-shadow: 0 8px 22px rgba($vote-bad, 0.28);
+
+    &:disabled {
+      box-shadow: none;
+    }
+  }
+
+  &__openForm {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 200px);
+    gap: 16px 14px;
+
+    @media (max-width: 640px) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    // Title gets the full row; committee and eligible-count share the row
+    // below it in the existing two-column layout.
+    > .formGroup:has(#resTitle) {
+      grid-column: 1 / -1;
+    }
+
+    > .votingControl__warning,
+    > .submitBtn {
+      grid-column: 1 / -1;
+    }
+  }
+
+  // Read-only record of past resolutions, between the live status board and
+  // the "open a new resolution" form. Reuses &__tally / &__tallyItem so a
+  // number reads the same whether the vote just closed or closed weeks ago.
+  &__history {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  &__historyItem {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 18px 18px 16px;
+    border-radius: $radius-md;
+    border: 1px solid $black-border;
+    background: rgba($black-deep, 0.35);
+
+    .votingControl__title {
+      font-size: clamp(15px, 2vw, 17px);
+    }
+
+    .votingControl__tally {
+      margin: 2px 0 0;
+    }
+  }
+
+  &__warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: $radius-md;
+    border: 1px solid rgba($vote-bad, 0.35);
+    background: rgba($vote-bad, 0.08);
+    font-size: 13px;
+    line-height: 1.55;
+    text-align: left;
+    color: $vote-bad-soft;
+
+    &::before {
+      content: '!';
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: $vote-bad-soft;
+      color: $black-deep;
+      font-family: $vote-font-label;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .votingControl__card > *,
+  .votingControl__statusPill--open::before {
+    animation: none;
+  }
+}

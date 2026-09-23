@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import UsersRouter from "./routes/users.js";
 import MarathonRouter from "./routes/marathon.js";
 import AdminRouter from "./routes/admin.js";
+import VotingRouter from "./routes/voting.js";
 import MunRouter from "./routes/mun.js";
 import connectDB from "./db/connection.js";
 import helmet from "helmet";
@@ -53,6 +54,7 @@ app.use("/api/users", UsersRouter);
 app.use("/api/marathon", MarathonRouter);
 app.use("/api/admin", AdminRouter);
 app.use("/api/mun", MunRouter);
+app.use("/api/voting", VotingRouter);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

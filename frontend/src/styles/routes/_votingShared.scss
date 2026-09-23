@@ -1,0 +1,298 @@
+@use '../abstracts' as *;
+
+// ---------------------------------------------------------------------------
+// Voting — shared tokens
+//
+// Colours, type roles, and mixins used by BOTH the delegate ballot
+// (_vote.scss) and the chair control panel (_votingControl.scss). Same
+// gold-on-black diplomatic language as the rest of GAMUN; this file is the
+// part of it the two voting screens have in common, split out so each
+// screen's stylesheet only carries what's actually its own.
+//
+// Beyond colours and type roles, this file also owns the two screens'
+// shared *shape*: the full-viewport page shell they both sit in, the glass
+// card they both render their content in, and the small set of repeated
+// pieces (badge pill, text link, muted note, tally grid) that used to be
+// hand-duplicated between the two files with small, accidental differences.
+// Anything that should look and move the same on both screens belongs here,
+// not copy-pasted twice.
+// ---------------------------------------------------------------------------
+
+// --- Colours -----------------------------------------------------------
+$vote-ok: #4ade80;
+$vote-bad: #e5484d;
+$vote-bad-soft: #ff8a8a;
+$vote-neutral: #8c8378;
+
+// --- Typography roles ----------------------------------------------------
+// Georgian text keeps the brand faces; Montserrat only ever fills in Latin
+// glyphs, so label roles list it first and fall through to the display face
+// for Georgian. Digits stay on their own dial.
+$vote-font-heading: $font-display; // resolution titles, choice labels
+$vote-font-body: $font-body; // running copy, notes, links
+$vote-font-label: $font-eng, $font-display; // badge, committee, status pills
+$vote-font-number: $font-display; // tallies
+
+// --- Shared keyframes ------------------------------------------------------
+
+// The one rise-and-fade-in both cards use for their direct children. A
+// single named animation means the ballot and the control panel always
+// announce themselves with the same motion.
+@keyframes voteRise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+// --- Mixins ------------------------------------------------------------
+
+// Tints a 3-item list (yes / no / abstain) via CSS custom property, following
+// CHOICES order in both components. Never relies on colour alone — every
+// consumer of --tone also carries a shape or label.
+@mixin vote-tones {
+  &:nth-child(1) {
+    --tone: #{$vote-ok};
+  }
+  &:nth-child(2) {
+    --tone: #{$vote-bad};
+  }
+  &:nth-child(3) {
+    --tone: #{$vote-neutral};
+  }
+}
+
+@mixin vote-focus($offset: 3px) {
+  &:focus-visible {
+    outline: 2px solid $gold-bright;
+    outline-offset: $offset;
+  }
+}
+
+// Generates a named "listening" pulse ring: a soft glow that expands and
+// fades. The ballot's waiting beacon and the panel's live status dot both
+// use this same shape, just with their own colour, spread and alpha, so a
+// small status dot and a larger beacon each read at the right scale while
+// staying visibly the same kind of animation.
+@mixin vote-pulse-ring($name, $color, $spread: 20px, $alpha: 0.55) {
+  @keyframes #{$name} {
+    0% {
+      box-shadow: 0 0 0 0 rgba($color, $alpha);
+    }
+    100% {
+      box-shadow: 0 0 0 #{$spread} rgba($color, 0);
+    }
+  }
+}
+
+// The full-viewport shell both voting screens sit in: centred content,
+// safe-area aware padding, the shared banner/background treatment, and the
+// short-viewport fallback that top-aligns instead of clipping.
+@mixin vote-page-shell($banner-opacity: 0.26) {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+    max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  font-family: $vote-font-body;
+  color: $white-warm;
+  background-color: $black-deep;
+  isolation: isolate;
+  overflow-x: clip;
+  @include page-banner-shell($banner-opacity: $banner-opacity);
+
+  &::before,
+  &::after {
+    position: fixed;
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  // Phones held sideways: top-align so the card scrolls instead of clipping.
+  @media (max-height: 560px) {
+    place-items: start center;
+  }
+}
+
+// The gold-on-black card both screens render their content in: glass panel,
+// engine-turned lattice engraving, a hairline top rule, a soft gold ring
+// shadow, and a staggered rise-in for its direct children.
+@mixin vote-card-shell($max-width: 440px, $radius: $radius-xl, $stagger-children: 8) {
+  position: relative;
+  width: min(100%, $max-width);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 36px 26px 26px;
+  overflow: hidden;
+  @include glass-card($from-opacity: 0.92, $to-opacity: 0.94);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba($gold-bright, 0.35);
+  border-radius: $radius;
+  box-shadow:
+    gold-ring-shadow(24px, 0.15),
+    0 20px 60px rgba($black-deep, 0.6),
+    inset 0 1px 0 rgba($gold-bright, 0.1);
+
+  // Engine-turned lattice, same engraving as .formCard.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cdefs%3E%3Cpattern id='p' width='120' height='120' patternUnits='userSpaceOnUse'%3E%3Ccircle cx='0' cy='0' r='60' fill='none' stroke='%23D4AF5A' stroke-width='1'/%3E%3Ccircle cx='120' cy='0' r='60' fill='none' stroke='%23D4AF5A' stroke-width='1'/%3E%3Ccircle cx='0' cy='120' r='60' fill='none' stroke='%23D4AF5A' stroke-width='1'/%3E%3Ccircle cx='120' cy='120' r='60' fill='none' stroke='%23D4AF5A' stroke-width='1'/%3E%3Ccircle cx='60' cy='60' r='60' fill='none' stroke='%23D4AF5A' stroke-width='1'/%3E%3Ccircle cx='60' cy='60' r='30' fill='none' stroke='%23D4AF5A' stroke-width='0.75'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='120' height='120' fill='url(%23p)'/%3E%3C/svg%3E");
+    background-size: 90px 90px;
+    background-position: center;
+  }
+
+  // Hairline gold rule along the top edge.
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 12%;
+    right: 12%;
+    height: 1px;
+    z-index: 0;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba($gold-bright, 0.6), transparent);
+  }
+
+  // Each screen rises in once when it mounts. Polling re-renders reuse the
+  // same nodes, so nothing replays on every refresh tick.
+  > * {
+    position: relative;
+    z-index: 1;
+    animation: voteRise 0.42s $ease-out both;
+  }
+
+  @for $i from 2 through $stagger-children {
+    > *:nth-child(#{$i}) {
+      animation-delay: ($i - 1) * 55ms;
+    }
+  }
+
+  @media (max-width: 380px) {
+    padding: 30px 18px 22px;
+    gap: 20px;
+  }
+}
+
+// The small gold pill both screens open with ("GAMUN 2026 · ...").
+@mixin vote-badge-pill {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 16px;
+  border-radius: $radius-pill;
+  border: 1px solid rgba($gold-bright, 0.35);
+  background: $gold-glow-sm;
+  color: $gold-bright;
+  font-family: $vote-font-label;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+}
+
+// The quiet underlined text button both screens use to step back a level
+// (change e-mail / change chair key).
+@mixin vote-text-link {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  font-family: $vote-font-body;
+  font-size: 13px;
+  color: $white-dim;
+  background: none;
+  border: 0;
+  border-radius: $radius-md;
+  text-decoration: underline;
+  text-decoration-color: rgba($white-warm, 0.25);
+  text-underline-offset: 4px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color $duration-fast $ease-out,
+    text-decoration-color $duration-fast $ease-out;
+
+  &:hover {
+    color: $white-warm;
+    text-decoration-color: $gold-bright;
+  }
+
+  @include vote-focus(2px);
+}
+
+// A small muted line of copy, e.g. "loading…" or a status note. Each screen
+// owns this locally as its own `&__note` rather than reaching into an
+// unrelated component's class for basic text styling.
+@mixin vote-note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: $white-dim;
+}
+
+// The 3-up yes/no/abstain grid, and one tile within it. Used by the ballot's
+// own results screen and the chair panel's live tally, so a number means
+// the same thing rendered the same way on both.
+@mixin vote-tally-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@mixin vote-tally-item($number-size: clamp(30px, 9vw, 40px)) {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 22px 6px 14px;
+  overflow: hidden;
+  border-radius: $radius-md;
+  border: 1px solid $black-border;
+  background: rgba($black-deep, 0.5);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: var(--tone);
+  }
+
+  @include vote-tones;
+
+  strong {
+    font-family: $vote-font-number;
+    font-size: $number-size;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--tone);
+  }
+
+  span {
+    font-size: 12px;
+    line-height: 1.35;
+    color: $white-muted;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+}

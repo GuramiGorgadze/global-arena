@@ -7,31 +7,39 @@ const useDocumentTitle = () => {
   useEffect(() => {
     switch (pathname) {
       case '/':
-        document.title = 'Global Arena - GAMUN';
+        document.title = 'Global Arena | GAMUN';
         break;
 
       case '/register':
-        document.title = 'Global Arena - Registration';
+        document.title = 'Global Arena | Registration';
         break;
 
       case '/marathon':
-        document.title = 'Global Arena - Marathon';
+        document.title = 'Global Arena | Marathon';
         break;
 
       case '/committee-match':
-        document.title = 'Global Arena - Committee Match';
+        document.title = 'Global Arena | Committee Match';
         break;
 
       case '/admin-page-twvnlr4m8dqunb9kqdi6':
-        document.title = 'Global Arena - Admin';
+        document.title = 'Global Arena | Admin';
+        break;
+
+      case '/vote':
+        document.title = 'Global Arena | Voting';
+        break;
+
+      case '/voting-control':
+        document.title = 'Global Arena | Voting Control';
         break;
 
       case '/command':
-        document.title = 'Global Arena - MUN Command';
+        document.title = 'Global Arena | MUN Command';
         break;
 
       default:
-        document.title = 'Global Arena - Page Not Found';
+        document.title = 'Global Arena | Page Not Found';
         break;
     }
   }, [pathname]);
