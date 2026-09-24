@@ -1,0 +1,323 @@
+@use '../abstracts' as *;
+@use './votingShared' as *;
+
+// ---------------------------------------------------------------------------
+// Voting — auditorium screen (.votingScreen)
+//
+// A third, passive voting surface: no form to fill in, no button to press,
+// just a projector-facing readout of whatever the chair panel currently
+// shows. It borrows its colours, type roles and the small mixins
+// (vote-tones, vote-focus, vote-pulse-ring, vote-note, vote-text-link,
+// vote-badge-pill, vote-tally-*, the voteRise keyframe) from
+// _votingShared.scss, the same as .vote and .votingControl, so a result
+// looks like the same product wherever it's read. The page shell itself is
+// bespoke here rather than the shared vote-page-shell mixin: that mixin
+// centres a narrow phone card, where this screen wants a full-bleed
+// header/stage layout sized for a room, not a hand.
+//
+// Two content states share one .votingScreen__stage: a resolution (open —
+// status + turnout only; closed — full VoteResults chart) or, with nothing
+// open, an idle beacon plus the most recent result so the room never stares
+// at a blank screen between votes. .voteResults is reused as-is and scaled
+// up for a room-viewing distance via the override block at the bottom.
+// ---------------------------------------------------------------------------
+
+@include vote-pulse-ring(voteScreenLivePulse, $vote-ok, 10px, 0.6);
+@include vote-pulse-ring(voteScreenPulse, $gold-bright, 26px, 0.5);
+
+.votingScreen {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: max(28px, env(safe-area-inset-top)) max(40px, env(safe-area-inset-right))
+    max(24px, env(safe-area-inset-bottom)) max(40px, env(safe-area-inset-left));
+  font-family: $vote-font-body;
+  color: $white-warm;
+  background-color: $black-deep;
+  isolation: isolate;
+  overflow: hidden;
+  @include page-banner-shell($banner-opacity: 0.22);
+
+  &::before,
+  &::after {
+    position: fixed;
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .formInput {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .submitBtn {
+    width: 100%;
+    min-height: 50px;
+    justify-content: center;
+  }
+
+  // --- Header: identity pill left, clock right ---------------------------
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  &__badge {
+    @include vote-badge-pill;
+    align-self: auto;
+    font-size: 13px;
+  }
+
+  &__clock {
+    margin: 0;
+    font-family: $vote-font-number;
+    font-size: clamp(16px, 1.6vw, 22px);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+    color: rgba($white-warm, 0.7);
+  }
+
+  // --- Manual unlock gate --------------------------------------------------
+  &__gateWrap {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    width: 100%;
+  }
+
+  &__gate {
+    @include vote-card-shell($max-width: 420px, $stagger-children: 4);
+    text-align: center;
+  }
+
+  &__gateTitle {
+    margin: 0 0 4px;
+    font-family: $vote-font-heading;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: $white-warm;
+  }
+
+  // --- Main stage: idle beacon or current resolution ----------------------
+  &__stage {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    width: 100%;
+  }
+
+  &__note {
+    @include vote-note;
+    text-align: center;
+    font-size: clamp(15px, 1.4vw, 18px);
+
+    &--error {
+      color: $vote-bad-soft;
+    }
+  }
+
+  &__vote,
+  &__idle {
+    width: 100%;
+    max-width: min(100%, 1200px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: clamp(18px, 2.6vw, 32px);
+    animation: voteRise 0.5s $ease-out both;
+  }
+
+  &__statusRow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  &__statusPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 20px 9px 16px;
+    border-radius: $radius-pill;
+    border: 1px solid transparent;
+    font-family: $vote-font-label;
+    font-size: clamp(13px, 1.3vw, 17px);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    line-height: 1.2;
+
+    &::before {
+      content: '';
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    &--open {
+      color: $vote-ok;
+      background: rgba($vote-ok, 0.12);
+      border-color: rgba($vote-ok, 0.32);
+
+      &::before {
+        animation: voteScreenLivePulse 1.6s ease-out infinite;
+      }
+    }
+
+    &--closed {
+      color: $white-muted;
+      background: rgba($white-warm, 0.06);
+      border-color: $black-border;
+    }
+  }
+
+  &__committee {
+    display: inline-flex;
+    padding: 6px 16px;
+    border-radius: $radius-pill;
+    border: 1px solid rgba($gold-bright, 0.3);
+    font-family: $vote-font-label;
+    font-size: clamp(13px, 1.2vw, 16px);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: $gold-text-safe;
+  }
+
+  &__title {
+    margin: 0;
+    font-family: $font-body;
+    font-size: clamp(40px, 5vw, 92px);
+    font-weight: 700;
+    line-height: 1.15;
+    color: $white-warm;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+
+    &--sub {
+      font-size: clamp(24px, 3vw, 44px);
+    }
+  }
+
+  &__turnout {
+    margin: 0;
+    font-size: clamp(20px, 2.2vw, 30px);
+    line-height: 1.4;
+    color: $white-muted;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__closedAt {
+    margin: 0;
+    font-size: clamp(14px, 1.4vw, 18px);
+    color: $white-muted;
+  }
+
+  &__idleDot {
+    width: clamp(16px, 1.6vw, 22px);
+    height: clamp(16px, 1.6vw, 22px);
+    border-radius: 50%;
+    background: $gold-bright;
+    animation: voteScreenPulse 2.2s ease-out infinite;
+  }
+
+  &__idleText {
+    margin: 0;
+    font-size: clamp(20px, 2.4vw, 30px);
+    color: $white-muted;
+  }
+
+  &__lastResult {
+    margin-top: clamp(24px, 4vw, 52px);
+    padding-top: clamp(20px, 3vw, 32px);
+    border-top: 1px solid $black-border;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+
+  &__lastResultLabel {
+    margin: 0;
+    font-family: $vote-font-label;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: rgba($white-warm, 0.5);
+  }
+
+  // --- Quiet corner control, operator-only -------------------------------
+  &__reset {
+    @include vote-text-link;
+    margin-top: auto;
+    align-self: center;
+    opacity: 0.45;
+    font-size: 12px;
+    transition: opacity $duration-fast $ease-out;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  // The room-scale version of the shared results chart: same component,
+  // same accessible structure (count + % as real text, textured columns),
+  // just sized for a reading distance of metres instead of centimetres.
+  .voteResults {
+    gap: clamp(20px, 2.4vw, 32px);
+
+    &__chart {
+      gap: clamp(20px, 3vw, 48px);
+    }
+
+    &__value strong {
+      font-size: clamp(34px, 3.6vw, 60px);
+    }
+
+    &__value span {
+      font-size: clamp(14px, 1.2vw, 20px);
+    }
+
+    &__track {
+      width: min(100%, 180px);
+      height: clamp(220px, 26vw, 380px);
+    }
+
+    &__label {
+      font-size: clamp(16px, 1.6vw, 24px);
+    }
+
+    &__total {
+      padding-top: clamp(14px, 1.6vw, 20px);
+      font-size: clamp(15px, 1.4vw, 20px);
+    }
+  }
+
+  @media (max-width: 720px) {
+    padding-left: max(18px, env(safe-area-inset-left));
+    padding-right: max(18px, env(safe-area-inset-right));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .votingScreen__gate > *,
+  .votingScreen__vote,
+  .votingScreen__idle,
+  .votingScreen__statusPill--open::before,
+  .votingScreen__idleDot {
+    animation: none;
+  }
+}

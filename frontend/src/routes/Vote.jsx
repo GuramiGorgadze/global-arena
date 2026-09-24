@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { getVotingState, castVote } from '../api/voting';
+import VoteResults from './VoteResults';
 
 const EMAIL_KEY = 'vote:email:v1';
 const POLL_MS = 3000;
@@ -201,14 +202,10 @@ export default function Vote() {
             {resolution.status === 'closed' && (
               <>
                 <p className="vote__meta">კენჭისყრა დასრულდა</p>
-                <div className="vote__tally">
-                  {CHOICES.map((c) => (
-                    <div key={c.id}>
-                      <strong>{resolution.tally?.[c.id] ?? 0}</strong>
-                      <span>{c.label}</span>
-                    </div>
-                  ))}
-                </div>
+                <VoteResults
+                  choices={CHOICES}
+                  tally={resolution.tally}
+                />
                 {state.myVote && <p className="vote__note">თქვენი ხმა: {labelOf(state.myVote)}</p>}
                 <button
                   type="button"

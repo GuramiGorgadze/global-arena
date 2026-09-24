@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { getAdminVotingState, openVoting, closeVoting } from '../api/voting';
+import VoteResults from './VoteResults';
 
 const CHAIR_KEY_STORAGE = 'vote:chairKey:v1';
 const POLL_MS = 4000;
@@ -266,17 +267,10 @@ export default function VotingControl() {
                         {formatDateTime(resolution.closedAt) &&
                           ` · დაიხურა ${formatDateTime(resolution.closedAt)}`}
                       </p>
-                      <div className="votingControl__tally">
-                        {CHOICES.map((c) => (
-                          <div
-                            key={c.id}
-                            className="votingControl__tallyItem"
-                          >
-                            <strong>{state.tally?.[c.id] ?? 0}</strong>
-                            <span>{c.label}</span>
-                          </div>
-                        ))}
-                      </div>
+                      <VoteResults
+                        choices={CHOICES}
+                        tally={state.tally}
+                      />
                       {isOpen && (
                         <motion.button
                           type="button"
@@ -317,17 +311,10 @@ export default function VotingControl() {
                           {turnoutText(h.votesCast, h.eligibleCount)}
                           {formatDateTime(h.closedAt) && ` · დაიხურა ${formatDateTime(h.closedAt)}`}
                         </p>
-                        <div className="votingControl__tally">
-                          {CHOICES.map((c) => (
-                            <div
-                              key={c.id}
-                              className="votingControl__tallyItem"
-                            >
-                              <strong>{h.tally?.[c.id] ?? 0}</strong>
-                              <span>{c.label}</span>
-                            </div>
-                          ))}
-                        </div>
+                        <VoteResults
+                          choices={CHOICES}
+                          tally={h.tally}
+                        />
                       </div>
                     ))}
                   </div>

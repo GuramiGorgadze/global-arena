@@ -14,6 +14,7 @@ import {
   SessionCommandPage,
   Vote,
   VotingControl,
+  VotingScreen,
 } from './routes';
 import useDocumentTitle from './hooks/useDocumentTitle';
 import useScrollTop from './hooks/useScrollTop';
@@ -23,7 +24,7 @@ const APPLICATIONS_HOST = 'applications.g-arena.org';
 // Routes that render on their own — no Navbar, no Footer, none of the
 // site's content padding. A control surface, not a page. Add a path here
 // and it gets the same treatment; nothing else changes.
-const BARE_ROUTES = ['/command', '/vote', '/voting-control'];
+const BARE_ROUTES = ['/command', '/vote', '/voting-control', '/voting-screen'];
 
 function App() {
   useDocumentTitle();
@@ -67,6 +68,10 @@ function App() {
       <Route
         path="/voting-control"
         element={<VotingControl />}
+      />
+      <Route
+        path="/voting-screen"
+        element={<VotingScreen />}
       />
       <Route
         path="/command"

@@ -1,0 +1,176 @@
+@use '../abstracts' as *;
+@use './votingShared' as *;
+
+// ---------------------------------------------------------------------------
+// Voting — results column chart (.voteResults)
+//
+// One vertical column per option (yes / no / abstain), read against a
+// 50%-share gridline. Count and percentage sit as real text above each
+// column and the option name sits below it, so nothing here depends on
+// reading a column's height alone. On top of colour, each option keeps its
+// own fill texture (solid / diagonal stripes / dots) so the columns stay
+// distinguishable without colour. Columns are revealed with a clip-path
+// inset (paint only, no layout) so the textures never stretch. Used inside
+// both .vote__card and .votingControl__card.
+// ---------------------------------------------------------------------------
+
+.voteResults {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+
+  &__chart {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: end;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    --tone: #{$vote-neutral};
+
+    &[data-choice='yes'] {
+      --tone: #{$vote-ok};
+    }
+
+    &[data-choice='no'] {
+      --tone: #{$vote-bad};
+
+      .voteResults__bar {
+        background-image: repeating-linear-gradient(
+          -45deg,
+          rgba($black-deep, 0.38) 0 3px,
+          transparent 3px 8px
+        );
+      }
+    }
+
+    &[data-choice='abstain'] {
+      --tone: #{$vote-neutral};
+
+      .voteResults__bar {
+        background-image: radial-gradient(rgba($black-deep, 0.45) 1.3px, transparent 1.7px);
+        background-size: 8px 8px;
+      }
+    }
+
+    &[data-lead='true'] {
+      .voteResults__label {
+        font-weight: 700;
+      }
+
+      .voteResults__value strong {
+        color: $gold-bright;
+      }
+    }
+  }
+
+  // Data label above the column — value first (this is what a glance is
+  // for), percentage underneath it in a smaller, muted weight.
+  &__value {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-variant-numeric: tabular-nums;
+
+    strong {
+      font-family: $vote-font-number;
+      font-size: clamp(18px, 5vw, 22px);
+      font-weight: 700;
+      line-height: 1;
+      color: $white-warm;
+    }
+
+    span {
+      font-size: 12px;
+      line-height: 1;
+      color: $white-muted;
+    }
+  }
+
+  &__track {
+    position: relative;
+    width: min(100%, 56px);
+    height: clamp(120px, 30vw, 170px);
+    overflow: hidden;
+    border-radius: $radius-md $radius-md 3px 3px;
+    border: 1px solid $black-border;
+    background-color: rgba($white-warm, 0.05);
+    // Quiet 50% gridline so a column's height can be read against a
+    // reference: reaching it means that option took half the votes cast.
+    background-image: linear-gradient(
+      0deg,
+      transparent calc(50% - 0.5px),
+      rgba($white-warm, 0.16) calc(50% - 0.5px),
+      rgba($white-warm, 0.16) calc(50% + 0.5px),
+      transparent calc(50% + 0.5px)
+    );
+  }
+
+  &__bar {
+    position: absolute;
+    inset: 0;
+    background-color: var(--tone);
+    // Clip from the top by the unfilled share, so the column grows up from
+    // its own baseline instead of stretching (transitions stay paint-only).
+    clip-path: inset(calc((1 - var(--share, 0)) * 100%) 0 0 0);
+    transition: clip-path 0.42s $ease-out;
+    transition-delay: calc(var(--i, 0) * 70ms);
+  }
+
+  // X-axis label under the column. Georgian option names run long, so this
+  // wraps rather than truncating or forcing the column wider.
+  &__label {
+    font-family: $vote-font-heading;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: $white-warm;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+
+  &__total {
+    margin: 0;
+    padding-top: 12px;
+    border-top: 1px solid $black-border;
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: center;
+    color: $white-muted;
+    font-variant-numeric: tabular-nums;
+  }
+
+  // Narrow phones: three columns is already tight, so trim gaps and column
+  // height rather than letting the chart force the card wider.
+  @media (max-width: 380px) {
+    &__chart {
+      gap: 8px;
+    }
+
+    &__track {
+      height: clamp(100px, 28vw, 140px);
+    }
+
+    &__label {
+      font-size: 12px;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voteResults__bar {
+    transition: none;
+  }
+}

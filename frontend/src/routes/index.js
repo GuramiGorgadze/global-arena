@@ -7,3 +7,5 @@ export { default as NotFoundPage } from './NotFoundPage';
 export { default as SessionCommandPage } from './SessionCommandPage';
 export { default as Vote } from './Vote';
 export { default as VotingControl } from './VotingControl';
+export { default as VoteResults } from './VoteResults';
+export { default as VotingScreen } from './VotingScreen';
