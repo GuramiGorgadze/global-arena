@@ -460,6 +460,16 @@ function SetupShell({ children }) {
 // Sign in — pick a committee, then its password
 // ---------------------------------------------------------------------------
 
+// Human-readable label per committee status. Keyed by the same `state`
+// string CommitteeCard resolves below, so the two stay impossible to drift
+// apart.
+const COMMITTEE_STATE_LABEL = {
+  checking: 'Checking…',
+  new: 'Not set up yet',
+  ready: 'Ready — no session yet',
+  active: 'In progress',
+};
+
 function LoginScreen({ login }) {
   const [statuses, setStatuses] = useState(null); // [{committeeId, hasPassword, hasSession}] | null while loading
   const [selected, setSelected] = useState(null);
@@ -496,7 +506,9 @@ function LoginScreen({ login }) {
   return (
     <div className="commandSetup">
       <div className="commandSetup__inner">
-        <span className="commandSetup__badge">GAMUN Command</span>
+        <span className="commandSetup__badge">
+          <i className="bi bi-shield-lock" /> GAMUN Command
+        </span>
         <h1 className="commandSetup__title">Sign in to your committee</h1>
         <p className="commandSetup__desc">
           Pick your committee. If nobody has signed in to it yet, you'll set its password now — the
@@ -504,63 +516,104 @@ function LoginScreen({ login }) {
         </p>
 
         <div className="commandSetup__grid">
-          {COMMITTEES.map((committee) => {
+          {COMMITTEES.map((committee, index) => {
             const meta = statuses?.find((s) => s.committeeId === committee.id);
-            const statusLabel = !statuses
-              ? 'Checking…'
-              : !meta?.hasPassword
-                ? 'Not set up yet'
-                : meta.hasSession
-                  ? 'In progress'
-                  : 'Set up, no session yet';
+            const state = !statuses ? 'checking' : !meta?.hasPassword ? 'new' : meta.hasSession ? 'active' : 'ready';
+
             // A crisis cabinet or a press corps seats the same country over
-            // and over, so each flag shows once.
+            // and over, so each flag shows once, with a "+N" for the rest.
             const rosterCodes = committee.roster.map((entry) =>
               typeof entry === 'string' ? entry : entry.code
             );
-            const flagCodes = [...new Set(rosterCodes)].filter(Boolean).slice(0, 5);
+            const uniqueCodes = [...new Set(rosterCodes)].filter(Boolean);
+            const flagCodes = uniqueCodes.slice(0, 5);
+            const extraFlagsCount = Math.max(0, uniqueCodes.length - flagCodes.length);
+
             return (
-              <div
-                className="commandSetup__card"
+              <CommitteeCard
                 key={committee.id}
-              >
-                <button
-                  type="button"
-                  className="commandSetup__cardMain"
-                  onClick={() => setSelected(committee.id)}
-                >
-                  <span className="commandSetup__icon">
-                    <i className={`bi ${committee.icon}`} />
-                  </span>
-                  <span className="commandSetup__cardText">
-                    <span className="commandSetup__abbr">
-                      {committee.abbr}
-                      {committee.tag && <span className="commandSetup__tag">{committee.tag}</span>}
-                    </span>
-                    <span className="commandSetup__name">{committee.name}</span>
-                    <span className="commandSetup__meta">{statusLabel}</span>
-                  </span>
-                  <span className="commandSetup__flags">
-                    {flagCodes.map((code) => (
-                      <Flag
-                        key={`${committee.id}-${code}`}
-                        code={code}
-                        size={22}
-                      />
-                    ))}
-                  </span>
-                </button>
-              </div>
+                committee={committee}
+                state={state}
+                index={index}
+                flagCodes={flagCodes}
+                extraFlagsCount={extraFlagsCount}
+                seatCount={committee.roster.length}
+                onSelect={() => setSelected(committee.id)}
+              />
             );
           })}
         </div>
 
         <p className="commandSetup__hint">
+          <i className="bi bi-info-circle" />
           Signing in doesn't rebuild the roster or the topic. Both are set once, the first time a
-          committee ever signs in. It does start a fresh roll call, every time.
+          committee ever signs in. It does start a fresh roll call, every time. Forgoting a password isn't an end of the world. It can be changed or recovered by our team. Feel free to test out the functionality.
         </p>
       </div>
     </div>
+  );
+}
+
+function CommitteeCard({ committee, state, index, flagCodes, extraFlagsCount, seatCount, onSelect }) {
+  const checking = state === 'checking';
+
+  return (
+    <motion.button
+      type="button"
+      className="commandSetup__card"
+      onClick={onSelect}
+      disabled={checking}
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: index * 0.05, ease: EASE }}
+      whileHover={{ y: -3 }}
+      whileTap={{ scale: 0.98 }}
+    >
+      <i
+        className={`bi ${committee.icon} commandSetup__cardGlyph`}
+        aria-hidden="true"
+      />
+
+      <span className="commandSetup__cardArrow">
+        <i className="bi bi-arrow-right" />
+      </span>
+
+      <span className="commandSetup__cardTop">
+        <span className="commandSetup__icon">
+          <i className={`bi ${committee.icon}`} />
+        </span>
+        <span className={`commandSetup__status commandSetup__status--${state}`}>
+          <i className="bi bi-circle-fill" />
+          {COMMITTEE_STATE_LABEL[state]}
+        </span>
+      </span>
+
+      <span className="commandSetup__cardText">
+        <span className="commandSetup__abbr">
+          {committee.abbr}
+          {committee.tag && <span className="commandSetup__tag">{committee.tag}</span>}
+        </span>
+        <span className="commandSetup__name">{committee.name}</span>
+      </span>
+
+      <span className="commandSetup__cardFoot">
+        <span className="commandSetup__seatCount">
+          <i className="bi bi-people" />
+          {seatCount} {committee.seatLabel.toLowerCase()}
+          {seatCount === 1 ? '' : 's'}
+        </span>
+        <span className="commandSetup__flags">
+          {flagCodes.map((code) => (
+            <Flag
+              key={code}
+              code={code}
+              size={20}
+            />
+          ))}
+          {extraFlagsCount > 0 && <span className="commandSetup__flagsMore">+{extraFlagsCount}</span>}
+        </span>
+      </span>
+    </motion.button>
   );
 }
 
@@ -570,8 +623,12 @@ function PasswordStep({ committeeId, hasPassword, onBack, login }) {
 
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  const lengthOk = password.length >= 4;
+  const matchOk = !isFirstTime || (confirm.length > 0 && password === confirm);
 
   const submit = async () => {
     setError('');
@@ -603,45 +660,87 @@ function PasswordStep({ committeeId, hasPassword, onBack, login }) {
       <div className="commandSetup__inner loginStep">
         <button
           type="button"
-          className="commandGhostBtn loginStep__back"
+          className="commandIconBtn loginStep__back"
           onClick={onBack}
+          disabled={submitting}
+          aria-label="Back to committee list"
         >
-          <i className="bi bi-arrow-left" /> Back
+          <i className="bi bi-arrow-left" />
         </button>
 
-        <span className="commandSetup__icon loginStep__icon">
-          <i className={`bi ${committee.icon}`} />
-        </span>
-        <h1 className="commandSetup__title">{committee.abbr}</h1>
-        <p className="commandSetup__desc">
-          {isFirstTime
-            ? 'Nobody has signed in to this committee yet. Choose a password now — the dais will use it for the rest of the conference.'
-            : "Enter this committee's password."}
-        </p>
+        <div className="loginStep__identity">
+          <span className="commandSetup__icon loginStep__icon">
+            <i className={`bi ${committee.icon}`} />
+          </span>
+          <h1 className="commandSetup__title loginStep__title">{committee.abbr}</h1>
+          <p className="loginStep__fullName">{committee.name}</p>
+        </div>
+
+        {isFirstTime ? (
+          <div className="loginStep__notice">
+            <i className="bi bi-key-fill" />
+            <div>
+              <p className="loginStep__noticeTitle">First sign-in for this committee</p>
+              <p className="loginStep__noticeText">
+                Choose a password now — the dais will use it for the rest of the conference.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <p className="commandSetup__desc loginStep__desc">
+            Enter this committee's password to continue.
+          </p>
+        )}
 
         <div className="loginStep__fields">
-          <input
-            type="password"
-            className="rosterSearch"
-            placeholder="Password"
+          <PasswordField
+            id="committeePassword"
+            label="Password"
             value={password}
-            autoFocus
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={setPassword}
             onKeyDown={onEnter}
+            show={showPassword}
+            onToggleShow={() => setShowPassword((v) => !v)}
+            autoComplete={isFirstTime ? 'new-password' : 'current-password'}
+            autoFocus
           />
+
           {isFirstTime && (
-            <input
-              type="password"
-              className="rosterSearch"
-              placeholder="Confirm password"
+            <PasswordField
+              id="committeePasswordConfirm"
+              label="Confirm password"
               value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
+              onChange={setConfirm}
               onKeyDown={onEnter}
+              show={showPassword}
+              onToggleShow={() => setShowPassword((v) => !v)}
+              autoComplete="new-password"
             />
+          )}
+
+          {isFirstTime && password.length > 0 && (
+            <ul className="loginStep__checklist">
+              <li className={lengthOk ? 'is-met' : undefined}>
+                <i className={`bi ${lengthOk ? 'bi-check-circle-fill' : 'bi-circle'}`} />
+                At least 4 characters
+              </li>
+              <li className={matchOk ? 'is-met' : undefined}>
+                <i className={`bi ${matchOk ? 'bi-check-circle-fill' : 'bi-circle'}`} />
+                Passwords match
+              </li>
+            </ul>
           )}
         </div>
 
-        {error && <p className="loginStep__error">{error}</p>}
+        {error && (
+          <p
+            className="loginStep__error"
+            role="alert"
+          >
+            <i className="bi bi-exclamation-triangle-fill" />
+            {error}
+          </p>
+        )}
 
         <button
           type="button"
@@ -649,7 +748,52 @@ function PasswordStep({ committeeId, hasPassword, onBack, login }) {
           onClick={submit}
           disabled={submitting}
         >
-          {submitting ? 'Signing in…' : isFirstTime ? 'Set password and continue' : 'Sign in'}
+          {submitting ? (
+            <>
+              <i className="bi bi-arrow-repeat loginStep__spinner" /> Signing in…
+            </>
+          ) : isFirstTime ? (
+            <>
+              Set password and continue <i className="bi bi-arrow-right" />
+            </>
+          ) : (
+            <>
+              Sign in <i className="bi bi-arrow-right" />
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PasswordField({ id, label, value, onChange, onKeyDown, show, onToggleShow, autoComplete, autoFocus }) {
+  return (
+    <div className="loginStep__field">
+      <label
+        className="loginStep__label"
+        htmlFor={id}
+      >
+        {label}
+      </label>
+      <div className="loginStep__inputWrap">
+        <input
+          id={id}
+          type={show ? 'text' : 'password'}
+          className="rosterSearch"
+          value={value}
+          autoFocus={autoFocus}
+          autoComplete={autoComplete}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={onKeyDown}
+        />
+        <button
+          type="button"
+          className="loginStep__toggle"
+          onClick={onToggleShow}
+          aria-label={show ? 'Hide password' : 'Show password'}
+        >
+          <i className={`bi ${show ? 'bi-eye-slash' : 'bi-eye'}`} />
         </button>
       </div>
     </div>

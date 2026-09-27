@@ -50,6 +50,22 @@ $font-number: $font-display; // clocks, tallies, counters, stat values
 // important thing" buttons always match, wherever they're declared.
 $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-muted 100%);
 
+@keyframes commandSetupPulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes commandSetupSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @mixin thin-scroll {
   scrollbar-width: thin;
   scrollbar-color: rgba($gold-bright, 0.35) transparent;
@@ -133,7 +149,6 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
   // styles (and every other style in it) confined to this page.
   // ---------------------------------------------------------------------
 
-
   // ---------------------------------------------------------------------------
   // Setup
   // ---------------------------------------------------------------------------
@@ -168,7 +183,11 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       inset: 0;
       z-index: 0;
       pointer-events: none;
-      background-image: radial-gradient(circle at 1px 1px, rgba($gold-bright, 0.16) 1px, transparent 0);
+      background-image: radial-gradient(
+        circle at 1px 1px,
+        rgba($gold-bright, 0.16) 1px,
+        transparent 0
+      );
       background-size: 26px 26px;
       mask-image: radial-gradient(ellipse 65% 55% at 50% 18%, black, transparent 72%);
       -webkit-mask-image: radial-gradient(ellipse 65% 55% at 50% 18%, black, transparent 72%);
@@ -178,7 +197,10 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       position: relative;
       z-index: 1;
       width: 100%;
-      max-width: 880px;
+      // Widened from 880px so a 3-column committee grid has room to breathe.
+      // Nested screens (roster setup, the login step) cap their own width
+      // below this, so this only ever adds surrounding whitespace for them.
+      max-width: 1040px;
       text-align: center;
     }
 
@@ -221,27 +243,44 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       font-size: 14.5px;
       line-height: 1.75;
       color: $white-muted;
-      max-width: 520px;
+      max-width: 560px;
       margin: 0 auto 36px;
     }
 
     &__grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       grid-auto-rows: 1fr;
       gap: 14px;
       text-align: left;
 
-      @media (max-width: 760px) {
+      @media (max-width: 980px) {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      @media (max-width: 620px) {
         grid-template-columns: 1fr;
       }
     }
 
+    // The card is a real <button> now (see the JSX) — one focusable, tappable
+    // surface instead of a div wrapping a second, separately-styled button.
     &__card {
-      @include panel-surface;
       position: relative;
       display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+      width: 100%;
+      min-height: 192px;
+      padding: 20px;
       overflow: hidden;
+      border: none;
+      color: inherit;
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+      @include panel-surface;
       transition:
         border-color $duration-fast $ease-out,
         transform $duration-fast $ease-out,
@@ -259,7 +298,7 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
         transition: opacity $duration-fast $ease-out;
       }
 
-      &:hover {
+      &:hover:not(:disabled) {
         border-color: rgba($gold-bright, 0.42);
         transform: translateY(-2px);
         box-shadow: 0 14px 34px rgba($black-deep, 0.45);
@@ -268,25 +307,83 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
           opacity: 1;
         }
       }
-    }
-
-    &__cardMain {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      width: 100%;
-      padding: 20px;
-      background: none;
-      border: none;
-      color: inherit;
-      font-family: inherit;
-      text-align: left;
-      cursor: pointer;
 
       &:focus-visible {
         outline: 2px solid $gold-bright;
         outline-offset: -4px;
       }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: wait;
+        pointer-events: none;
+      }
+    }
+
+    // A giant, faint watermark of the committee's own icon, bleeding off the
+    // card's bottom-right corner — texture and identity at zero extra copy.
+    // Clipped by the card's own overflow: hidden.
+    &__cardGlyph {
+      position: absolute;
+      right: -14px;
+      bottom: -18px;
+      font-size: 108px;
+      line-height: 1;
+      color: $gold-bright;
+      opacity: 0.05;
+      pointer-events: none;
+      transition:
+        opacity $duration-fast $ease-out,
+        transform $duration-mid $ease-out;
+    }
+
+    &__card:hover:not(:disabled) &__cardGlyph {
+      opacity: 0.09;
+      transform: scale(1.06) rotate(-4deg);
+    }
+
+    // A small "this opens" affordance, top-right. Reinforcement, not the only
+    // signifier — the whole card already reads as a button via its border,
+    // shadow and cursor — so it's fine for this to only appear on hover/focus.
+    &__cardArrow {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: 1px solid $black-border;
+      background: rgba($black-deep, 0.4);
+      color: $white-dim;
+      font-size: 11px;
+      opacity: 0;
+      transform: translateX(-4px);
+      transition:
+        opacity $duration-fast $ease-out,
+        transform $duration-fast $ease-out,
+        color $duration-fast $ease-out,
+        border-color $duration-fast $ease-out;
+    }
+
+    &__card:hover:not(:disabled) &__cardArrow,
+    &__card:focus-visible &__cardArrow {
+      opacity: 1;
+      transform: translateX(0);
+      color: $gold-bright;
+      border-color: rgba($gold-bright, 0.4);
+    }
+
+    &__cardTop {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
     }
 
     &__icon {
@@ -299,17 +396,61 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       justify-content: center;
       font-size: 19px;
       color: $gold-bright;
-      background: radial-gradient(circle at 30% 30%, rgba($gold-bright, 0.22), rgba($gold-bright, 0.08));
+      background: radial-gradient(
+        circle at 30% 30%,
+        rgba($gold-bright, 0.22),
+        rgba($gold-bright, 0.08)
+      );
       border: 1px solid rgba($gold-bright, 0.32);
       box-shadow: inset 0 0 0 1px rgba($black-deep, 0.3);
     }
 
+    // The status pill. Colour is never the only signal — every state also
+    // carries its own text label right next to the dot.
+    &__status {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px 3px 7px;
+      margin-top: 4px;
+      border-radius: $radius-pill;
+      border: 1px solid $black-border;
+      background: rgba($white-warm, 0.06);
+      color: $white-dim;
+      font-family: $font-label;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+
+      i {
+        font-size: 6px;
+      }
+
+      &--ready {
+        color: $gold-bright;
+        background: rgba($gold-bright, 0.12);
+        border-color: rgba($gold-bright, 0.3);
+      }
+
+      &--active {
+        color: $ok;
+        background: rgba($ok, 0.12);
+        border-color: rgba($ok, 0.3);
+      }
+
+      &--checking i {
+        animation: commandSetupPulse 1.4s ease-in-out infinite;
+      }
+    }
+
     &__cardText {
-      flex: 1;
-      min-width: 0;
+      position: relative;
+      z-index: 1;
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 4px;
     }
 
     &__abbr {
@@ -317,7 +458,7 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       align-items: center;
       gap: 8px;
       font-family: $font-label;
-      font-size: 17px;
+      font-size: 19px;
       font-weight: 700;
       color: $white-warm;
     }
@@ -337,13 +478,37 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       font-size: 12px;
       line-height: 1.45;
       color: $white-muted;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
-    &__meta {
-      font-family: $font-label;
+    &__cardFoot {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid $black-border;
+    }
+
+    &__seatCount {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: $font-subhead;
       font-size: 11px;
-      letter-spacing: 0.02em;
       color: $white-dim;
+      white-space: nowrap;
+
+      i {
+        font-size: 11px;
+      }
     }
 
     // A compact overlapping row instead of a tall vertical stack — five flags
@@ -374,12 +539,45 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       }
     }
 
+    &__flagsMore {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 15px;
+      margin-left: -8px;
+      border-radius: 4px;
+      background: $black-elevated;
+      box-shadow:
+        0 0 0 2px $black-elevated,
+        0 2px 6px rgba($black-deep, 0.5);
+      font-family: $font-label;
+      font-size: 9px;
+      font-weight: 700;
+      color: $white-dim;
+    }
+
     &__hint {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 8px;
       margin-top: 24px;
       font-family: $font-subhead;
       font-size: 12px;
       line-height: 1.6;
       color: $white-dim;
+      text-align: left;
+      max-width: 640px;
+      margin-left: auto;
+      margin-right: auto;
+
+      i {
+        flex-shrink: 0;
+        margin-top: 2px;
+        font-size: 13px;
+        color: $gold-bright;
+      }
     }
   }
 
@@ -420,6 +618,8 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
 
   .loginStep {
     position: relative;
+    max-width: 400px;
+    margin: 0 auto;
     text-align: center;
 
     &__back {
@@ -433,31 +633,194 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       }
     }
 
+    &__identity {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
     &__icon {
-      margin: 8px auto 18px;
-      width: 56px;
-      height: 56px;
-      font-size: 22px;
+      margin: 8px auto 14px;
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+    }
+
+    &__title {
+      margin-bottom: 4px;
+    }
+
+    &__fullName {
+      max-width: 320px;
+      margin: 0 auto 22px;
+      font-family: $font-subhead;
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: $white-dim;
+    }
+
+    // The "you're setting this committee's password for the whole
+    // conference" moment — worth a distinct visual beat from a routine
+    // "enter your password" prompt, so nobody breezes past it.
+    &__notice {
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+      max-width: 320px;
+      margin: 0 auto 22px;
+      padding: 13px 14px;
+      border-radius: $radius-md;
+      border: 1px solid rgba($gold-bright, 0.28);
+      background: linear-gradient(135deg, rgba($gold-bright, 0.1), rgba($gold-bright, 0.03));
+      text-align: left;
+
+      i {
+        flex-shrink: 0;
+        margin-top: 1px;
+        font-size: 15px;
+        color: $gold-bright;
+      }
+    }
+
+    &__noticeTitle {
+      font-family: $font-label;
+      font-size: 12px;
+      font-weight: 700;
+      color: $white-warm;
+      margin-bottom: 3px;
+    }
+
+    &__noticeText {
+      font-family: $font-subhead;
+      font-size: 11.5px;
+      line-height: 1.55;
+      color: $white-dim;
+    }
+
+    &__desc {
+      margin-bottom: 24px;
     }
 
     &__fields {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 14px;
       max-width: 320px;
       margin: 0 auto;
+      text-align: left;
+    }
+
+    &__field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    &__label {
+      font-family: $font-label;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: $white-dim;
+    }
+
+    &__inputWrap {
+      position: relative;
+
+      // Higher specificity than .rosterSearch's own padding shorthand, so it
+      // wins regardless of the two rules' order in the file.
+      .rosterSearch {
+        padding-right: 40px;
+      }
+    }
+
+    &__toggle {
+      position: absolute;
+      top: 50%;
+      right: 4px;
+      transform: translateY(-50%);
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 6px;
+      background: none;
+      color: $white-dim;
+      font-size: 13px;
+      cursor: pointer;
+
+      &:hover {
+        color: $gold-bright;
+      }
+
+      &:focus-visible {
+        outline: 2px solid $gold-bright;
+        outline-offset: 1px;
+      }
+    }
+
+    &__checklist {
+      margin: 2px 0 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+
+      li {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-family: $font-subhead;
+        font-size: 11px;
+        color: $white-dim;
+        transition: color $duration-fast $ease-out;
+
+        i {
+          font-size: 11px;
+        }
+
+        &.is-met {
+          color: $ok;
+        }
+      }
     }
 
     &__error {
-      margin-top: 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      max-width: 320px;
+      margin: 16px auto 0;
+      padding: 10px 12px;
+      border-radius: $radius-md;
+      border: 1px solid rgba($bad, 0.35);
+      background: rgba($bad, 0.08);
+      text-align: left;
       font-family: $font-subhead;
-      font-size: 12.5px;
+      font-size: 12px;
+      line-height: 1.5;
       color: $bad;
+
+      i {
+        flex-shrink: 0;
+        margin-top: 1px;
+        font-size: 13px;
+      }
     }
 
     &__submit {
-      margin-top: 18px;
+      width: 100%;
+      max-width: 320px;
+      margin: 20px auto 0;
       padding: 13px 28px;
+    }
+
+    &__spinner {
+      animation: commandSetupSpin 0.8s linear infinite;
     }
   }
 
@@ -2162,8 +2525,7 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
     padding: 8px 30px 8px 11px;
     border-radius: $radius-md;
     border: 1px solid $black-border;
-    background:
-      rgba($black-deep, 0.6)
+    background: rgba($black-deep, 0.6)
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%238c8378' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l5 5 5-5'/%3E%3C/svg%3E")
       no-repeat right 11px center;
     background-size: 10px 7px;
@@ -2958,8 +3320,7 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       padding: 4px 20px 4px 6px;
       border-radius: 6px;
       border: 1px solid $black-border;
-      background:
-        rgba($black-card, 0.7)
+      background: rgba($black-card, 0.7)
         url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%238c8378' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l5 5 5-5'/%3E%3C/svg%3E")
         no-repeat right 6px center;
       background-size: 9px 6px;
@@ -3427,7 +3788,6 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
 
 @media (prefers-reduced-motion: reduce) {
   .commandPage {
-
     .floorStage__ringFill,
     .floorBlock__fill {
       transition: none;
@@ -3435,6 +3795,13 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
 
     .commandSetup__card:hover {
       transform: none;
+    }
+
+    .commandSetup__card:hover .commandSetup__cardGlyph {
+      transform: none;
+    }
+    .commandSetup__status--checking i {
+      animation: none;
     }
   }
 }
