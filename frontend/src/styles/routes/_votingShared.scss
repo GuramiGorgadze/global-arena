@@ -15,7 +15,10 @@
 // pieces (badge pill, text link, muted note, tally grid) that used to be
 // hand-duplicated between the two files with small, accidental differences.
 // Anything that should look and move the same on both screens belongs here,
-// not copy-pasted twice.
+// not copy-pasted twice. That now includes the login/gate screen itself
+// (`.voteGate`, at the bottom of this file): VotingControl.jsx and
+// VotingScreen.jsx both render it via the shared VotingGate.jsx component,
+// so there is exactly one place that screen is styled.
 // ---------------------------------------------------------------------------
 
 // --- Colours -----------------------------------------------------------
@@ -294,5 +297,53 @@ $vote-font-number: $font-display; // tallies
     color: $white-muted;
     text-align: center;
     overflow-wrap: anywhere;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Shared login/gate screen (.voteGate)
+//
+// Rendered by components/voting/VotingGate.jsx, used as-is by both
+// VotingControl.jsx (logged out) and VotingScreen.jsx (logged out). One
+// card, one badge, one field, one button — a chair typing the shared
+// password sees the identical screen whether they're about to open the
+// control panel or the public display.
+// ---------------------------------------------------------------------------
+.voteGate {
+  @include vote-card-shell($max-width: 420px, $stagger-children: 4);
+  text-align: center;
+
+  // Both pages that render this card (.votingControl, .votingScreen) also
+  // set .formInput/.submitBtn sizing of their own, at the same specificity
+  // as the rules below — so these values are pinned to match theirs
+  // exactly. Whichever rule the cascade actually applies, the rendered
+  // size is identical, and the gate stays correct even if it's ever
+  // dropped into a page that doesn't set its own.
+  .formInput {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .submitBtn {
+    width: 100%;
+    min-height: 50px;
+    justify-content: center;
+  }
+}
+
+.voteGate__badge {
+  @include vote-badge-pill;
+}
+
+.voteGate__form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  text-align: left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voteGate > * {
+    animation: none;
   }
 }

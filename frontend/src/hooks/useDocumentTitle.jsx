@@ -34,6 +34,10 @@ const useDocumentTitle = () => {
         document.title = 'Global Arena | Voting Control';
         break;
 
+      case '/voting-screen':
+        document.title = 'Global Arena | Voting Screen';
+        break;
+
       case '/command':
         document.title = 'Global Arena | MUN Command';
         break;

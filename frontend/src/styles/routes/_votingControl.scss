@@ -15,7 +15,10 @@
 //
 // Shared colours, font roles, the page/card shells, and the vote-tones /
 // vote-focus / vote-tally mixins all live in _votingShared.scss — this file
-// only holds what's specific to the panel.
+// only holds what's specific to the panel. The logged-out login screen
+// lives there too now (`.voteGate`, rendered via components/voting/
+// VotingGate.jsx), so it matches VotingScreen's login screen exactly; this
+// file no longer defines its own gate styling.
 // ---------------------------------------------------------------------------
 
 @include vote-pulse-ring(voteLivePulse, $vote-ok, 8px, 0.6);
@@ -53,14 +56,6 @@ input[type='number']::-webkit-outer-spin-button {
 
   &__note {
     @include vote-note;
-  }
-
-  &__gate {
-    width: min(100%, 380px);
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
   }
 
   &__lock {

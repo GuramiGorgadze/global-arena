@@ -15,6 +15,12 @@
 // centres a narrow phone card, where this screen wants a full-bleed
 // header/stage layout sized for a room, not a hand.
 //
+// The logged-out login screen is the one exception: it's the shared
+// `.voteGate` card (rendered via components/voting/VotingGate.jsx), so it
+// matches VotingControl's login screen exactly, and only `&__gateWrap`
+// below still belongs to this file — it just centres that shared card the
+// way this page's own layout always centred its gate.
+//
 // Two content states share one .votingScreen__stage: a resolution (open —
 // status + turnout only; closed — full VoteResults chart) or, with nothing
 // open, an idle beacon plus the most recent result so the room never stares
@@ -87,25 +93,14 @@
   }
 
   // --- Manual unlock gate --------------------------------------------------
+  // Only the centring wrapper lives here — the card itself is the shared
+  // `.voteGate` from _votingShared.scss, so a chair sees the exact same
+  // login screen here as on /voting-control.
   &__gateWrap {
     flex: 1;
     display: grid;
     place-items: center;
     width: 100%;
-  }
-
-  &__gate {
-    @include vote-card-shell($max-width: 420px, $stagger-children: 4);
-    text-align: center;
-  }
-
-  &__gateTitle {
-    margin: 0 0 4px;
-    font-family: $vote-font-heading;
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 1.4;
-    color: $white-warm;
   }
 
   // --- Main stage: idle beacon or current resolution ----------------------
@@ -313,7 +308,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .votingScreen__gate > *,
   .votingScreen__vote,
   .votingScreen__idle,
   .votingScreen__statusPill--open::before,

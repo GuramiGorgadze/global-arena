@@ -145,31 +145,58 @@ function splitDuration(ms) {
 }
 
 // ---------------------------------------------------------------------------
-// Shared shell for the two "take our quiz" teaser cards (marathon +
-// committee match). These were two ~100-line blocks of near-identical JSX
-// and SCSS differing only in badge label, copy, and what sits in the
-// right-hand panel — now it's one component, and each quiz just supplies
-// its badge text/copy/panel content/CTA.
+// Promo grid
+//
+// Four cards point at the site's actual tools: two evergreen quizzes
+// (marathon, committee match) and two live-conference instruments (the
+// chair console, the delegate ballot). One shared PromoCard shell renders
+// all four so the icon medallion, corner marks, and footer layout stay
+// identical everywhere — each card only supplies its own icon, copy, and a
+// small panel (a live badge, an icon cluster, a lock notice, or a set of
+// ballot choices).
 // ---------------------------------------------------------------------------
-function PromoCard({ badgeText, title, desc, panel, ctaHref, ctaLabel, className = '' }) {
+function PromoCard({ icon, badgeText, title, desc, panel, ctaHref, ctaLabel, className = '' }) {
   return (
-    <motion.section
+    <motion.article
       className={`promoCard ${className}`.trim()}
       initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.7, ease: EASE_OUT }}
     >
+      <span
+        className="promoCard__corner promoCard__corner--tl"
+        aria-hidden="true"
+      />
+      <span
+        className="promoCard__corner promoCard__corner--br"
+        aria-hidden="true"
+      />
       <AmbientParticles
-        count={12}
+        count={8}
         className="particles--promo"
       />
+
       <div className="promoCard__inner">
         <div className="promoCard__text">
-          <span className="promoCard__badge">
-            <span className="promoCard__badgeDot" /> {badgeText}
-          </span>
-          <h2 className="promoCard__title">{title}</h2>
+          <div className="promoCard__head">
+            {icon && (
+              <span
+                className="promoCard__icon"
+                aria-hidden="true"
+              >
+                <i className={`bi ${icon}`} />
+              </span>
+            )}
+            <span className="promoCard__badge">
+              <span
+                className="promoCard__badgeDot"
+                aria-hidden="true"
+              />
+              {badgeText}
+            </span>
+          </div>
+          <h3 className="promoCard__title">{title}</h3>
           <p className="promoCard__desc">{desc}</p>
         </div>
 
@@ -177,27 +204,31 @@ function PromoCard({ badgeText, title, desc, panel, ctaHref, ctaLabel, className
           {panel}
           <BurstCTA
             href={ctaHref}
-            className="submitBtn"
-            strength={16}
+            className="submitBtn promoCard__cta"
+            strength={14}
           >
             {ctaLabel} <i className="bi bi-arrow-right" />
           </BurstCTA>
         </div>
       </div>
-    </motion.section>
+    </motion.article>
   );
 }
 
 function MarathonPromo() {
   const panel = (
     <span className="promoCard__live">
-      <span className="promoCard__liveDot" /> ღიაა ნებისმიერ დროს
+      <span
+        className="promoCard__liveDot"
+        aria-hidden="true"
+      />
+      ღიაა ნებისმიერ დროს
     </span>
   );
 
   return (
     <PromoCard
-      className="promoCard--first"
+      icon="bi-stopwatch-fill"
       badgeText="მარათონი"
       title={
         <>
@@ -231,6 +262,7 @@ function CommitteeMatchPromo() {
 
   return (
     <PromoCard
+      icon="bi-compass-fill"
       badgeText="ტესტი"
       title={
         <>
@@ -242,6 +274,101 @@ function CommitteeMatchPromo() {
       ctaHref="/committee-match"
       ctaLabel="ტესტის დაწყება"
     />
+  );
+}
+
+function MunCommandPromo() {
+  const panel = (
+    <span className="promoCard__lock">
+      <i
+        className="bi bi-shield-lock-fill"
+        aria-hidden="true"
+      />
+      დაცულია პაროლით - მხოლოდ თავმჯდომარეებისთვის
+    </span>
+  );
+
+  return (
+    <PromoCard
+      icon="bi-sliders"
+      badgeText="სამართავი პანელი"
+      title={
+        <>
+          მართე შენი <em>კომიტეტი</em>
+        </>
+      }
+      desc="დასწრება, მოლაპარაკებები, დოკუმენტები და კენჭისყრა ერთი ეკრანიდან."
+      panel={panel}
+      ctaHref="/command"
+      ctaLabel="კონსოლში შესვლა"
+    />
+  );
+}
+
+function VotingPromo() {
+  const panel = (
+    <div
+      className="promoCard__choices"
+      aria-hidden="true"
+    >
+      <span className="promoCard__choiceChip">
+        <i className="bi bi-check-lg" /> მომხრე
+      </span>
+      <span className="promoCard__choiceChip">
+        <i className="bi bi-x-lg" /> წინააღმდეგი
+      </span>
+      <span className="promoCard__choiceChip">
+        <i className="bi bi-dash-lg" /> თავი შეიკავა
+      </span>
+    </div>
+  );
+
+  return (
+    <PromoCard
+      icon="bi-check2-square"
+      badgeText="კენჭისყრა"
+      title={
+        <>
+          მიეცი ხმა <em>რეალურ დროში</em>
+        </>
+      }
+      desc="  მიეცი ხმა პირდაპირ შენი ტელეფონიდან, გენერალური ანსამბლეის  მიმდინარეობისას."
+      panel={panel}
+      ctaHref="/vote"
+      ctaLabel="კენჭისყრაზე გადასვლა"
+    />
+  );
+}
+
+function PromoSection() {
+  return (
+    <section
+      className="promoSection"
+      id="tools"
+    >
+      <motion.div
+        className="sectionHeader"
+        initial={{ opacity: 0, y: 22 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.4 }}
+        transition={{ duration: 0.6, ease: EASE_OUT }}
+      >
+        <h2>
+          ტესტები და <em>ხელსაწყოები</em>
+        </h2>
+        <p>
+          გამოსცადე ჩვენი მარათონი და საინტერესო ქვიზი, ან დაათვალიერე კონფერენციისთვის საჭირო ხელსაწყოები
+          დებატების მართვისა და კენჭისყრისთვის.
+        </p>
+      </motion.div>
+
+      <div className="promoGrid">
+        <MarathonPromo />
+        <CommitteeMatchPromo />
+        <MunCommandPromo />
+        <VotingPromo />
+      </div>
+    </section>
   );
 }
 
@@ -266,8 +393,7 @@ export default function HomePage() {
           />
           <Stats />
           <CommitteeTicker />
-          <MarathonPromo />
-          <CommitteeMatchPromo />
+          <PromoSection />
           <Info />
           <Committees />
           <CtaBanner />
@@ -650,5 +776,5 @@ function CtaBanner() {
         დარეგისტრირდი <i className="bi bi-arrow-right" />
       </BurstCTA>
     </motion.section>
-  );
+  );  
 }

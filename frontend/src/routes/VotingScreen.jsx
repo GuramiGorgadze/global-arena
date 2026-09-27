@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { getAdminVotingState } from '../api/voting';
 import VoteResults from './VoteResults';
+import VotingGate from '../components/voting/VotingGate';
 
 // Same sessionStorage key VotingControl.jsx uses, on purpose: a chair who
 // already unlocked the control panel in this browser tab lands straight on
@@ -151,6 +152,27 @@ export default function VotingScreen() {
     hour12: false,
   });
 
+  // Logged out: the exact same login screen VotingControl.jsx shows — same
+  // card, same badge, same field, same button — since both surfaces unlock
+  // with one shared chair password. The centering wrapper is kept so the
+  // gate still lands mid-screen the way it always did here.
+  if (!chairKey) {
+    return (
+      <main className="votingScreen">
+        <div className="votingScreen__gateWrap">
+          <VotingGate
+            idPrefix="screen"
+            value={keyInput}
+            onChange={(e) => setKeyInput(e.target.value)}
+            onSubmit={unlock}
+            loading={unlocking}
+            error={keyError}
+          />
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="votingScreen">
       <header className="votingScreen__header">
@@ -158,128 +180,83 @@ export default function VotingScreen() {
         <p className="votingScreen__clock">{clockText}</p>
       </header>
 
-      {!chairKey && (
-        <div className="votingScreen__gateWrap">
-          <form
-            onSubmit={unlock}
-            className="votingScreen__gate"
+      <div
+        className="votingScreen__stage"
+        aria-live="polite"
+      >
+        {loading && !state ? (
+          <p className="votingScreen__note">იტვირთება...</p>
+        ) : fetchError && !state ? (
+          <p className="votingScreen__note votingScreen__note--error">
+            {fetchError} — შეამოწმეთ ბმული ან პაროლი.
+          </p>
+        ) : resolution ? (
+          <div
+            key={`${resolution.id}-${resolution.status}`}
+            className="votingScreen__vote"
           >
-            <p className="votingScreen__gateTitle">ეკრანის გასაშვებად შეიყვანეთ პაროლი</p>
-            <div className="formGroup">
-              <label
-                className="formLabel"
-                htmlFor="screenKey"
-              >
-                შეიყვანეთ პაროლი
-              </label>
-              <input
-                id="screenKey"
-                type="password"
-                className="formInput"
-                placeholder="x-chair-key"
-                value={keyInput}
-                onChange={(e) => setKeyInput(e.target.value)}
-                autoComplete="off"
-              />
-              {keyError && (
-                <p
-                  className="formError"
-                  role="alert"
-                >
-                  {keyError}
-                </p>
-              )}
-            </div>
-            <button
-              type="submit"
-              className="submitBtn"
-              disabled={unlocking || !keyInput.trim()}
-            >
-              {unlocking ? 'მოწმდება...' : 'გაშვება'}
-            </button>
-          </form>
-        </div>
-      )}
-
-      {chairKey && (
-        <div
-          className="votingScreen__stage"
-          aria-live="polite"
-        >
-          {loading && !state ? (
-            <p className="votingScreen__note">იტვირთება...</p>
-          ) : fetchError && !state ? (
-            <p className="votingScreen__note votingScreen__note--error">
-              {fetchError} — შეამოწმეთ ბმული ან პაროლი.
-            </p>
-          ) : resolution ? (
-            <div
-              key={`${resolution.id}-${resolution.status}`}
-              className="votingScreen__vote"
-            >
-              <div className="votingScreen__statusRow">
-                <span
-                  className={`votingScreen__statusPill votingScreen__statusPill--${resolution.status}`}
-                >
-                  {resolution.status === 'open' ? 'ღიაა' : 'დასრულებულია'}
-                </span>
-                {resolution.committee && (
-                  <span className="votingScreen__committee">{resolution.committee}</span>
-                )}
-              </div>
-
-              <h1 className="votingScreen__title">{resolution.title}</h1>
-
-              {isOpen ? (
-                <p className="votingScreen__turnout">
-                  {turnoutText(state.votesCast, resolution.eligibleCount)}
-                </p>
-              ) : (
-                <>
-                  <VoteResults
-                    choices={CHOICES}
-                    tally={state.tally}
-                  />
-                  {formatDateTime(resolution.closedAt) && (
-                    <p className="votingScreen__closedAt">
-                      დაიხურა {formatDateTime(resolution.closedAt)}
-                    </p>
-                  )}
-                </>
-              )}
-            </div>
-          ) : (
-            <div
-              key="idle"
-              className="votingScreen__idle"
-            >
+            <div className="votingScreen__statusRow">
               <span
-                className="votingScreen__idleDot"
-                aria-hidden="true"
-              />
-              <p className="votingScreen__idleText">ველოდებით კენჭისყრის დაწყებას</p>
-
-              {latestClosed && (
-                <div className="votingScreen__lastResult">
-                  <p className="votingScreen__lastResultLabel">ბოლო შედეგი</p>
-                  {latestClosed.committee && (
-                    <span className="votingScreen__committee">{latestClosed.committee}</span>
-                  )}
-                  <h2 className="votingScreen__title votingScreen__title--sub">
-                    {latestClosed.title}
-                  </h2>
-                  <VoteResults
-                    choices={CHOICES}
-                    tally={latestClosed.tally}
-                  />
-                </div>
+                className={`votingScreen__statusPill votingScreen__statusPill--${resolution.status}`}
+              >
+                {resolution.status === 'open' ? 'ღიაა' : 'დასრულებულია'}
+              </span>
+              {resolution.committee && (
+                <span className="votingScreen__committee">{resolution.committee}</span>
               )}
             </div>
-          )}
-        </div>
-      )}
 
-      {chairKey && !urlKey && (
+            <h1 className="votingScreen__title">{resolution.title}</h1>
+
+            {isOpen ? (
+              <p className="votingScreen__turnout">
+                {turnoutText(state.votesCast, resolution.eligibleCount)}
+              </p>
+            ) : (
+              <>
+                <VoteResults
+                  choices={CHOICES}
+                  tally={state.tally}
+                />
+                {formatDateTime(resolution.closedAt) && (
+                  <p className="votingScreen__closedAt">
+                    დაიხურა {formatDateTime(resolution.closedAt)}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        ) : (
+          <div
+            key="idle"
+            className="votingScreen__idle"
+          >
+            <span
+              className="votingScreen__idleDot"
+              aria-hidden="true"
+            />
+            <p className="votingScreen__idleText">ველოდებით კენჭისყრის დაწყებას</p>
+
+            {latestClosed && (
+              <div className="votingScreen__lastResult">
+                <p className="votingScreen__lastResultLabel">ბოლო შედეგი</p>
+                {latestClosed.committee && (
+                  <span className="votingScreen__committee">{latestClosed.committee}</span>
+                )}
+                <h2 className="votingScreen__title votingScreen__title--sub">
+                  {latestClosed.title}
+                </h2>
+                <VoteResults
+                  choices={CHOICES}
+                  tally={latestClosed.tally}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {!urlKey && (
         <button
           type="button"
           className="votingScreen__reset"

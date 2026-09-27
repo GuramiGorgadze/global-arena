@@ -373,220 +373,299 @@
   }
 }
 
+// ---------------------------------------------------------------------------
+// Promo grid — Marathon, Committee Match, MUN Command, Voting
+//
+// One card shell (.promoCard) renders all four tools as equal members of a
+// 2x2 grid: an icon medallion + eyebrow pill up top, title and description
+// in the middle, and a hairline-divided footer holding a small status panel
+// plus the CTA, pinned to the bottom of every card via margin-top: auto so
+// uneven description lengths never throw the row out of alignment. Corner
+// brackets echo the guilloché lattice already used on .formCard, so this
+// reads as the same "official document" material as registration.
+// ---------------------------------------------------------------------------
+
+.promoSection {
+  position: relative;
+  max-width: 1180px;
+  margin: 108px auto 0;
+  padding: 0 40px;
+
+  @media (max-width: 860px) {
+    margin-top: 72px;
+    padding: 10px 20px 0;
+  }
+}
+
+.promoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 26px;
+  align-items: stretch;
+
+  @media (max-width: 860px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
 .promoCard {
   position: relative;
-  max-width: 1100px;
-  margin: 60px auto 0;
-  padding: 48px 44px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 40px 36px;
   border-radius: $radius-xl;
   overflow: hidden;
   isolation: isolate;
   @include ornate-panel(
     $from-opacity: 0.75,
     $to-opacity: 0.9,
-    $tint-opacity: 0.05,
+    $tint-opacity: 0.045,
     $dot-opacity: 0.05,
     $dot-size: 22px,
     $line-opacity: 0.04,
     $line-pitch: 8px
   );
-  border: 1px solid rgba($gold-bright, 0.28);
+  border: 1px solid rgba($gold-bright, 0.24);
   box-shadow:
     inset 0 1px 0 rgba($white-warm, 0.06),
-    0 20px 60px rgba($black-deep, 0.5);
+    0 20px 54px rgba($black-deep, 0.4);
+  transition:
+    border-color $duration-mid $ease-out,
+    box-shadow $duration-mid $ease-out,
+    transform $duration-mid $ease-out;
 
-  &--first {
-    margin-top: 140px;
-  }
+  &:hover {
+    transform: translateY(-4px);
+    border-color: rgba($gold-bright, 0.42);
+    box-shadow:
+      inset 0 1px 0 rgba($white-warm, 0.08),
+      0 30px 70px rgba($black-deep, 0.5),
+      0 0 0 1px rgba($gold-bright, 0.12);
 
-  &__inner {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 40px;
-    flex-wrap: wrap;
-  }
+    .promoCard__icon {
+      background: $gold-bright;
+      color: $black-deep;
+      border-color: $gold-bright;
+      transform: rotate(-6deg) scale(1.06);
+    }
 
-  &__text {
-    flex: 1 1 320px;
-    min-width: 260px;
-
-    @media (max-width: 860px) {
-      flex: 1 1 200px;
+    .promoCard__corner {
+      opacity: 1;
     }
   }
 
-  &__badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 16px;
-    border-radius: $radius-pill;
-    border: 1px solid rgba($gold-bright, 0.35);
-    background: $gold-glow-sm;
+  @media (max-width: 640px) {
+    padding: 30px 24px;
+  }
+}
+
+.promoCard__corner {
+  position: absolute;
+  z-index: 0;
+  width: 30px;
+  height: 30px;
+  pointer-events: none;
+  opacity: 0.5;
+  transition: opacity $duration-mid $ease-out;
+
+  &--tl {
+    top: 14px;
+    left: 14px;
+    border-top: 1px solid rgba($gold-bright, 0.55);
+    border-left: 1px solid rgba($gold-bright, 0.55);
+    border-radius: 6px 0 0 0;
+  }
+
+  &--br {
+    bottom: 14px;
+    right: 14px;
+    border-bottom: 1px solid rgba($gold-bright, 0.55);
+    border-right: 1px solid rgba($gold-bright, 0.55);
+    border-radius: 0 0 6px 0;
+  }
+}
+
+.promoCard__inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 28px;
+}
+
+.promoCard__text {
+  flex: 1;
+}
+
+.promoCard__head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.promoCard__icon {
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba($gold-bright, 0.1);
+  border: 1px solid rgba($gold-bright, 0.32);
+  color: $gold-bright;
+  font-size: 18px;
+  transition:
+    background $duration-mid $ease-out,
+    color $duration-mid $ease-out,
+    border-color $duration-mid $ease-out,
+    transform $duration-mid $ease-out;
+}
+
+.promoCard__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: $radius-pill;
+  border: 1px solid rgba($gold-bright, 0.35);
+  background: $gold-glow-sm;
+  color: $gold-bright;
+  font-family: $font-eng, $font-display;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.promoCard__badgeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: $gold-bright;
+  animation: promoCardDotPulse 1.6s ease-in-out infinite;
+}
+
+.promoCard__title {
+  font-family: $font-display;
+  font-size: clamp(21px, 2.1vw, 27px);
+  font-weight: 700;
+  line-height: 1.28;
+  margin-bottom: 14px;
+}
+
+.promoCard__desc {
+  font-size: 14px;
+  line-height: 1.75;
+  color: $white-muted;
+}
+
+.promoCard__panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  margin-top: auto;
+  padding-top: 22px;
+  border-top: 1px solid $black-border;
+}
+
+.promoCard__cta {
+  justify-content: center;
+
+  @media (max-width: 480px) {
+    width: 100%;
+  }
+}
+
+// Marathon — "always open" live status.
+.promoCard__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #e5484d;
+}
+
+.promoCard__liveDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e5484d;
+  animation: promoCardDotPulse 1.2s ease-in-out infinite;
+}
+
+// MUN Command — password-protected notice.
+.promoCard__lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: $white-muted;
+
+  i {
+    flex-shrink: 0;
     color: $gold-bright;
-    font-family: $font-eng, $font-display;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: 18px;
-  }
-
-  &__badgeDot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: $gold-bright;
-    animation: promoCardDotPulse 1.6s ease-in-out infinite;
-  }
-
-  &__title {
-    font-family: $font-display;
-    font-size: clamp(24px, 2.6vw, 32px);
-    font-weight: 700;
-    margin-bottom: 12px;
-
-    em {
-      font-style: normal;
-      @include gold-text;
-    }
-  }
-
-  &__desc {
     font-size: 14px;
-    line-height: 1.75;
-    color: $white-muted;
-    max-width: 440px;
   }
+}
 
-  &__panel {
-    flex: 0 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 22px;
-  }
+// Committee Match — the six committee icons.
+.promoCard__icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 
-  &__countdown {
-    display: flex;
-    gap: 10px;
+.promoCard__iconChip {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba($gold-bright, 0.08);
+  border: 1px solid rgba($gold-bright, 0.28);
+  color: $gold-bright;
+  font-size: 14px;
+}
 
-    &--placeholder {
-      opacity: 0.4;
-    }
-  }
+// Voting — the three ballot choices. Each chip carries its own icon + label
+// so the option is never conveyed by color alone.
+.promoCard__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 
-  &__unit {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    min-width: 58px;
-    padding: 10px 6px;
-    border-radius: $radius-md;
-    border: 1px solid rgba($gold-bright, 0.28);
-    background: rgba($gold-bright, 0.06);
-  }
+.promoCard__choiceChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: $radius-pill;
+  border: 1px solid rgba($gold-bright, 0.28);
+  background: rgba($gold-bright, 0.06);
+  color: $white-muted;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
 
-  &__unitValue {
-    font-family: $font-display;
-    font-size: 22px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    @include gold-text;
-  }
-
-  &__unitLabel {
-    font-size: 9px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: $white-dim;
-  }
-
-  &__live {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    color: #e5484d;
-  }
-
-  &__liveDot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #e5484d;
-    animation: promoCardDotPulse 1.2s ease-in-out infinite;
-  }
-
-  &__closed {
-    font-size: 13px;
-    color: $white-dim;
-    text-align: center;
-    max-width: 200px;
-  }
-
-  &__icons {
-    display: grid;
-    grid-template-columns: repeat(3, 44px);
-    gap: 10px;
-    justify-content: center;
-  }
-
-  &__iconChip {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba($gold-bright, 0.08);
-    border: 1px solid rgba($gold-bright, 0.3);
+  i {
+    font-size: 11px;
     color: $gold-bright;
-    font-size: 17px;
-  }
-
-  @media (max-width: 860px) {
-    margin: 60px 20px 0;
-    padding: 36px 26px;
-
-    &--first {
-      margin-top: 96px;
-    }
-
-    &__inner {
-      flex-direction: column;
-      text-align: center;
-      gap: 28px;
-    }
-
-    &__text {
-      min-width: 0;
-    }
-
-    &__desc {
-      margin: 0 auto;
-    }
-
-    &__panel {
-      width: 100%;
-    }
-  }
-
-  @media (max-width: 420px) {
-    &__unit {
-      min-width: 50px;
-      padding: 8px 4px;
-    }
-    &__unitValue {
-      font-size: 18px;
-    }
   }
 }
 
@@ -603,6 +682,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .promoCard {
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
+  }
+
   .promoCard__badgeDot,
   .promoCard__liveDot {
     animation: none;

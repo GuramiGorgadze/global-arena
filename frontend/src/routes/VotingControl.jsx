@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { getAdminVotingState, openVoting, closeVoting } from '../api/voting';
 import VoteResults from './VoteResults';
+import VotingGate from '../components/voting/VotingGate';
 
 const CHAIR_KEY_STORAGE = 'vote:chairKey:v1';
 const POLL_MS = 4000;
@@ -197,229 +198,203 @@ export default function VotingControl() {
     }
   };
 
+  // Logged out: the exact same login screen VotingScreen.jsx shows — same
+  // card, same badge, same field, same button — since both surfaces unlock
+  // with one shared chair password.
+  if (!chairKey) {
+    return (
+      <main className="votingControl">
+        <VotingGate
+          idPrefix="chair"
+          value={keyInput}
+          onChange={(e) => setKeyInput(e.target.value)}
+          onSubmit={unlock}
+          loading={unlocking}
+          error={keyError}
+        />
+      </main>
+    );
+  }
+
   return (
     <main className="votingControl">
       <div className="votingControl__card">
         <p className="votingControl__badge">GAMUN 2026 · კენჭისყრა</p>
 
-        {!chairKey && (
-          <form
-            onSubmit={unlock}
-            className="votingControl__gate"
-          >
-            <div className="formGroup">
-              <label
-                className="formLabel"
-                htmlFor="chairKey"
-              >
-                შეიყვანეთ პაროლი
-              </label>
-              <input
-                id="chairKey"
-                type="password"
-                className="formInput"
-                placeholder="x-chair-key"
-                value={keyInput}
-                onChange={(e) => setKeyInput(e.target.value)}
-                autoComplete="off"
-              />
-              {keyError && (
-                <p
-                  className="formError"
-                  role="alert"
-                >
-                  {keyError}
-                </p>
+        {loading ? (
+          <p className="votingControl__note">იტვირთება...</p>
+        ) : (
+          <>
+            <div className="votingControl__status">
+              {resolution ? (
+                <>
+                  <div className="votingControl__statusRow">
+                    <span
+                      className={`votingControl__statusPill votingControl__statusPill--${resolution.status}`}
+                    >
+                      {resolution.status === 'open' ? 'ღიაა' : 'დასრულებულია'}
+                    </span>
+                    {resolution.committee && (
+                      <span className="votingControl__committee">{resolution.committee}</span>
+                    )}
+                  </div>
+                  <h3 className="votingControl__title">{resolution.title}</h3>
+                  <p className="votingControl__meta">
+                    {turnoutText(state.votesCast, resolution.eligibleCount)}
+                    {formatDateTime(resolution.closedAt) &&
+                      ` · დაიხურა ${formatDateTime(resolution.closedAt)}`}
+                  </p>
+                  <VoteResults
+                    choices={CHOICES}
+                    tally={state.tally}
+                  />
+                  {isOpen && (
+                    <motion.button
+                      type="button"
+                      className="submitBtn votingControl__closeBtn"
+                      onClick={submitClose}
+                      disabled={closing}
+                      whileHover={!closing ? { y: -2 } : {}}
+                      whileTap={!closing ? { scale: 0.97, y: 0 } : {}}
+                    >
+                      {closing
+                        ? 'იხურება...'
+                        : confirmingClose
+                          ? 'დარწმუნებული ხართ? დააჭირეთ თავიდან დასახურად'
+                          : 'კენჭისყრის დახურვა'}
+                    </motion.button>
+                  )}
+                </>
+              ) : (
+                <p className="votingControl__note">კენჭისყრა ჯერ არ დაწყებულა.</p>
               )}
             </div>
-            <button
-              type="submit"
-              className="submitBtn"
-              disabled={unlocking || !keyInput.trim()}
-            >
-              {unlocking ? 'მოწმდება...' : 'შესვლა'}
-            </button>
-          </form>
-        )}
 
-        {chairKey && (
-          <>
-            {loading ? (
-              <p className="votingControl__note">იტვირთება...</p>
-            ) : (
-              <>
-                <div className="votingControl__status">
-                  {resolution ? (
-                    <>
-                      <div className="votingControl__statusRow">
-                        <span
-                          className={`votingControl__statusPill votingControl__statusPill--${resolution.status}`}
-                        >
-                          {resolution.status === 'open' ? 'ღიაა' : 'დასრულებულია'}
-                        </span>
-                        {resolution.committee && (
-                          <span className="votingControl__committee">{resolution.committee}</span>
-                        )}
-                      </div>
-                      <h3 className="votingControl__title">{resolution.title}</h3>
-                      <p className="votingControl__meta">
-                        {turnoutText(state.votesCast, resolution.eligibleCount)}
-                        {formatDateTime(resolution.closedAt) &&
-                          ` · დაიხურა ${formatDateTime(resolution.closedAt)}`}
-                      </p>
-                      <VoteResults
-                        choices={CHOICES}
-                        tally={state.tally}
-                      />
-                      {isOpen && (
-                        <motion.button
-                          type="button"
-                          className="submitBtn votingControl__closeBtn"
-                          onClick={submitClose}
-                          disabled={closing}
-                          whileHover={!closing ? { y: -2 } : {}}
-                          whileTap={!closing ? { scale: 0.97, y: 0 } : {}}
-                        >
-                          {closing
-                            ? 'იხურება...'
-                            : confirmingClose
-                              ? 'დარწმუნებული ხართ? დააჭირეთ თავიდან დასახურად'
-                              : 'კენჭისყრის დახურვა'}
-                        </motion.button>
-                      )}
-                    </>
-                  ) : (
-                    <p className="votingControl__note">კენჭისყრა ჯერ არ დაწყებულა.</p>
-                  )}
-                </div>
-
-                {history.length > 0 && (
-                  <div className="votingControl__history">
-                    <p className="votingControl__note">წინა კენჭისყრები</p>
-                    {history.map((h) => (
-                      <div
-                        key={h.id}
-                        className="votingControl__historyItem"
-                      >
-                        <div className="votingControl__statusRow">
-                          {h.committee && (
-                            <span className="votingControl__committee">{h.committee}</span>
-                          )}
-                        </div>
-                        <h4 className="votingControl__title">{h.title}</h4>
-                        <p className="votingControl__meta">
-                          {turnoutText(h.votesCast, h.eligibleCount)}
-                          {formatDateTime(h.closedAt) && ` · დაიხურა ${formatDateTime(h.closedAt)}`}
-                        </p>
-                        <VoteResults
-                          choices={CHOICES}
-                          tally={h.tally}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="formDivider">
-                  <span>ახალი კენჭისყრის დაწყება</span>
-                </div>
-                <form
-                  onSubmit={submitOpen}
-                  className="votingControl__openForm"
-                >
-                  {isOpen && (
-                    <p className="formNote votingControl__warning">
-                      ახალი კენჭისყრის დაწყება ავტომატურად დახურავს მიმდინარეს.
-                    </p>
-                  )}
-                  <div className="formGroup">
-                    <label
-                      className="formLabel"
-                      htmlFor="resTitle"
-                    >
-                      რეზოლუციის სათაური <span className="formLabel__req">*</span>
-                    </label>
-                    <input
-                      id="resTitle"
-                      type="text"
-                      className="formInput"
-                      placeholder="მაგ. რეზოლუცია A/RES/1"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      maxLength={200}
-                    />
-                  </div>
-                  <div className="formGroup">
-                    <label
-                      className="formLabel"
-                      htmlFor="resCommittee"
-                    >
-                      კომიტეტი
-                    </label>
-                    <select
-                      id="resCommittee"
-                      className="formSelect"
-                      value={committee}
-                      onChange={(e) => setCommittee(e.target.value)}
-                    >
-                      <option value="">აირჩიეთ კომიტეტი…</option>
-                      {COMMITTEES.map((c) => (
-                        <option
-                          key={c.id}
-                          value={c.name}
-                        >
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="formGroup">
-                    <label
-                      className="formLabel"
-                      htmlFor="resEligibleCount"
-                    >
-                      დელეგატების რაოდენობა <span className="formLabel__req">*</span>
-                    </label>
-                    <input
-                      id="resEligibleCount"
-                      type="number"
-                      min="0"
-                      step="1"
-                      inputMode="numeric"
-                      className="formInput"
-                      placeholder="მაგ. 120"
-                      value={eligibleCount}
-                      onChange={(e) => setEligibleCount(e.target.value)}
-                    />
-                  </div>
-                  <motion.button
-                    type="submit"
-                    className="submitBtn"
-                    disabled={opening || !title.trim() || eligibleCount === ''}
-                    whileHover={!opening ? { y: -2 } : {}}
-                    whileTap={!opening ? { scale: 0.97, y: 0 } : {}}
+            {history.length > 0 && (
+              <div className="votingControl__history">
+                <p className="votingControl__note">წინა კენჭისყრები</p>
+                {history.map((h) => (
+                  <div
+                    key={h.id}
+                    className="votingControl__historyItem"
                   >
-                    {opening
-                      ? 'იხსნება...'
-                      : isOpen && confirmingReopen
-                        ? 'დარწმუნებული ხართ? დააჭირეთ ახლის დასაწყებად'
-                        : isOpen
-                          ? 'ახლის დაწყება (მიმდინარეს დახურავს)'
-                          : 'კენჭისყრის დაწყება'}
-                  </motion.button>
-                </form>
-              </>
+                    <div className="votingControl__statusRow">
+                      {h.committee && (
+                        <span className="votingControl__committee">{h.committee}</span>
+                      )}
+                    </div>
+                    <h4 className="votingControl__title">{h.title}</h4>
+                    <p className="votingControl__meta">
+                      {turnoutText(h.votesCast, h.eligibleCount)}
+                      {formatDateTime(h.closedAt) && ` · დაიხურა ${formatDateTime(h.closedAt)}`}
+                    </p>
+                    <VoteResults
+                      choices={CHOICES}
+                      tally={h.tally}
+                    />
+                  </div>
+                ))}
+              </div>
             )}
 
-            <button
-              type="button"
-              className="votingControl__lock"
-              onClick={logout}
+            <div className="formDivider">
+              <span>ახალი კენჭისყრის დაწყება</span>
+            </div>
+            <form
+              onSubmit={submitOpen}
+              className="votingControl__openForm"
             >
-              გასვლა
-            </button>
+              {isOpen && (
+                <p className="formNote votingControl__warning">
+                  ახალი კენჭისყრის დაწყება ავტომატურად დახურავს მიმდინარეს.
+                </p>
+              )}
+              <div className="formGroup">
+                <label
+                  className="formLabel"
+                  htmlFor="resTitle"
+                >
+                  რეზოლუციის სათაური <span className="formLabel__req">*</span>
+                </label>
+                <input
+                  id="resTitle"
+                  type="text"
+                  className="formInput"
+                  placeholder="მაგ. რეზოლუცია A/RES/1"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  maxLength={200}
+                />
+              </div>
+              <div className="formGroup">
+                <label
+                  className="formLabel"
+                  htmlFor="resCommittee"
+                >
+                  კომიტეტი
+                </label>
+                <select
+                  id="resCommittee"
+                  className="formSelect"
+                  value={committee}
+                  onChange={(e) => setCommittee(e.target.value)}
+                >
+                  <option value="">აირჩიეთ კომიტეტი…</option>
+                  {COMMITTEES.map((c) => (
+                    <option
+                      key={c.id}
+                      value={c.name}
+                    >
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="formGroup">
+                <label
+                  className="formLabel"
+                  htmlFor="resEligibleCount"
+                >
+                  დელეგატების რაოდენობა <span className="formLabel__req">*</span>
+                </label>
+                <input
+                  id="resEligibleCount"
+                  type="number"
+                  min="0"
+                  step="1"
+                  inputMode="numeric"
+                  className="formInput"
+                  placeholder="მაგ. 120"
+                  value={eligibleCount}
+                  onChange={(e) => setEligibleCount(e.target.value)}
+                />
+              </div>
+              <motion.button
+                type="submit"
+                className="submitBtn"
+                disabled={opening || !title.trim() || eligibleCount === ''}
+                whileHover={!opening ? { y: -2 } : {}}
+                whileTap={!opening ? { scale: 0.97, y: 0 } : {}}
+              >
+                {opening
+                  ? 'იხსნება...'
+                  : isOpen && confirmingReopen
+                    ? 'დარწმუნებული ხართ? დააჭირეთ ახლის დასაწყებად'
+                    : isOpen
+                      ? 'ახლის დაწყება (მიმდინარეს დახურავს)'
+                      : 'კენჭისყრის დაწყება'}
+              </motion.button>
+            </form>
           </>
         )}
+
+        <button
+          type="button"
+          className="votingControl__lock"
+          onClick={logout}
+        >
+          გასვლა
+        </button>
       </div>
     </main>
   );
