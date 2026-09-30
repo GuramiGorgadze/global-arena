@@ -1,42 +1,13 @@
 @use '../abstracts' as *;
 
-// ---------------------------------------------------------------------------
-// Session console.
-//
-// This is a control surface, not a landing page: the whole thing fits one
-// viewport, every column scrolls on its own, and the only loud element is the
-// speaker clock, which has to be readable from the back of a committee room.
-// Everything else stays quiet — hairline borders, small type, no stacked
-// shadows.
-// ---------------------------------------------------------------------------
-
 $ok: #4ade80;
 $bad: #e5484d;
 $neutral: #8c8378;
 $bp-console: 1180px;
 
-// ---------------------------------------------------------------------------
-// Typography tokens
-//
-// Every family used anywhere below is named here, in one of two buckets:
-//
-//   1. STRINGS — one variable per text *role* (a heading reads differently
-//      from a hint, a button label, or a small caps chrome label). Change any
-//      of these and every selector that plays that role updates together.
-//   2. NUMBERS — a single shared variable for anything that is purely a
-//      digit display (the speech clock, tallies, counters, stat values).
-//      Numbers intentionally don't share the string roles: a clock needs to
-//      stay legible and stable-width no matter what typeface the rest of the
-//      console is using, so it's kept on its own dial.
-//
-// Defaults below simply point at the existing abstracts ($font-eng /
-// $font-body / $font-display) so nothing changes visually until you edit the
-// values here.
-// ---------------------------------------------------------------------------
-
 // --- Strings -----------------------------------------------------------
 $font-brand: $font-eng; // the "GAMUN Command" wordmark / badge
-$font-heading: $font-eng; // page + card titles, speaker names, modal titles
+$font-heading: $font-eng, $font-body; // page + card titles, speaker names, modal titles
 $font-subhead: $font-body; // descriptive paragraphs, hints, helper copy
 $font-label: $font-eng; // small caps chrome: panel titles, tags, form labels
 $font-body-text: $font-body; // running content: names, rows, notes, inputs
@@ -46,8 +17,6 @@ $font-mono: ui-monospace, 'SF Mono', Menlo, monospace; // keyboard shortcuts
 // --- Numbers -------------------------------------------------------------
 $font-number: $font-display; // clocks, tallies, counters, stat values
 
-// Shared call-to-action treatment so the console's one or two "do the
-// important thing" buttons always match, wherever they're declared.
 $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-muted 100%);
 
 @keyframes commandSetupPulse {
@@ -63,6 +32,29 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
 @keyframes commandSetupSpin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+// The step indicator's check mark lands with a small pop, so finishing a step
+// is something you see happen rather than a glyph that was simply swapped.
+@keyframes commandSetupPop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// The console fades in from the sign-in screen instead of cutting to it.
+@keyframes commandPageIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
@@ -98,10 +90,6 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
 // ---------------------------------------------------------------------------
 
 .commandPage {
-  // The console now sits on its own bare route with no navbar and no footer
-  // above it (see the SiteChrome layout route in App.jsx), so it simply owns
-  // the viewport. If you ever mount it back under the site chrome, set
-  // --command-nav to your Navbar's height and the two calcs below pick it up.
   --command-nav: 0px;
 
   position: relative;
@@ -126,31 +114,29 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       radial-gradient(ellipse 60% 40% at 10% 100%, rgba($gold-bright, 0.05), transparent 60%);
   }
 
-  // NOTE: z-index only ever takes effect on a positioned element. Without
-  // `position: relative` here, every direct child of .commandPage was
-  // painted in normal document flow *underneath* the ::before overlay above
-  // (a positioned, z-indexed pseudo-element always paints after static
-  // in-flow content) — which is why chrome sitting right at the top of the
-  // page, like the setup badge, could get visually swallowed by it.
   > * {
     position: relative;
     z-index: 1;
   }
 
-  // ---------------------------------------------------------------------
-  // Everything below, for every screen this component renders (status,
-  // sign-in, one-time setup, roll call, the main console, every modal) is
-  // nested under this single .commandPage wrapper on purpose. Several of
-  // the class names in this file — .chip, .submitBtn, .linkBtn, .counter,
-  // and the rest of the button/control styles among them — are short and
-  // generic enough that, declared at the top level, they'd style any
-  // element anywhere on the site that happens to share the name. Nesting
-  // everything under .commandPage is what keeps this stylesheet's button
-  // styles (and every other style in it) confined to this page.
-  // ---------------------------------------------------------------------
+  // The console itself, once the sign-in gate has let go of the page.
+  &--enter {
+    animation: commandPageIn 0.3s $ease-out backwards;
+  }
+
+  // Every pre-console screen (checking sign-in, sign-in, loading, setting up,
+  // error) lives in one of these, inside a single AnimatePresence, so moving
+  // between them crossfades. It just fills the page; the screen inside decides
+  // how to place itself.
+  .gateScreen {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
 
   // ---------------------------------------------------------------------------
-  // Setup
+  // Setup — the committee picker
   // ---------------------------------------------------------------------------
 
   .commandSetup {
@@ -159,19 +145,21 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
     min-height: 0;
     overflow-y: auto;
     display: flex;
-    // `center` alone only centers when the content *fits*. The moment the
-    // hero (badge + title + desc + committee grid + hint) is taller than the
-    // viewport — which it always was — plain `align-items: center` clips the
-    // overflow evenly off BOTH ends and, worse, starts the scroll position
-    // already at that clipped view with no way to scroll back up to see the
-    // missing top. That's what was eating the badge (and the last line of the
-    // hint text below the grid). `safe center` keeps the centering when
-    // everything fits, but falls back to top-aligned, fully scrollable flow
-    // the instant it doesn't — nothing can be clipped out of reach again.
-    align-items: safe center;
+    // Top-aligned on purpose. This screen swaps between a tall picker and a
+    // short password form; if the block were vertically centred, the badge and
+    // step indicator would jump up and down every time the content height
+    // changed. Pinned near the top, they stay exactly where they are and only
+    // the pane below them slides. The top padding scales with the viewport so
+    // the short step still sits comfortably on a tall monitor, and there is
+    // nothing to clip out of reach on a short one.
+    align-items: flex-start;
     justify-content: center;
-    padding: 56px 24px;
+    padding: clamp(32px, 10vh, 104px) 24px 56px;
     @include thin-scroll;
+
+    @media (max-width: 480px) {
+      padding: calc(28px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom));
+    }
 
     // A quiet dotted grid behind the hero, fading out toward the edges. Purely
     // decorative texture — it replaces the dead flat space above the fold now
@@ -197,10 +185,10 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       position: relative;
       z-index: 1;
       width: 100%;
-      // Widened from 880px so a 3-column committee grid has room to breathe.
-      // Nested screens (roster setup, the login step) cap their own width
-      // below this, so this only ever adds surrounding whitespace for them.
+      // Wide enough for a 3-column committee grid. The password step caps its
+      // own width well below this, so this only adds whitespace around it.
       max-width: 1040px;
+      margin: 0 auto;
       text-align: center;
     }
 
@@ -223,17 +211,22 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      margin-bottom: 22px;
 
       i {
         font-size: 12px;
       }
     }
 
+    &__head {
+      margin-bottom: 32px;
+    }
+
     &__title {
       font-family: $font-heading;
-      font-size: clamp(30px, 4vw, 42px);
+      font-size: clamp(30px, 4.4vw, 44px);
       font-weight: 700;
+      line-height: 1.15;
+      text-wrap: balance;
       margin-bottom: 12px;
       @include gold-text;
     }
@@ -243,15 +236,16 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       font-size: 14.5px;
       line-height: 1.75;
       color: $white-muted;
-      max-width: 560px;
-      margin: 0 auto 36px;
+      max-width: 520px;
+      margin: 0 auto;
+      text-wrap: pretty;
     }
 
     &__grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       grid-auto-rows: 1fr;
-      gap: 14px;
+      gap: 16px;
       text-align: left;
 
       @media (max-width: 980px) {
@@ -260,12 +254,18 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
 
       @media (max-width: 620px) {
         grid-template-columns: 1fr;
+        gap: 12px;
       }
     }
 
-    // The card is a real <button> now (see the JSX) — one focusable, tappable
-    // surface instead of a div wrapping a second, separately-styled button.
+    // The card is a real <button> — one focusable, tappable surface. Lift and
+    // press are Framer Motion's (see CommitteeCard), so nothing here moves the
+    // card with CSS; that would fight the inline transform it writes.
     &__card {
+      // Updated on pointer move (see CommitteeCard) to place the highlight.
+      --mx: 50%;
+      --my: 0%;
+
       position: relative;
       display: flex;
       flex-direction: column;
@@ -280,14 +280,13 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       font-family: inherit;
       text-align: left;
       cursor: pointer;
+      touch-action: manipulation;
       @include panel-surface;
       transition:
         border-color $duration-fast $ease-out,
-        transform $duration-fast $ease-out,
         box-shadow $duration-fast $ease-out;
 
-      // A thin accent rule along the top edge — the card's own "in progress /
-      // ready" state reads at a glance before you even read the label below.
+      // A thin accent rule along the top edge.
       &::before {
         content: '';
         position: absolute;
@@ -298,12 +297,33 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
         transition: opacity $duration-fast $ease-out;
       }
 
+      // A soft pool of light under the pointer. Only where there is a pointer
+      // to follow; touch screens never see it.
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          240px circle at var(--mx) var(--my),
+          rgba($gold-bright, 0.14),
+          transparent 70%
+        );
+        opacity: 0;
+        transition: opacity $duration-mid $ease-out;
+      }
+
       &:hover:not(:disabled) {
         border-color: rgba($gold-bright, 0.42);
-        transform: translateY(-2px);
         box-shadow: 0 14px 34px rgba($black-deep, 0.45);
 
         &::before {
+          opacity: 1;
+        }
+      }
+
+      @media (hover: hover) {
+        &:hover:not(:disabled)::after {
           opacity: 1;
         }
       }
@@ -342,15 +362,12 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       transform: scale(1.06) rotate(-4deg);
     }
 
-    // A small "this opens" affordance, top-right. Reinforcement, not the only
-    // signifier — the whole card already reads as a button via its border,
-    // shadow and cursor — so it's fine for this to only appear on hover/focus.
+    // "This opens." It lives in the footer and is always visible, so the
+    // affordance never depends on hovering; hover only fills it in.
     &__cardArrow {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      width: 26px;
-      height: 26px;
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -358,22 +375,20 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       border: 1px solid $black-border;
       background: rgba($black-deep, 0.4);
       color: $white-dim;
-      font-size: 11px;
-      opacity: 0;
-      transform: translateX(-4px);
+      font-size: 12px;
       transition:
-        opacity $duration-fast $ease-out,
-        transform $duration-fast $ease-out,
         color $duration-fast $ease-out,
-        border-color $duration-fast $ease-out;
+        background $duration-fast $ease-out,
+        border-color $duration-fast $ease-out,
+        transform $duration-fast $ease-out;
     }
 
     &__card:hover:not(:disabled) &__cardArrow,
     &__card:focus-visible &__cardArrow {
-      opacity: 1;
-      transform: translateX(0);
-      color: $gold-bright;
-      border-color: rgba($gold-bright, 0.4);
+      color: $black-deep;
+      background: $gold-bright;
+      border-color: $gold-bright;
+      transform: translateX(3px);
     }
 
     &__cardTop {
@@ -405,8 +420,6 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       box-shadow: inset 0 0 0 1px rgba($black-deep, 0.3);
     }
 
-    // The status pill. Colour is never the only signal — every state also
-    // carries its own text label right next to the dot.
     &__status {
       flex-shrink: 0;
       display: inline-flex;
@@ -497,6 +510,13 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       border-top: 1px solid $black-border;
     }
 
+    &__cardEnd {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
     &__seatCount {
       display: inline-flex;
       align-items: center;
@@ -511,11 +531,6 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       }
     }
 
-    // A compact overlapping row instead of a tall vertical stack — five flags
-    // stacked one per line used to run far taller than the rest of the card,
-    // which both looked broken on its own and (since grid rows stretch to the
-    // tallest card in the row) forced every shorter card next to it to carry a
-    // lot of dead vertical space.
     &__flags {
       display: flex;
       flex-direction: row;
@@ -557,117 +572,381 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       color: $white-dim;
     }
 
-    &__hint {
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 24px;
-      font-family: $font-subhead;
-      font-size: 12px;
-      line-height: 1.6;
-      color: $white-dim;
+    // Three short reassurances under the grid, each with its own glyph, in
+    // place of one dense paragraph.
+    &__notes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      max-width: 1040px;
+      margin: 28px auto 0;
+      padding: 0;
+      list-style: none;
       text-align: left;
-      max-width: 640px;
-      margin-left: auto;
-      margin-right: auto;
+
+      @media (max-width: 760px) {
+        grid-template-columns: 1fr;
+      }
+
+      li {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 14px;
+        border-radius: $radius-md;
+        border: 1px solid $black-border;
+        background: rgba($black-deep, 0.35);
+        font-family: $font-subhead;
+        font-size: 12px;
+        line-height: 1.55;
+        color: $white-muted;
+      }
 
       i {
         flex-shrink: 0;
         margin-top: 2px;
-        font-size: 13px;
+        font-size: 14px;
         color: $gold-bright;
       }
     }
   }
 
   // ---------------------------------------------------------------------------
-  // Full-screen status (checking sign-in, loading, error)
+  // Full-screen status (checking sign-in, loading, setting up, error)
   // ---------------------------------------------------------------------------
 
-  &--status {
-    align-items: center;
-    justify-content: safe center;
-  }
-
   .statusScreen {
+    // The gate is a flex column; auto margins centre this in both directions
+    // and fall back to top-aligned, never clipped, if the window is tiny.
+    margin: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
     text-align: center;
-    padding: 0 24px;
+    padding: 24px;
 
     &__icon {
       font-size: 34px;
       color: $gold-bright;
     }
 
+    // A loading ring rather than a frozen hourglass: it says "working", not
+    // "stuck", and it is the same element for every wait, so text changes
+    // between waits do not restart it.
+    &__spinner {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid rgba($gold-bright, 0.18);
+      border-top-color: $gold-bright;
+      animation: commandSetupSpin 0.9s linear infinite;
+    }
+
     &__text {
       max-width: 380px;
       font-family: $font-subhead;
-      font-size: 13.5px;
+      font-size: 14px;
       line-height: 1.6;
       color: $white-muted;
     }
   }
 
   // ---------------------------------------------------------------------------
-  // Sign in
+  // Sign in — shared header and step indicator
+  // ---------------------------------------------------------------------------
+
+  // Badge and progress stay mounted while the pane below them changes, which
+  // is what makes the two steps feel like one place.
+  .loginHeader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 36px;
+
+    @media (max-width: 480px) {
+      margin-bottom: 28px;
+    }
+  }
+
+  .loginPane {
+    width: 100%;
+  }
+
+  .loginSteps {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    &__item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      // 44px tall so the "back" state is an easy tap; it has no visible box
+      // until hover, so the extra height costs nothing visually.
+      min-height: 44px;
+      padding: 0 12px 0 6px;
+      border: none;
+      border-radius: $radius-pill;
+      background: none;
+      color: $white-dim;
+      font-family: $font-label;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      transition:
+        color $duration-fast $ease-out,
+        background $duration-fast $ease-out;
+
+      &.is-current {
+        color: $white-warm;
+      }
+
+      &.is-done {
+        color: $gold-bright;
+      }
+
+      &.is-upcoming {
+        opacity: 0.75;
+      }
+    }
+
+    button.loginSteps__item {
+      cursor: pointer;
+      touch-action: manipulation;
+
+      &:hover:not(:disabled) {
+        background: rgba($gold-bright, 0.1);
+        color: $white-warm;
+      }
+
+      &:focus-visible {
+        outline: 2px solid $gold-bright;
+        outline-offset: 2px;
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+
+    &__dot {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: 1px solid $black-border;
+      background: rgba($black-deep, 0.6);
+      font-family: $font-number;
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      color: inherit;
+      transition:
+        background $duration-mid $ease-out,
+        border-color $duration-mid $ease-out,
+        color $duration-mid $ease-out;
+
+      i {
+        font-size: 12px;
+        animation: commandSetupPop 0.28s $ease-out;
+      }
+    }
+
+    &__item.is-current &__dot {
+      background: $gold-bright;
+      border-color: $gold-bright;
+      color: $black-deep;
+    }
+
+    &__item.is-done &__dot {
+      background: rgba($gold-bright, 0.16);
+      border-color: rgba($gold-bright, 0.5);
+      color: $gold-bright;
+    }
+
+    &__label {
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    // The connector fills as you move forward. It animates transform, not
+    // width, so it never triggers layout.
+    &__line {
+      position: relative;
+      flex-shrink: 0;
+      width: 44px;
+      height: 2px;
+      border-radius: $radius-pill;
+      background: rgba($white-warm, 0.1);
+      overflow: hidden;
+
+      @media (max-width: 380px) {
+        width: 24px;
+      }
+    }
+
+    &__lineFill {
+      position: absolute;
+      inset: 0;
+      background: $gold-bright;
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: transform 0.4s $ease-out;
+    }
+
+    &__line.is-filled &__lineFill {
+      transform: scaleX(1);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Sign in — the password step
   // ---------------------------------------------------------------------------
 
   .loginStep {
     position: relative;
-    max-width: 400px;
+    width: 100%;
+    max-width: 440px;
     margin: 0 auto;
     text-align: center;
-
-    &__back {
-      position: absolute;
-      top: 0;
-      left: 0;
-
-      @media (max-width: 480px) {
-        position: static;
-        margin-bottom: 16px;
-      }
-    }
 
     &__identity {
       display: flex;
       flex-direction: column;
       align-items: center;
+      margin-bottom: 24px;
     }
 
     &__icon {
-      margin: 8px auto 14px;
-      width: 60px;
-      height: 60px;
-      font-size: 24px;
+      width: 68px;
+      height: 68px;
+      margin-bottom: 16px;
+      font-size: 27px;
+      box-shadow:
+        inset 0 0 0 1px rgba($black-deep, 0.3),
+        0 0 0 6px rgba($gold-bright, 0.06),
+        0 0 44px rgba($gold-bright, 0.2);
+    }
+
+    // The tag sits beside the title rather than inside it: the title is
+    // gradient-filled text, and anything nested in it would inherit that fill.
+    &__titleRow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 6px;
     }
 
     &__title {
-      margin-bottom: 4px;
+      font-family: $font-heading;
+      font-size: clamp(30px, 5vw, 38px);
+      font-weight: 700;
+      line-height: 1.15;
+      @include gold-text;
     }
 
     &__fullName {
-      max-width: 320px;
-      margin: 0 auto 22px;
+      max-width: 340px;
+      margin: 0 auto 12px;
       font-family: $font-subhead;
-      font-size: 12.5px;
+      font-size: 13px;
       line-height: 1.5;
-      color: $white-dim;
+      color: $white-muted;
+      text-wrap: balance;
     }
 
-    // The "you're setting this committee's password for the whole
-    // conference" moment — worth a distinct visual beat from a routine
-    // "enter your password" prompt, so nobody breezes past it.
+    // Seat count and agenda: enough to confirm "yes, this is the right one".
+    &__meta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      max-width: 100%;
+      font-family: $font-subhead;
+      font-size: 11.5px;
+      line-height: 1.4;
+      color: $white-dim;
+
+      i {
+        flex-shrink: 0;
+        font-size: 12px;
+      }
+    }
+
+    &__metaDot {
+      flex-shrink: 0;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.6;
+    }
+
+    // The count keeps its natural width and never wraps; only the agenda,
+    // which can be arbitrarily long, gives way to an ellipsis (the full text
+    // is in its title attribute).
+    &__count {
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    &__agenda {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: left;
+    }
+
+    // The form lives on its own surface, so it reads as the one thing to act
+    // on instead of floating loose on the page background.
+    &__panel {
+      position: relative;
+      padding: 22px 22px 20px;
+      text-align: left;
+      @include panel-surface;
+      box-shadow:
+        inset 0 1px 0 rgba($white-warm, 0.05),
+        0 24px 60px rgba($black-deep, 0.45);
+
+      @media (max-width: 480px) {
+        padding: 18px 16px 16px;
+      }
+    }
+
+    // Visually hidden, but still in the DOM and the form, so a password
+    // manager can tie the saved password to this committee.
+    &__username {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    // "You're setting this committee's password for the whole conference."
     &__notice {
       display: flex;
       align-items: flex-start;
       gap: 11px;
-      max-width: 320px;
-      margin: 0 auto 22px;
+      margin-bottom: 20px;
       padding: 13px 14px;
       border-radius: $radius-md;
       border: 1px solid rgba($gold-bright, 0.28);
@@ -684,7 +963,7 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
 
     &__noticeTitle {
       font-family: $font-label;
-      font-size: 12px;
+      font-size: 12.5px;
       font-weight: 700;
       color: $white-warm;
       margin-bottom: 3px;
@@ -692,95 +971,181 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
 
     &__noticeText {
       font-family: $font-subhead;
-      font-size: 11.5px;
+      font-size: 12px;
       line-height: 1.55;
-      color: $white-dim;
+      color: $white-muted;
     }
 
     &__desc {
-      margin-bottom: 24px;
+      margin-bottom: 20px;
+      font-family: $font-subhead;
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: $white-muted;
     }
 
     &__fields {
       display: flex;
       flex-direction: column;
-      gap: 14px;
-      max-width: 320px;
-      margin: 0 auto;
-      text-align: left;
+      gap: 16px;
     }
 
     &__field {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 7px;
     }
 
     &__label {
       font-family: $font-label;
-      font-size: 11px;
+      font-size: 11.5px;
       font-weight: 700;
       letter-spacing: 0.03em;
       text-transform: uppercase;
-      color: $white-dim;
+      color: $white-muted;
     }
 
     &__inputWrap {
       position: relative;
 
-      // Higher specificity than .rosterSearch's own padding shorthand, so it
-      // wins regardless of the two rules' order in the file.
-      .rosterSearch {
-        padding-right: 40px;
+      &:focus-within .loginStep__lead {
+        color: $gold-bright;
+      }
+    }
+
+    &__lead {
+      position: absolute;
+      top: 50%;
+      left: 14px;
+      transform: translateY(-50%);
+      font-size: 15px;
+      color: $white-dim;
+      pointer-events: none;
+      transition: color $duration-fast $ease-out;
+    }
+
+    // 16px text and a 48px box: the size at which phones stop zooming into the
+    // field on focus, and a comfortable tap target.
+    &__input {
+      width: 100%;
+      height: 48px;
+      padding: 0 52px 0 42px;
+      border-radius: $radius-md;
+      border: 1px solid $black-border;
+      background: rgba($black-deep, 0.7);
+      color: $white-warm;
+      font-family: $font-body-text;
+      font-size: 16px;
+      transition:
+        border-color $duration-fast $ease-out,
+        box-shadow $duration-fast $ease-out;
+
+      &:hover:not(:focus) {
+        border-color: rgba($gold-bright, 0.25);
+      }
+
+      &:focus {
+        outline: none;
+        border-color: rgba($gold-bright, 0.6);
+        box-shadow: 0 0 0 3px rgba($gold-bright, 0.16);
+      }
+
+      &[aria-invalid='true'] {
+        border-color: rgba($bad, 0.65);
+
+        &:focus {
+          box-shadow: 0 0 0 3px rgba($bad, 0.18);
+        }
+      }
+
+      &[readonly] {
+        opacity: 0.7;
       }
     }
 
     &__toggle {
       position: absolute;
       top: 50%;
-      right: 4px;
+      right: 2px;
       transform: translateY(-50%);
-      width: 30px;
-      height: 30px;
+      width: 44px;
+      height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
       border: none;
-      border-radius: 6px;
+      border-radius: $radius-md;
       background: none;
       color: $white-dim;
-      font-size: 13px;
+      font-size: 15px;
       cursor: pointer;
+      touch-action: manipulation;
+      transition: color $duration-fast $ease-out;
 
       &:hover {
         color: $gold-bright;
       }
 
+      &[aria-pressed='true'] {
+        color: $gold-bright;
+      }
+
       &:focus-visible {
         outline: 2px solid $gold-bright;
-        outline-offset: 1px;
+        outline-offset: -2px;
+      }
+    }
+
+    // Errors sit directly under the field they are about, and say what to do.
+    &__fieldError {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      font-family: $font-subhead;
+      font-size: 12px;
+      line-height: 1.5;
+      color: $bad;
+
+      i {
+        flex-shrink: 0;
+        margin-top: 2px;
+        font-size: 12px;
+      }
+    }
+
+    &__caps {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: $font-subhead;
+      font-size: 12px;
+      line-height: 1.5;
+      color: $gold-bright;
+
+      i {
+        font-size: 12px;
       }
     }
 
     &__checklist {
-      margin: 2px 0 0;
+      margin: 0;
       padding: 0;
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 6px;
 
       li {
         display: flex;
         align-items: center;
-        gap: 7px;
+        gap: 8px;
         font-family: $font-subhead;
-        font-size: 11px;
+        font-size: 12px;
         color: $white-dim;
         transition: color $duration-fast $ease-out;
 
         i {
-          font-size: 11px;
+          font-size: 12px;
         }
 
         &.is-met {
@@ -789,227 +1154,79 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       }
     }
 
-    &__error {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      max-width: 320px;
-      margin: 16px auto 0;
-      padding: 10px 12px;
-      border-radius: $radius-md;
-      border: 1px solid rgba($bad, 0.35);
-      background: rgba($bad, 0.08);
-      text-align: left;
-      font-family: $font-subhead;
-      font-size: 12px;
-      line-height: 1.5;
-      color: $bad;
-
-      i {
-        flex-shrink: 0;
-        margin-top: 1px;
-        font-size: 13px;
-      }
-    }
-
-    &__submit {
-      width: 100%;
-      max-width: 320px;
-      margin: 20px auto 0;
-      padding: 13px 28px;
-    }
-
     &__spinner {
       animation: commandSetupSpin 0.8s linear infinite;
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // One-time roster setup
-  // ---------------------------------------------------------------------------
-
-  .rosterSetup {
-    max-width: 560px;
-    margin: 0 auto;
-    text-align: left;
-
-    &__head {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 10px;
-
-      .rosterSearch {
-        flex: 1;
-      }
-    }
-
-    &__count {
-      flex-shrink: 0;
-      padding: 6px 12px;
-      border-radius: $radius-pill;
-      background: rgba($gold-bright, 0.14);
-      color: $gold-bright;
-      font-family: $font-number;
-      font-size: 12px;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      white-space: nowrap;
-    }
-
-    &__list {
-      max-height: 340px;
-      overflow-y: auto;
-      margin: 0 0 14px;
-      padding: 6px;
-      list-style: none;
-      border-radius: $radius-md;
-      border: 1px solid $black-border;
-      background: rgba($black-deep, 0.4);
-      @include thin-scroll;
-    }
-
-    &__row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 7px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-
-      &:hover {
-        background: rgba($gold-bright, 0.08);
-      }
-
-      input[type='checkbox'] {
-        flex-shrink: 0;
-        width: 16px;
-        height: 16px;
-        accent-color: $gold-bright;
-      }
-
-      span {
-        font-family: $font-body-text;
-        font-size: 13px;
-        color: $white-warm;
-      }
-    }
-
-    &__curatedList {
-      margin: 0 0 14px;
-      padding: 0;
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      max-height: 300px;
-      overflow-y: auto;
-      @include thin-scroll;
-    }
-
-    &__curatedRow {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 9px;
-      border-radius: $radius-md;
-      border: 1px solid $black-border;
-      background: rgba($black-deep, 0.42);
-
-      button {
-        margin-left: auto;
-        flex-shrink: 0;
-        width: 24px;
-        height: 24px;
-        border: none;
-        border-radius: 5px;
-        background: none;
-        color: $white-dim;
-        font-size: 11px;
-        cursor: pointer;
-
-        &:hover {
-          color: $bad;
-        }
-      }
-    }
-
-    &__curatedText {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-
-      span {
-        font-family: $font-body-text;
-        font-size: 13px;
-        color: $white-warm;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      small {
-        font-family: $font-subhead;
-        font-size: 10.5px;
-        line-height: 1.4;
-        color: $white-dim;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
     }
 
     &__footer {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-top: 6px;
+      gap: 4px;
+      margin-top: 20px;
+    }
 
-      .submitBtn {
-        padding: 12px 22px;
+    &__help {
+      max-width: 34ch;
+      font-family: $font-subhead;
+      font-size: 12px;
+      line-height: 1.6;
+      color: $white-dim;
+    }
+
+    &__back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 44px;
+      padding: 0 16px;
+      border: none;
+      margin-top: 10px;
+      border-radius: $radius-pill;
+      background: none;
+      color: $white-muted;
+      font-family: $font-button;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition:
+        color $duration-fast $ease-out,
+        background $duration-fast $ease-out;
+
+      i {
+        transition: transform $duration-fast $ease-out;
       }
 
-      &--end {
-        justify-content: flex-end;
+      &:hover:not(:disabled) {
+        color: $white-warm;
+        background: rgba($gold-bright, 0.08);
+
+        i {
+          transform: translateX(-3px);
+        }
+      }
+
+      &:focus-visible {
+        outline: 2px solid $gold-bright;
+        outline-offset: 2px;
+      }
+
+      &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
       }
     }
   }
 
-  // The committee-topic field on the one-time setup screen. It previously had
-  // no styles of its own at all: the label and hint rendered unstyled at full
-  // page width (max-width: 880px, centered text), instead of lining up with
-  // the roster step below it (max-width: 560px, left-aligned).
-  .setupTopic {
-    max-width: 560px;
-    margin: 0 auto 24px;
-    text-align: left;
-
-    &__label {
-      display: block;
-      margin-bottom: 7px;
-      font-family: $font-label;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      color: $white-dim;
-    }
-
-    &__hint {
-      margin-top: 8px;
-      font-family: $font-subhead;
-      font-size: 11.5px;
-      line-height: 1.55;
-      color: $white-dim;
-    }
-
-    // The one input every chair fills in before anything else — worth a
-    // slightly larger, more confident treatment than a search box.
-    .rosterSearch {
-      padding: 12px 14px;
-      font-size: 14.5px;
-    }
+  // The password step's primary button. Written as a compound selector so it
+  // outranks the later, general .submitBtn padding.
+  .submitBtn.loginStep__submit {
+    width: 100%;
+    min-height: 52px;
+    margin-top: 20px;
+    padding: 13px 28px;
+    font-size: 14.5px;
   }
 
   // ---------------------------------------------------------------------------
@@ -1349,7 +1566,7 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
   }
 
   // The console's primary call-to-action button — "Open debate", "Set
-  // password and continue", "Continue with N", "Close and record", "Save".
+  // password and continue", "Close and record", "Save".
   // It was used all over the console (.submitBtn) but never actually defined
   // here; every one of those buttons was quietly relying on some global,
   // outer button style. It's fully self-contained now.
@@ -3724,10 +3941,6 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Seat faces — flags for country committees, portraits for crisis cabinets
-  // ---------------------------------------------------------------------------
-
   .munFlag {
     flex-shrink: 0;
     display: inline-block;
@@ -3755,14 +3968,10 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
     display: inline-block;
     border-radius: 50%;
     object-fit: cover;
-    // Faces sit high in most portrait crops, so centring vertically cuts
-    // foreheads off.
     object-position: center 22%;
     background: rgba($white-warm, 0.06);
     box-shadow: inset 0 0 0 1px rgba($white-warm, 0.14);
 
-    // The two places a flag is deliberately rectangular; a portrait there
-    // should still be round.
     &.rollCall__flag,
     &.floorStage__flag {
       border-radius: 50%;
@@ -3780,10 +3989,6 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
         0 6px 20px rgba($black-deep, 0.6);
     }
   }
-
-  // ---------------------------------------------------------------------------
-  // Motion preferences
-  // ---------------------------------------------------------------------------
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3793,15 +3998,46 @@ $gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-
       transition: none;
     }
 
-    .commandSetup__card:hover {
-      transform: none;
+    // Framer Motion handles its own slides and scales under reducedMotion
+    // "user"; these are the CSS-driven ones.
+    &--enter {
+      animation: none;
+    }
+
+    .commandSetup__card::after {
+      transition: none;
     }
 
     .commandSetup__card:hover .commandSetup__cardGlyph {
       transform: none;
     }
+
+    .commandSetup__card:hover:not(:disabled) .commandSetup__cardArrow,
+    .commandSetup__card:focus-visible .commandSetup__cardArrow {
+      transform: none;
+    }
+
     .commandSetup__status--checking i {
       animation: none;
+    }
+
+    .loginSteps__lineFill {
+      transition: none;
+    }
+
+    .loginSteps__dot i {
+      animation: none;
+    }
+
+    .loginStep__back:hover:not(:disabled) i {
+      transform: none;
+    }
+
+    // A spinning ring is the thing reduced-motion users ask not to see. Keep
+    // the "working" signal, but as a slow fade instead of a rotation.
+    .statusScreen__spinner,
+    .loginStep__spinner {
+      animation: commandSetupPulse 1.6s ease-in-out infinite;
     }
   }
 }

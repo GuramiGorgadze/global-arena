@@ -15,8 +15,6 @@ export const getSession = async (req, res) => {
     }).lean();
 
     if (!doc) {
-      // Not an error — this committee just hasn't had a session created
-      // yet, which is how the frontend knows to run roster setup first.
       return res.status(200).json({ exists: false });
     }
 
@@ -43,9 +41,6 @@ export const saveSession = async (req, res) => {
       });
     }
 
-    // The client always sends the complete session, so a save is a full
-    // overwrite, not a patch — but cap the growable arrays server-side too,
-    // rather than trusting the client's own caps to always hold.
     if (Array.isArray(session.log) && session.log.length > MAX_LOG_ENTRIES) {
       session.log = session.log.slice(0, MAX_LOG_ENTRIES);
     }
@@ -114,18 +109,11 @@ export const resetSession = async (req, res) => {
       committeeId: req.committeeId,
     });
 
-    // A reset starts a new session block — a new conference day, typically.
-    // The seats a chair built stay, stripped of that block's live stats;
-    // the floor, motions, vote, documents and log all clear; the topic
-    // carries over since it rarely changes conference to conference. Phase
-    // goes back to rollcall for the same reason a fresh login does.
     const freshDelegates = existing.delegates.map((d) => ({
       id: d.id,
       code: d.code,
       name: d.name,
       role: d.role,
-      // Portraits are part of the seat, not the day's stats. This line was
-      // the one place a crisis cabinet's faces got silently dropped.
       photo: d.photo || "",
       status: "present",
       speeches: 0,
@@ -204,7 +192,5 @@ function toClientSession(doc) {
 
 function fromClientSession(session, committeeId) {
   const { _id, __v, syncedAt, ...rest } = session;
-  // committeeId always comes from the authenticated request, never from the
-  // payload, so a chair logged in for one committee can't write another's.
   return { ...rest, committeeId, syncedAt: new Date() };
 }

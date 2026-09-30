@@ -1,42 +1,26 @@
-// ---------------------------------------------------------------------------
-// Static data for the session console.
-//
-// Everything here is plain data with no React and no side effects, so the
-// console can always be rebuilt to a known-good state (new session, reset,
-// "restore default roster") without touching the engine.
-//
-// Flags come from flagcdn.com by ISO 3166-1 alpha-2 code. If the network is
-// unavailable the <Flag /> component falls back to the Unicode emoji flag,
-// which is built from the same two-letter code.
-// ---------------------------------------------------------------------------
-
+import {
+  UNSC_ROSTER,
+  SPECPOL_ROSTER,
+  UNHRC_ROSTER,
+  DISEC_ROSTER,
+  PRESS_ROSTER,
+} from './presetRosters';
 import { HCC_ROSTER } from './hccRoster';
 
 export const FLAG_CDN = 'https://flagcdn.com';
 
-// flagcdn only serves a fixed set of widths (20/40/80/160/320), so callers
-// pass one of those and we build the 2x descriptor from the next size up.
 export const flagUrl = (code, width = 40) =>
   code ? `${FLAG_CDN}/w${width}/${String(code).toLowerCase()}.png` : '';
 
 export const flagSrcSet = (code, width = 40) =>
   code ? `${FLAG_CDN}/w${width * 2}/${String(code).toLowerCase()}.png 2x` : '';
 
-// 'GE' -> 🇬🇪. Regional indicator symbols start at U+1F1E6, which is
-// 0x1F1E6 - 'A'.charCodeAt(0) = 127397 above the ASCII letter.
 export const flagEmoji = (code) => {
   if (!code || String(code).length !== 2) return '🏳️';
   return String(code)
     .toUpperCase()
     .replace(/[A-Z]/g, (ch) => String.fromCodePoint(127397 + ch.charCodeAt(0)));
 };
-
-// ---------------------------------------------------------------------------
-// Country catalog
-//
-// `name` is the placard spelling, and is what the delegate search matches
-// against, so a chair can type either the country name or its ISO code.
-// ---------------------------------------------------------------------------
 
 export const COUNTRIES = [
   { code: 'af', name: 'Afghanistan' },
@@ -118,6 +102,7 @@ export const COUNTRIES = [
   { code: 'ng', name: 'Nigeria' },
   { code: 'kp', name: 'North Korea' },
   { code: 'no', name: 'Norway' },
+  { code: 'om', name: 'Oman' },
   { code: 'pk', name: 'Pakistan' },
   { code: 'ps', name: 'Palestine' },
   { code: 'pa', name: 'Panama' },
@@ -176,27 +161,23 @@ export const findCountry = (code) => COUNTRY_MAP[String(code || '').toLowerCase(
 export const searchCountries = (query, limit = 8) => {
   const q = query.trim().toLowerCase();
   if (!q) return [];
-  return COUNTRIES.filter(
-    (c) => c.name.toLowerCase().includes(q) || c.code === q
-  ).slice(0, limit);
+  return COUNTRIES.filter((c) => c.name.toLowerCase().includes(q) || c.code === q).slice(0, limit);
 };
-
-// ---------------------------------------------------------------------------
-// Committees
-//
-// `rules` is what the engine reads to decide how a vote resolves:
-//   voteMode  'simple'  — majority of delegates present
-//             'unsc'    — 9 affirmative of 15, and any P5 "no" is a veto
-//             'none'    — the body doesn't vote (Press Corps)
-//   veto      list of ISO codes holding the veto
-//   crisis    unlocks crisis updates and directives (HCC)
-//   press     swaps draft resolutions for articles and interviews
-// ---------------------------------------------------------------------------
 
 export const SEAT_KIND = {
   COUNTRY: 'country',
   FIGURE: 'figure',
   OUTLET: 'outlet',
+};
+
+export const COMMITTEE_TOPICS = {
+  unsc: 'GOOD TOPIC',
+  specpol:
+    'ANOTHER GOOD TOPIC',
+  unhrc: 'GREAT TOPIC',
+  hcc: 'The Rose Revolution',
+  disec: 'EVEN BETTER TOPIC',
+  press: 'ASTONISHING TOPIC ',
 };
 
 export const COMMITTEES = [
@@ -208,7 +189,7 @@ export const COMMITTEES = [
     icon: 'bi-shield-lock',
     seatKind: SEAT_KIND.COUNTRY,
     seatLabel: 'Delegation',
-    defaultTopic: 'Autonomous weapons, artificial intelligence and international security',
+    defaultTopic: COMMITTEE_TOPICS.unsc,
     defaultSpeechMs: 90_000,
     rules: {
       voteMode: 'unsc',
@@ -217,13 +198,7 @@ export const COMMITTEES = [
       crisis: false,
       press: false,
     },
-    // 2026 composition: five permanent members plus the ten elected seats.
-    // Editable from the roster panel if your dais runs a different council.
-    roster: [
-      'cn', 'fr', 'ru', 'gb', 'us',
-      'dk', 'gr', 'pk', 'pa', 'so',
-      'bh', 'co', 'cd', 'lv', 'lr',
-    ],
+    roster: UNSC_ROSTER,
   },
   {
     id: 'specpol',
@@ -233,7 +208,7 @@ export const COMMITTEES = [
     icon: 'bi-flag',
     seatKind: SEAT_KIND.COUNTRY,
     seatLabel: 'Delegation',
-    defaultTopic: 'Non-self-governing territories and the unfinished agenda of decolonization',
+    defaultTopic: COMMITTEE_TOPICS.specpol,
     defaultSpeechMs: 60_000,
     rules: {
       voteMode: 'simple',
@@ -242,11 +217,7 @@ export const COMMITTEES = [
       crisis: false,
       press: false,
     },
-    roster: [
-      'ar', 'au', 'br', 'ca', 'cl', 'cn', 'cu', 'eg', 'fr', 'de',
-      'in', 'id', 'ir', 'il', 'jp', 'ke', 'ma', 'mx', 'ng', 'pk',
-      'ps', 'pl', 'ru', 'za', 'es', 'tr', 'ua', 'ae', 'gb', 'us',
-    ],
+    roster: SPECPOL_ROSTER,
   },
   {
     id: 'unhrc',
@@ -256,7 +227,7 @@ export const COMMITTEES = [
     icon: 'bi-people',
     seatKind: SEAT_KIND.COUNTRY,
     seatLabel: 'Delegation',
-    defaultTopic: 'The rights of people displaced by the climate crisis',
+    defaultTopic: COMMITTEE_TOPICS.unhrc,
     defaultSpeechMs: 60_000,
     rules: {
       voteMode: 'simple',
@@ -265,11 +236,7 @@ export const COMMITTEES = [
       crisis: false,
       press: false,
     },
-    roster: [
-      'af', 'bd', 'be', 'bo', 'br', 'cm', 'cl', 'cn', 'cu', 'cz',
-      'fi', 'fr', 'ge', 'de', 'gh', 'in', 'id', 'kz', 'ke', 'mx',
-      'ma', 'np', 'ng', 'qa', 'ro', 'sn', 'za', 'kr', 'sd', 'ch',
-    ],
+    roster: UNHRC_ROSTER,
   },
   {
     id: 'hcc',
@@ -279,7 +246,7 @@ export const COMMITTEES = [
     icon: 'bi-hourglass-split',
     seatKind: SEAT_KIND.FIGURE,
     seatLabel: 'Portfolio',
-    defaultTopic: 'Rose Revolution',
+    defaultTopic: COMMITTEE_TOPICS.hcc,
     defaultSpeechMs: 45_000,
     rules: {
       voteMode: 'simple',
@@ -288,9 +255,6 @@ export const COMMITTEES = [
       crisis: true,
       press: false,
     },
-    // The Rose Revolution cabinet (November 2003) lives in hccRoster.js, next
-    // to the portrait slugs it points at. Each seat shows its portrait and
-    // falls back to the flag if the image is missing.
     roster: HCC_ROSTER,
   },
   {
@@ -301,7 +265,7 @@ export const COMMITTEES = [
     icon: 'bi-radioactive',
     seatKind: SEAT_KIND.COUNTRY,
     seatLabel: 'Delegation',
-    defaultTopic: 'Preventing an arms race in outer space',
+    defaultTopic: COMMITTEE_TOPICS.disec,
     defaultSpeechMs: 60_000,
     rules: {
       voteMode: 'simple',
@@ -310,11 +274,7 @@ export const COMMITTEES = [
       crisis: false,
       press: false,
     },
-    roster: [
-      'ar', 'at', 'au', 'br', 'ca', 'cn', 'eg', 'fr', 'de', 'in',
-      'id', 'ir', 'il', 'it', 'jp', 'kz', 'kp', 'mx', 'nl', 'ng',
-      'no', 'pk', 'pl', 'ru', 'sa', 'kr', 'se', 'tr', 'gb', 'us',
-    ],
+    roster: DISEC_ROSTER,
   },
   {
     id: 'press',
@@ -324,7 +284,7 @@ export const COMMITTEES = [
     icon: 'bi-camera-reels',
     seatKind: SEAT_KIND.OUTLET,
     seatLabel: 'Outlet',
-    defaultTopic: 'GAMUN 2026 — Conference coverage',
+    defaultTopic: COMMITTEE_TOPICS.press,
     defaultSpeechMs: 45_000,
     rules: {
       voteMode: 'none',
@@ -333,22 +293,7 @@ export const COMMITTEES = [
       crisis: false,
       press: true,
     },
-    roster: [
-      { code: 'gb', name: 'BBC News', role: 'London' },
-      { code: 'us', name: 'CNN', role: 'Atlanta' },
-      { code: 'us', name: 'The New York Times', role: 'New York' },
-      { code: 'gb', name: 'Reuters', role: 'Wire service' },
-      { code: 'qa', name: 'Al Jazeera', role: 'Doha' },
-      { code: 'fr', name: 'Le Monde', role: 'Paris' },
-      { code: 'fr', name: 'Agence France-Presse', role: 'Wire service' },
-      { code: 'de', name: 'Der Spiegel', role: 'Hamburg' },
-      { code: 'cn', name: 'Xinhua', role: 'Beijing' },
-      { code: 'ru', name: 'TASS', role: 'Moscow' },
-      { code: 'jp', name: 'NHK', role: 'Tokyo' },
-      { code: 'in', name: 'The Hindu', role: 'Chennai' },
-      { code: 'za', name: 'Mail & Guardian', role: 'Johannesburg' },
-      { code: 'ge', name: 'Georgian First Channel', role: 'Tbilisi' },
-    ],
+    roster: PRESS_ROSTER,
   },
 ];
 
@@ -359,19 +304,15 @@ export const COMMITTEE_MAP = COMMITTEES.reduce((acc, c) => {
 
 export const getCommittee = (id) => COMMITTEE_MAP[id] || COMMITTEES[0];
 
-// The server caps a committee's topic at 300 characters (topic in
-// models/schemas/sessionFields.js). The topic inputs enforce it up front,
-// because a save the server rejects is retried indefinitely and nothing
-// else gets saved in the meantime.
-export const TOPIC_MAX_LENGTH = 300;
+export const getPresetRoster = (committee) =>
+  committee.roster.map(({ code, name, role, photo }) => ({
+    code: code || '',
+    name,
+    role: role || '',
+    photo: photo || '',
+  }));
 
-// ---------------------------------------------------------------------------
-// Motions
-//
-// `precedence` is the order of disruption: when several motions are on the
-// floor the chair takes the lowest number first, exactly as in the rules of
-// procedure. `fields` tells the form which inputs to render.
-// ---------------------------------------------------------------------------
+export const TOPIC_MAX_LENGTH = 300;
 
 export const MAJORITY = {
   SIMPLE: 'simple',
@@ -521,10 +462,6 @@ export const MOTION_MAP = MOTION_TYPES.reduce((acc, m) => {
 
 export const getMotionType = (id) => MOTION_MAP[id] || null;
 
-// ---------------------------------------------------------------------------
-// Points — never voted on, just logged so the minutes show who raised what.
-// ---------------------------------------------------------------------------
-
 export const POINT_TYPES = [
   {
     id: 'order',
@@ -556,11 +493,6 @@ export const POINT_MAP = POINT_TYPES.reduce((acc, p) => {
   acc[p.id] = p;
   return acc;
 }, {});
-
-// ---------------------------------------------------------------------------
-// Documents on the floor. Press Corps trades resolutions for articles, HCC
-// adds directives — the console shows only the types a committee can produce.
-// ---------------------------------------------------------------------------
 
 export const DOC_TYPES = [
   {
@@ -627,7 +559,5 @@ export const DOC_STATUS_MAP = DOC_STATUS.reduce((acc, s) => {
   return acc;
 }, {});
 
-// Preset speaking and caucus lengths, so the dais never types a number
-// mid-session. Values in milliseconds.
 export const SPEECH_PRESETS = [30_000, 45_000, 60_000, 90_000, 120_000];
 export const CAUCUS_PRESETS = [300_000, 480_000, 600_000, 900_000, 1_200_000];

@@ -8,10 +8,6 @@ const client = axios.create({
   withCredentials: true,
 });
 
-// Every call throws a plain Error on failure, with the server's message
-// where there is one and the HTTP status attached as err.status — the
-// engine branches on 401 specifically (treat as signed out) versus
-// anything else (a genuine error to show or retry).
 function unwrap(promise, fallback) {
   return promise
     .then((response) => response.data)

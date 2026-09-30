@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, MotionConfig, motion, useAnimation } from 'framer-motion';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import Flag from '../components/session/Flag';
@@ -8,8 +8,8 @@ import * as munApi from '../api/mun';
 import {
   CAUCUS_PRESETS,
   COMMITTEES,
-  COUNTRIES,
   DOC_STATUS,
+  getPresetRoster,
   MOTION_TYPES,
   POINT_TYPES,
   SEAT_KIND,
@@ -50,6 +50,7 @@ import {
 } from '../hooks/useSessionEngine';
 
 const EASE = [0.22, 1, 0.36, 1];
+const EXIT_EASE = [0.4, 0, 1, 1];
 const RING_RADIUS = 104;
 const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
@@ -105,6 +106,33 @@ export default function SessionCommandPage() {
   const [delegateModalId, setDelegateModalId] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const modalOpen = !!delegateModalId || settingsOpen;
+
+  // --- first-time setup ----------------------------------------------------
+  //
+  // A committee's seats and topic are preset in munData, so the first time it
+  // signs in there is nothing for the chair to fill in: the page seeds the
+  // session itself and drops straight into roll call. The ref stops the effect
+  // from firing twice for the same attempt (StrictMode, or a re-render while
+  // the request is still in flight); bumping setupAttempt is how Retry asks
+  // for a fresh one.
+  const [setupFailed, setSetupFailed] = useState(false);
+  const [setupAttempt, setSetupAttempt] = useState(0);
+  const setupStartedRef = useRef('');
+
+  useEffect(() => {
+    if (sessionStatus !== 'needsRoster' || !committeeId) {
+      setupStartedRef.current = '';
+      return;
+    }
+    const key = `${committeeId}:${setupAttempt}`;
+    if (setupStartedRef.current === key) return;
+    setupStartedRef.current = key;
+
+    const preset = getCommittee(committeeId);
+    Promise.resolve(initializeSession(getPresetRoster(preset), preset.defaultTopic)).catch(() =>
+      setSetupFailed(true)
+    );
+  }, [sessionStatus, committeeId, setupAttempt, initializeSession]);
 
   const clockRunning = !!session && session.speech.running;
   const now = useTick(!!session && session.phase !== 'closed', clockRunning ? 200 : 500);
@@ -200,60 +228,118 @@ export default function SessionCommandPage() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [session, actions, modalOpen]);
 
+  // --- everything before the console ----------------------------------------
+  //
   // Every hook above this line runs on every render regardless of which
   // screen ends up showing — each already no-ops safely when session is
-  // null, which is exactly what keeps this chain of early returns legal
-  // under the rules of hooks (nothing below here calls a hook).
+  // null, which is what keeps the early return below legal under the rules
+  // of hooks (nothing below here calls a hook).
+  //
+  // All the pre-console screens (checking sign-in, sign-in, loading, setting
+  // up, error) are resolved into one `gate` and rendered through a single
+  // AnimatePresence, so moving between them crossfades instead of snapping.
+  // Screens that are the same kind of thing share a key ("status"), so a
+  // spinner going from "Checking…" to "Loading…" stays put and only the
+  // sentence changes.
+  let gate = null;
   if (authStatus === 'checking') {
-    return (
-      <FullScreenStatus
-        icon="bi-hourglass-split"
-        text="Checking your sign-in…"
-      />
-    );
-  }
-  if (authStatus === 'signedOut') {
-    return (
-      <SetupShell>
-        <LoginScreen login={login} />
-      </SetupShell>
-    );
-  }
-  if (sessionStatus === 'loading' || sessionStatus === 'idle') {
-    return (
-      <FullScreenStatus
-        icon="bi-hourglass-split"
-        text="Loading your committee…"
-      />
-    );
-  }
-  if (sessionStatus === 'error') {
-    return (
-      <FullScreenStatus
-        icon="bi-exclamation-triangle"
-        text="Could not load your session. Check your connection and try again."
-        action={{ label: 'Retry', onClick: reloadSession }}
-      />
-    );
-  }
-  if (sessionStatus === 'needsRoster') {
-    return (
-      <SetupShell>
-        <RosterSetupScreen
-          committee={getCommittee(committeeId)}
-          onContinue={initializeSession}
+    gate = {
+      key: 'status',
+      node: (
+        <FullScreenStatus
+          busy
+          text="Checking your sign-in…"
         />
-      </SetupShell>
-    );
-  }
-  if (!session || !committee) {
+      ),
+    };
+  } else if (authStatus === 'signedOut') {
+    gate = { key: 'login', node: <LoginScreen login={login} /> };
+  } else if (sessionStatus === 'loading' || sessionStatus === 'idle') {
+    gate = {
+      key: 'status',
+      node: (
+        <FullScreenStatus
+          busy
+          text="Loading your committee…"
+        />
+      ),
+    };
+  } else if (sessionStatus === 'error') {
+    gate = {
+      key: 'error',
+      node: (
+        <FullScreenStatus
+          icon="bi-exclamation-triangle"
+          text="Could not load your session. Check your connection and try again."
+          action={{ label: 'Retry', onClick: reloadSession }}
+        />
+      ),
+    };
+  } else if (sessionStatus === 'needsRoster') {
+    // Nobody sees a setup form any more: the effect above is already seeding
+    // the session from the committee's preset seats and topic. This only
+    // covers the moment while that request is in flight, or the failure case.
+    gate = setupFailed
+      ? {
+          key: 'error',
+          node: (
+            <FullScreenStatus
+              icon="bi-exclamation-triangle"
+              text="Could not set up the committee. Check your connection and try again."
+              action={{
+                label: 'Retry',
+                onClick: () => {
+                  setSetupFailed(false);
+                  setSetupAttempt((n) => n + 1);
+                },
+              }}
+            />
+          ),
+        }
+      : {
+          key: 'status',
+          node: (
+            <FullScreenStatus
+              busy
+              text={`Setting up ${getCommittee(committeeId).abbr}…`}
+            />
+          ),
+        };
+  } else if (!session || !committee) {
     // sessionStatus should be 'ready' with a session by now; this only
     // guards the brief render between one state update and the next.
+    gate = {
+      key: 'status',
+      node: (
+        <FullScreenStatus
+          busy
+          text="Loading…"
+        />
+      ),
+    };
+  }
+
+  if (gate) {
     return (
-      <FullScreenStatus
-        icon="bi-hourglass-split"
-        text="Loading…"
-      />
+      // .commandPage is what gives the console its font, text colour and
+      // background, so every gate screen has to sit inside it. reducedMotion
+      // "user" makes Framer Motion drop slides and scales (keeping fades)
+      // for anyone who has asked their system for less motion.
+      <MotionConfig reducedMotion="user">
+        <div className="commandPage">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={gate.key}
+              className="gateScreen"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0, transition: { duration: 0.28, ease: EASE } }}
+              exit={{ opacity: 0, y: -8, transition: { duration: 0.18, ease: EXIT_EASE } }}
+            >
+              {gate.node}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </MotionConfig>
     );
   }
 
@@ -279,7 +365,7 @@ export default function SessionCommandPage() {
   };
 
   return (
-    <div className="commandPage">
+    <div className="commandPage commandPage--enter">
       <SessionBar
         session={session}
         committee={committee}
@@ -422,43 +508,80 @@ export default function SessionCommandPage() {
 
 // ---------------------------------------------------------------------------
 // Full-screen status (checking sign-in, loading a session, or an error)
+//
+// Rendered inside the gate's .commandPage, so it is only the centred content.
+// `busy` swaps the icon for a spinner; the sentence crossfades when it changes
+// so "Checking…" → "Loading…" reads as one continuous wait.
 // ---------------------------------------------------------------------------
 
-function FullScreenStatus({ icon, text, action }) {
+function FullScreenStatus({ icon, text, action, busy }) {
   return (
-    <div className="commandPage commandPage--status">
-      <div className="statusScreen">
-        <i className={`bi ${icon} statusScreen__icon`} />
-        <p className="statusScreen__text">{text}</p>
-        {action && (
-          <button
-            type="button"
-            className="commandGhostBtn"
-            onClick={action.onClick}
-          >
-            {action.label}
-          </button>
-        )}
-      </div>
+    <div
+      className="statusScreen"
+      role={busy ? 'status' : 'alert'}
+    >
+      {busy ? (
+        <span
+          className="statusScreen__spinner"
+          aria-hidden="true"
+        />
+      ) : (
+        <i
+          className={`bi ${icon} statusScreen__icon`}
+          aria-hidden="true"
+        />
+      )}
+      <motion.p
+        key={text}
+        className="statusScreen__text"
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.22, ease: EASE }}
+      >
+        {text}
+      </motion.p>
+      {action && (
+        <button
+          type="button"
+          className="commandGhostBtn"
+          onClick={action.onClick}
+        >
+          {action.label}
+        </button>
+      )}
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Shell for the sign-in and setup screens. .commandPage is what gives the
-// console its font, text colour and background, so these screens have to sit
-// inside it too. Rendered on their own they inherited whatever the page
-// underneath happened to set, which is why their type never matched the
-// console's.
-// ---------------------------------------------------------------------------
-
-function SetupShell({ children }) {
-  return <div className="commandPage">{children}</div>;
-}
-
-// ---------------------------------------------------------------------------
 // Sign in — pick a committee, then its password
+//
+// Two steps that share one persistent header (badge + step indicator) so the
+// thing that stays put tells you where you are, and the thing below it slides:
+// forward goes left, back goes right. Every pane is a variant parent, so its
+// children stagger in on `center` and the pane slides out as a whole on `exit`.
 // ---------------------------------------------------------------------------
+
+const stepVariants = {
+  enter: (dir) => ({ opacity: 0, x: dir * 36 }),
+  center: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.32, ease: EASE, delayChildren: 0.05, staggerChildren: 0.045 },
+  },
+  // Leaving is quicker than arriving, and travels a little less.
+  exit: (dir) => ({
+    opacity: 0,
+    x: dir * -27,
+    transition: { duration: 0.2, ease: EXIT_EASE },
+  }),
+};
+
+const itemVariants = {
+  enter: { opacity: 0, y: 12 },
+  center: { opacity: 1, y: 0, transition: { duration: 0.32, ease: EASE } },
+  exit: {},
+};
 
 // Human-readable label per committee status. Keyed by the same `state`
 // string CommitteeCard resolves below, so the two stay impossible to drift
@@ -470,9 +593,27 @@ const COMMITTEE_STATE_LABEL = {
   active: 'In progress',
 };
 
+const SIGN_IN_NOTES = [
+  {
+    icon: 'bi-pin-angle',
+    text: 'Seats and agenda are already set. Signing in never rebuilds them.',
+  },
+  {
+    icon: 'bi-clipboard-check',
+    text: 'Every sign-in starts a fresh roll call.',
+  },
+  {
+    icon: 'bi-life-preserver',
+    text: 'Forgot a password? Our team can change or recover it.',
+  },
+];
+
 function LoginScreen({ login }) {
   const [statuses, setStatuses] = useState(null); // [{committeeId, hasPassword, hasSession}] | null while loading
   const [selected, setSelected] = useState(null);
+  // +1 when moving forward (picker → password), -1 when going back.
+  const [direction, setDirection] = useState(1);
+  const scrollRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -491,92 +632,229 @@ function LoginScreen({ login }) {
     };
   }, []);
 
-  if (selected) {
-    const meta = statuses?.find((s) => s.committeeId === selected);
-    return (
-      <PasswordStep
-        committeeId={selected}
-        hasPassword={meta?.hasPassword ?? false}
-        onBack={() => setSelected(null)}
-        login={login}
-      />
-    );
-  }
+  const choose = (id) => {
+    setDirection(1);
+    setSelected(id);
+  };
+
+  const goBack = () => {
+    setDirection(-1);
+    setSelected(null);
+  };
+
+  const committee = selected ? getCommittee(selected) : null;
+  const meta = selected ? statuses?.find((s) => s.committeeId === selected) : null;
 
   return (
-    <div className="commandSetup">
+    <div
+      className="commandSetup"
+      ref={scrollRef}
+    >
       <div className="commandSetup__inner">
-        <span className="commandSetup__badge">
-          <i className="bi bi-shield-lock" /> GAMUN Command
-        </span>
-        <h1 className="commandSetup__title">Sign in to your committee</h1>
-        <p className="commandSetup__desc">
-          Pick your committee. If nobody has signed in to it yet, you'll set its password now — the
-          dais uses the same one for the rest of the conference.
-        </p>
+        <header className="loginHeader">
+          <span className="commandSetup__badge">
+            <i className="bi bi-shield-lock" /> GAMUN Command
+          </span>
+          <LoginSteps
+            committee={committee}
+            onBack={goBack}
+          />
+        </header>
 
-        <div className="commandSetup__grid">
-          {COMMITTEES.map((committee, index) => {
-            const meta = statuses?.find((s) => s.committeeId === committee.id);
-            const state = !statuses ? 'checking' : !meta?.hasPassword ? 'new' : meta.hasSession ? 'active' : 'ready';
-
-            // A crisis cabinet or a press corps seats the same country over
-            // and over, so each flag shows once, with a "+N" for the rest.
-            const rosterCodes = committee.roster.map((entry) =>
-              typeof entry === 'string' ? entry : entry.code
-            );
-            const uniqueCodes = [...new Set(rosterCodes)].filter(Boolean);
-            const flagCodes = uniqueCodes.slice(0, 5);
-            const extraFlagsCount = Math.max(0, uniqueCodes.length - flagCodes.length);
-
-            return (
-              <CommitteeCard
-                key={committee.id}
-                committee={committee}
-                state={state}
-                index={index}
-                flagCodes={flagCodes}
-                extraFlagsCount={extraFlagsCount}
-                seatCount={committee.roster.length}
-                onSelect={() => setSelected(committee.id)}
-              />
-            );
-          })}
-        </div>
-
-        <p className="commandSetup__hint">
-          <i className="bi bi-info-circle" />
-          Signing in doesn't rebuild the roster or the topic. Both are set once, the first time a
-          committee ever signs in. It does start a fresh roll call, every time. Forgoting a password isn't an end of the world. It can be changed or recovered by our team. Feel free to test out the functionality.
-        </p>
+        <AnimatePresence
+          mode="wait"
+          custom={direction}
+          // A long picker scrolled down, then a short password step: start the
+          // new pane from the top instead of wherever the old one left off.
+          onExitComplete={() => scrollRef.current?.scrollTo({ top: 0 })}
+        >
+          {committee ? (
+            <PasswordStep
+              key="password"
+              direction={direction}
+              committee={committee}
+              hasPassword={meta?.hasPassword ?? false}
+              onBack={goBack}
+              login={login}
+            />
+          ) : (
+            <CommitteePicker
+              key="pick"
+              direction={direction}
+              statuses={statuses}
+              onSelect={choose}
+            />
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
 }
 
-function CommitteeCard({ committee, state, index, flagCodes, extraFlagsCount, seatCount, onSelect }) {
+function LoginSteps({ committee, onBack }) {
+  const onPassword = !!committee;
+
+  return (
+    <ol
+      className="loginSteps"
+      aria-label="Sign-in progress"
+    >
+      <li>
+        {onPassword ? (
+          // Once a committee is picked, step one turns into the way back —
+          // with the committee's name on it, so it also confirms the choice.
+          <button
+            type="button"
+            className="loginSteps__item is-done"
+            onClick={onBack}
+            aria-label={`${committee.abbr} selected. Back to the committee list`}
+          >
+            <span className="loginSteps__dot">
+              <i className="bi bi-check-lg" />
+            </span>
+            <span className="loginSteps__label">{committee.abbr}</span>
+          </button>
+        ) : (
+          <span
+            className="loginSteps__item is-current"
+            aria-current="step"
+          >
+            <span className="loginSteps__dot">1</span>
+            <span className="loginSteps__label">Committee</span>
+          </span>
+        )}
+      </li>
+
+      <li
+        role="presentation"
+        className={clsx('loginSteps__line', { 'is-filled': onPassword })}
+      >
+        <span className="loginSteps__lineFill" />
+      </li>
+
+      <li>
+        <span
+          className={clsx('loginSteps__item', onPassword ? 'is-current' : 'is-upcoming')}
+          aria-current={onPassword ? 'step' : undefined}
+        >
+          <span className="loginSteps__dot">2</span>
+          <span className="loginSteps__label">Password</span>
+        </span>
+      </li>
+    </ol>
+  );
+}
+
+function CommitteePicker({ direction, statuses, onSelect }) {
+  return (
+    <motion.div
+      className="loginPane"
+      variants={stepVariants}
+      custom={direction}
+      initial="enter"
+      animate="center"
+      exit="exit"
+    >
+      <motion.div
+        className="commandSetup__head"
+        variants={itemVariants}
+      >
+        <h1 className="commandSetup__title">Sign in to your committee</h1>
+        <p className="commandSetup__desc">
+          Pick your committee. If nobody has signed in to it yet, you’ll set its password now — you
+          won’t have to set a new one each time.
+        </p>
+      </motion.div>
+
+      <div
+        className="commandSetup__grid"
+        aria-busy={!statuses}
+      >
+        {COMMITTEES.map((committee) => {
+          const meta = statuses?.find((s) => s.committeeId === committee.id);
+          const state = !statuses
+            ? 'checking'
+            : !meta?.hasPassword
+              ? 'new'
+              : meta.hasSession
+                ? 'active'
+                : 'ready';
+
+          // A crisis cabinet or a press corps seats the same country over
+          // and over, so each flag shows once, with a "+N" for the rest.
+          const rosterCodes = committee.roster.map((entry) =>
+            typeof entry === 'string' ? entry : entry.code
+          );
+          const uniqueCodes = [...new Set(rosterCodes)].filter(Boolean);
+          const flagCodes = uniqueCodes.slice(0, 5);
+          const extraFlagsCount = Math.max(0, uniqueCodes.length - flagCodes.length);
+
+          return (
+            <CommitteeCard
+              key={committee.id}
+              committee={committee}
+              state={state}
+              flagCodes={flagCodes}
+              extraFlagsCount={extraFlagsCount}
+              seatCount={committee.roster.length}
+              onSelect={() => onSelect(committee.id)}
+            />
+          );
+        })}
+      </div>
+
+      <motion.ul
+        className="commandSetup__notes"
+        variants={itemVariants}
+      >
+        {SIGN_IN_NOTES.map((note) => (
+          <li key={note.icon}>
+            <i
+              className={`bi ${note.icon}`}
+              aria-hidden="true"
+            />
+            <span>{note.text}</span>
+          </li>
+        ))}
+      </motion.ul>
+    </motion.div>
+  );
+}
+
+function CommitteeCard({
+  committee,
+  state,
+  flagCodes,
+  extraFlagsCount,
+  seatCount,
+  onSelect,
+}) {
   const checking = state === 'checking';
+
+  // A soft highlight that follows the pointer. It is written straight to CSS
+  // variables so moving the mouse never re-renders anything.
+  const trackPointer = (event) => {
+    const el = event.currentTarget;
+    const rect = el.getBoundingClientRect();
+    el.style.setProperty('--mx', `${event.clientX - rect.left}px`);
+    el.style.setProperty('--my', `${event.clientY - rect.top}px`);
+  };
 
   return (
     <motion.button
       type="button"
-      className="commandSetup__card"
+      className={clsx('commandSetup__card', `commandSetup__card--${state}`)}
       onClick={onSelect}
+      onPointerMove={trackPointer}
       disabled={checking}
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: index * 0.05, ease: EASE }}
-      whileHover={{ y: -3 }}
-      whileTap={{ scale: 0.98 }}
+      variants={itemVariants}
+      whileHover={checking ? undefined : { y: -3, transition: { duration: 0.18, ease: EASE } }}
+      whileTap={checking ? undefined : { scale: 0.98, transition: { duration: 0.1 } }}
     >
       <i
         className={`bi ${committee.icon} commandSetup__cardGlyph`}
         aria-hidden="true"
       />
-
-      <span className="commandSetup__cardArrow">
-        <i className="bi bi-arrow-right" />
-      </span>
 
       <span className="commandSetup__cardTop">
         <span className="commandSetup__icon">
@@ -602,172 +880,298 @@ function CommitteeCard({ committee, state, index, flagCodes, extraFlagsCount, se
           {seatCount} {committee.seatLabel.toLowerCase()}
           {seatCount === 1 ? '' : 's'}
         </span>
-        <span className="commandSetup__flags">
-          {flagCodes.map((code) => (
-            <Flag
-              key={code}
-              code={code}
-              size={20}
-            />
-          ))}
-          {extraFlagsCount > 0 && <span className="commandSetup__flagsMore">+{extraFlagsCount}</span>}
+        <span className="commandSetup__cardEnd">
+          <span className="commandSetup__flags">
+            {flagCodes.map((code) => (
+              <Flag
+                key={code}
+                code={code}
+                size={20}
+              />
+            ))}
+            {extraFlagsCount > 0 && (
+              <span className="commandSetup__flagsMore">+{extraFlagsCount}</span>
+            )}
+          </span>
+          <span
+            className="commandSetup__cardArrow"
+            aria-hidden="true"
+          >
+            <i className="bi bi-arrow-right" />
+          </span>
         </span>
       </span>
     </motion.button>
   );
 }
 
-function PasswordStep({ committeeId, hasPassword, onBack, login }) {
-  const committee = getCommittee(committeeId);
+function PasswordStep({ direction, committee, hasPassword, onBack, login }) {
   const isFirstTime = !hasPassword;
+  const seatCount = committee.roster.length;
 
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  // { field: 'password' | 'confirm', message } | null — the message renders
+  // under the field it is about, not in a banner somewhere else.
+  const [error, setError] = useState(null);
+  const [capsOn, setCapsOn] = useState(false);
+
+  const passwordRef = useRef(null);
+  const confirmRef = useRef(null);
+  const shake = useAnimation();
 
   const lengthOk = password.length >= 4;
   const matchOk = !isFirstTime || (confirm.length > 0 && password === confirm);
 
+  // The one thing to do on this screen is type, so the cursor is already there.
+  useEffect(() => {
+    passwordRef.current?.focus({ preventScroll: true });
+  }, []);
+
+  const fail = (field, message) => {
+    setError({ field, message });
+    setSubmitting(false);
+    shake.start({ x: [0, -10, 10, -6, 6, 0], transition: { duration: 0.4, ease: 'easeInOut' } });
+    const target = field === 'confirm' ? confirmRef.current : passwordRef.current;
+    target?.focus({ preventScroll: true });
+    // A rejected password is almost always retyped from scratch.
+    if (field === 'password') target?.select?.();
+  };
+
   const submit = async () => {
-    setError('');
+    if (submitting) return;
     if (password.length < 4) {
-      setError('Password must be at least 4 characters.');
+      fail('password', 'Password must be at least 4 characters.');
       return;
     }
     if (isFirstTime && password !== confirm) {
-      setError('Passwords do not match.');
+      fail('confirm', 'Passwords do not match.');
       return;
     }
+    setError(null);
     setSubmitting(true);
     try {
-      await login(committeeId, password);
+      await login(committee.id, password);
       // On success the parent's authStatus flips to signedIn and this
       // screen unmounts on its own — nothing left to do here.
     } catch (err) {
-      setError(err.message || 'Could not sign in.');
-      setSubmitting(false);
+      fail('password', err.message || 'Could not sign in.');
     }
   };
 
-  const onEnter = (e) => {
-    if (e.key === 'Enter') submit();
+  const trackCaps = (event) => {
+    if (event.getModifierState) setCapsOn(event.getModifierState('CapsLock'));
+  };
+
+  const clearError = (field) => {
+    if (error?.field === field) setError(null);
   };
 
   return (
-    <div className="commandSetup">
-      <div className="commandSetup__inner loginStep">
-        <button
-          type="button"
-          className="commandIconBtn loginStep__back"
-          onClick={onBack}
-          disabled={submitting}
-          aria-label="Back to committee list"
-        >
-          <i className="bi bi-arrow-left" />
-        </button>
-
-        <div className="loginStep__identity">
-          <span className="commandSetup__icon loginStep__icon">
-            <i className={`bi ${committee.icon}`} />
-          </span>
-          <h1 className="commandSetup__title loginStep__title">{committee.abbr}</h1>
-          <p className="loginStep__fullName">{committee.name}</p>
+    <motion.div
+      className="loginStep"
+      variants={stepVariants}
+      custom={direction}
+      initial="enter"
+      animate="center"
+      exit="exit"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && !submitting) onBack();
+      }}
+    >
+      <motion.div
+        className="loginStep__identity"
+        variants={itemVariants}
+      >
+        <span className="commandSetup__icon loginStep__icon">
+          <i className={`bi ${committee.icon}`} />
+        </span>
+        <div className="loginStep__titleRow">
+          <h1 className="loginStep__title">{committee.abbr}</h1>
+          {committee.tag && <span className="commandSetup__tag">{committee.tag}</span>}
         </div>
+        <p className="loginStep__fullName">{committee.name}</p>
+        <p className="loginStep__meta">
+          <i
+            className="bi bi-people"
+            aria-hidden="true"
+          />
+          <span className="loginStep__count">
+            {seatCount} {committee.seatLabel.toLowerCase()}
+            {seatCount === 1 ? '' : 's'}
+          </span>
+          {committee.defaultTopic && (
+            <>
+              <span
+                className="loginStep__metaDot"
+                aria-hidden="true"
+              />
+              <span
+                className="loginStep__agenda"
+                title={committee.defaultTopic}
+              >
+                {committee.defaultTopic}
+              </span>
+            </>
+          )}
+        </p>
+      </motion.div>
 
-        {isFirstTime ? (
-          <div className="loginStep__notice">
-            <i className="bi bi-key-fill" />
-            <div>
-              <p className="loginStep__noticeTitle">First sign-in for this committee</p>
-              <p className="loginStep__noticeText">
-                Choose a password now — the dais will use it for the rest of the conference.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <p className="commandSetup__desc loginStep__desc">
-            Enter this committee's password to continue.
-          </p>
-        )}
-
-        <div className="loginStep__fields">
-          <PasswordField
-            id="committeePassword"
-            label="Password"
-            value={password}
-            onChange={setPassword}
-            onKeyDown={onEnter}
-            show={showPassword}
-            onToggleShow={() => setShowPassword((v) => !v)}
-            autoComplete={isFirstTime ? 'new-password' : 'current-password'}
-            autoFocus
+      <motion.div variants={itemVariants}>
+        <motion.form
+          className="loginStep__panel"
+          animate={shake}
+          noValidate
+          onSubmit={(event) => {
+            event.preventDefault();
+            submit();
+          }}
+        >
+          {/* Lets password managers file the credential under this committee. */}
+          <input
+            className="loginStep__username"
+            type="text"
+            name="username"
+            autoComplete="username"
+            value={committee.abbr}
+            readOnly
+            tabIndex={-1}
+            aria-hidden="true"
           />
 
-          {isFirstTime && (
+          {isFirstTime ? (
+            <div className="loginStep__notice">
+              <i className="bi bi-key-fill" />
+              <div>
+                <p className="loginStep__noticeTitle">First sign-in for this committee</p>
+                <p className="loginStep__noticeText">
+                  Choose a password now. The dais will use it for the rest of the conference.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="loginStep__desc">Enter this committee’s password to continue.</p>
+          )}
+
+          <div className="loginStep__fields">
             <PasswordField
-              id="committeePasswordConfirm"
-              label="Confirm password"
-              value={confirm}
-              onChange={setConfirm}
-              onKeyDown={onEnter}
+              id="committeePassword"
+              label="Password"
+              lead="bi-lock"
+              value={password}
+              onChange={(value) => {
+                setPassword(value);
+                clearError('password');
+              }}
               show={showPassword}
               onToggleShow={() => setShowPassword((v) => !v)}
-              autoComplete="new-password"
+              autoComplete={isFirstTime ? 'new-password' : 'current-password'}
+              inputRef={passwordRef}
+              error={error?.field === 'password' ? error.message : ''}
+              capsOn={capsOn}
+              onCaps={trackCaps}
+              onBlur={() => setCapsOn(false)}
+              readOnly={submitting}
             />
-          )}
 
-          {isFirstTime && password.length > 0 && (
-            <ul className="loginStep__checklist">
-              <li className={lengthOk ? 'is-met' : undefined}>
-                <i className={`bi ${lengthOk ? 'bi-check-circle-fill' : 'bi-circle'}`} />
-                At least 4 characters
-              </li>
-              <li className={matchOk ? 'is-met' : undefined}>
-                <i className={`bi ${matchOk ? 'bi-check-circle-fill' : 'bi-circle'}`} />
-                Passwords match
-              </li>
-            </ul>
-          )}
-        </div>
+            {isFirstTime && (
+              <PasswordField
+                id="committeePasswordConfirm"
+                label="Confirm password"
+                lead="bi-shield-check"
+                value={confirm}
+                onChange={(value) => {
+                  setConfirm(value);
+                  clearError('confirm');
+                }}
+                show={showPassword}
+                onToggleShow={() => setShowPassword((v) => !v)}
+                autoComplete="new-password"
+                inputRef={confirmRef}
+                error={error?.field === 'confirm' ? error.message : ''}
+                capsOn={capsOn}
+                onCaps={trackCaps}
+                onBlur={() => setCapsOn(false)}
+                readOnly={submitting}
+              />
+            )}
 
-        {error && (
-          <p
-            className="loginStep__error"
-            role="alert"
+            {isFirstTime && password.length > 0 && (
+              <ul className="loginStep__checklist">
+                <li className={lengthOk ? 'is-met' : undefined}>
+                  <i className={`bi ${lengthOk ? 'bi-check-circle-fill' : 'bi-circle'}`} />
+                  At least 4 characters
+                </li>
+                <li className={matchOk ? 'is-met' : undefined}>
+                  <i className={`bi ${matchOk ? 'bi-check-circle-fill' : 'bi-circle'}`} />
+                  Passwords match
+                </li>
+              </ul>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            className="submitBtn loginStep__submit"
+            disabled={submitting}
           >
-            <i className="bi bi-exclamation-triangle-fill" />
-            {error}
-          </p>
-        )}
+            {submitting ? (
+              <>
+                <i className="bi bi-arrow-repeat loginStep__spinner" /> Signing in…
+              </>
+            ) : isFirstTime ? (
+              <>
+                Set password and continue <i className="bi bi-arrow-right" />
+              </>
+            ) : (
+              <>
+                Sign in <i className="bi bi-arrow-right" />
+              </>
+            )}
+          </button>
+        </motion.form>
+      </motion.div>
 
+      <motion.div
+        className="loginStep__footer"
+        variants={itemVariants}
+      >
+        <p className="loginStep__help">
+          Forgot this password? Our team can change or recover it.
+        </p>
         <button
           type="button"
-          className="submitBtn loginStep__submit"
-          onClick={submit}
+          className="loginStep__back"
+          onClick={onBack}
           disabled={submitting}
         >
-          {submitting ? (
-            <>
-              <i className="bi bi-arrow-repeat loginStep__spinner" /> Signing in…
-            </>
-          ) : isFirstTime ? (
-            <>
-              Set password and continue <i className="bi bi-arrow-right" />
-            </>
-          ) : (
-            <>
-              Sign in <i className="bi bi-arrow-right" />
-            </>
-          )}
+          <i className="bi bi-arrow-left" /> Choose a different committee
         </button>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
-function PasswordField({ id, label, value, onChange, onKeyDown, show, onToggleShow, autoComplete, autoFocus }) {
+function PasswordField({
+  id,
+  label,
+  lead,
+  value,
+  onChange,
+  show,
+  onToggleShow,
+  autoComplete,
+  inputRef,
+  error,
+  capsOn,
+  onCaps,
+  onBlur,
+  readOnly,
+}) {
+  const errorId = `${id}Error`;
+
   return (
     <div className="loginStep__field">
       <label
@@ -777,255 +1181,74 @@ function PasswordField({ id, label, value, onChange, onKeyDown, show, onToggleSh
         {label}
       </label>
       <div className="loginStep__inputWrap">
+        <i
+          className={`bi ${lead} loginStep__lead`}
+          aria-hidden="true"
+        />
         <input
           id={id}
+          ref={inputRef}
           type={show ? 'text' : 'password'}
-          className="rosterSearch"
+          className="loginStep__input"
           value={value}
-          autoFocus={autoFocus}
+          readOnly={readOnly}
           autoComplete={autoComplete}
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          aria-invalid={!!error}
+          aria-describedby={error ? errorId : undefined}
           onChange={(e) => onChange(e.target.value)}
-          onKeyDown={onKeyDown}
+          onKeyDown={onCaps}
+          onKeyUp={onCaps}
+          onBlur={onBlur}
         />
         <button
           type="button"
           className="loginStep__toggle"
           onClick={onToggleShow}
-          aria-label={show ? 'Hide password' : 'Show password'}
+          aria-label="Show password"
+          aria-pressed={show}
         >
           <i className={`bi ${show ? 'bi-eye-slash' : 'bi-eye'}`} />
         </button>
       </div>
-    </div>
-  );
-}
 
-// ---------------------------------------------------------------------------
-// One-time setup: the committee topic and the roster. Runs exactly once per
-// committee, the first time it ever signs in. After today, loadSession()
-// always finds this committee's document and skips straight to roll call.
-// ---------------------------------------------------------------------------
-
-function RosterSetupScreen({ committee, onContinue }) {
-  // Starts empty for the same reason the country roster does: the real topic
-  // is whatever the conference assigned, and a pre-filled default is just
-  // something to delete first. The default shows as the placeholder instead.
-  const [topic, setTopic] = useState('');
-  const topicRef = useRef(null);
-
-  // Each roster step calls this once its own checks pass, so the topic gets
-  // checked last, here, and the steps don't need to know it exists.
-  const finish = (delegates) => {
-    const written = topic.trim();
-    if (!written) {
-      toast.error('Write the committee topic first.');
-      topicRef.current?.focus();
-      return;
-    }
-    onContinue(delegates, written);
-  };
-
-  return (
-    <div className="commandSetup">
-      <div className="commandSetup__inner">
-        <span className="commandSetup__badge">GAMUN Command</span>
-        <h1 className="commandSetup__title">Set up {committee.abbr}</h1>
-        <p className="commandSetup__desc">
-          {committee.seatKind === SEAT_KIND.COUNTRY
-            ? 'Write the committee topic and pick which delegations sit on it. This only happens once, and every session after today goes straight to roll call.'
-            : `Write the committee topic and confirm the ${committee.seatLabel.toLowerCase()}s, or add your own. This only happens once.`}
-        </p>
-
-        <div className="setupTopic">
-          <label
-            className="setupTopic__label"
-            htmlFor="setupTopic"
+      <AnimatePresence initial={false}>
+        {error ? (
+          <motion.p
+            key="error"
+            id={errorId}
+            className="loginStep__fieldError"
+            role="alert"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: EASE }}
           >
-            Committee topic
-          </label>
-          <input
-            id="setupTopic"
-            ref={topicRef}
-            className="rosterSearch"
-            placeholder={`e.g. ${committee.defaultTopic}`}
-            value={topic}
-            maxLength={TOPIC_MAX_LENGTH}
-            autoFocus
-            onChange={(e) => setTopic(e.target.value)}
-          />
-          <p className="setupTopic__hint">
-            Shown at the top of the console and in the minutes. Click it there to change it later.
-          </p>
-        </div>
-
-        {committee.seatKind === SEAT_KIND.COUNTRY ? (
-          <CountryRosterStep
-            committee={committee}
-            onContinue={finish}
-          />
+            <i className="bi bi-exclamation-triangle-fill" />
+            {error}
+          </motion.p>
         ) : (
-          <CuratedRosterStep
-            committee={committee}
-            onContinue={finish}
-          />
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Starts empty. A chair's real roster is whatever their conference assigned,
-// which is never the same as a hardcoded default — pre-ticking one just made
-// them untick it.
-function CountryRosterStep({ committee, onContinue }) {
-  const [selected, setSelected] = useState(() => new Set());
-  const [query, setQuery] = useState('');
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return COUNTRIES;
-    return COUNTRIES.filter((c) => c.name.toLowerCase().includes(q) || c.code === q);
-  }, [query]);
-
-  const toggle = (code) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(code)) next.delete(code);
-      else next.add(code);
-      return next;
-    });
-  };
-
-  const continueWithSelection = () => {
-    const delegates = COUNTRIES.filter((c) => selected.has(c.code)).map((c) => ({
-      code: c.code,
-      name: c.name,
-    }));
-    onContinue(delegates);
-  };
-
-  return (
-    <div className="rosterSetup">
-      <div className="rosterSetup__head">
-        <input
-          className="rosterSearch"
-          placeholder="Search countries"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <span className="rosterSetup__count">{selected.size} selected</span>
-      </div>
-
-      <ul className="rosterSetup__list">
-        {filtered.map((c) => (
-          <li key={c.code}>
-            <label className="rosterSetup__row">
-              <input
-                type="checkbox"
-                checked={selected.has(c.code)}
-                onChange={() => toggle(c.code)}
-              />
-              <Flag
-                code={c.code}
-                size={22}
-              />
-              <span>{c.name}</span>
-            </label>
-          </li>
-        ))}
-        {filtered.length === 0 && <li className="commandEmpty">No countries match.</li>}
-      </ul>
-
-      <div className="rosterSetup__footer rosterSetup__footer--end">
-        <button
-          type="button"
-          className="submitBtn"
-          onClick={continueWithSelection}
-          disabled={selected.size === 0}
-        >
-          Continue with {selected.size} <i className="bi bi-arrow-right" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function CuratedRosterStep({ committee, onContinue }) {
-  const [entries, setEntries] = useState(() =>
-    committee.roster.map((entry, i) => ({
-      id: `seed-${i}`,
-      code: entry.code,
-      name: entry.name,
-      role: entry.role || '',
-      photo: entry.photo || '',
-    }))
-  );
-
-  const remove = (id) => setEntries((prev) => prev.filter((entry) => entry.id !== id));
-  const add = (payload) =>
-    setEntries((prev) => [...prev, { id: `new-${prev.length}-${Date.now()}`, ...payload }]);
-
-  const continueWithSelection = () => {
-    if (entries.length === 0) {
-      toast.error('Add at least one seat.');
-      return;
-    }
-    onContinue(entries.map(({ code, name, role, photo }) => ({ code, name, role, photo })));
-  };
-
-  return (
-    <div className="rosterSetup">
-      <div className="rosterSetup__head">
-        <span className="rosterSetup__count">{entries.length} seats</span>
-      </div>
-
-      <ul className="rosterSetup__curatedList">
-        {entries.map((entry) => (
-          <li
-            key={entry.id}
-            className="rosterSetup__curatedRow"
-          >
-            <SeatAvatar
-              seat={entry}
-              size={30}
-            />
-            <span className="rosterSetup__curatedText">
-              <span>{entry.name}</span>
-              {entry.role && <small>{entry.role}</small>}
-            </span>
-            <button
-              type="button"
-              onClick={() => remove(entry.id)}
-              aria-label="Remove"
+          capsOn && (
+            <motion.p
+              key="caps"
+              className="loginStep__caps"
+              role="status"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18, ease: EASE }}
             >
-              <i className="bi bi-x-lg" />
-            </button>
-          </li>
-        ))}
-        {entries.length === 0 && <li className="commandEmpty">No seats yet — add one below.</li>}
-      </ul>
-
-      <AddDelegateForm
-        committee={committee}
-        onAdd={add}
-      />
-
-      <div className="rosterSetup__footer rosterSetup__footer--end">
-        <button
-          type="button"
-          className="submitBtn"
-          onClick={continueWithSelection}
-        >
-          Continue with {entries.length} <i className="bi bi-arrow-right" />
-        </button>
-      </div>
+              <i className="bi bi-capslock-fill" />
+              Caps Lock is on
+            </motion.p>
+          )
+        )}
+      </AnimatePresence>
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Top bar
-// ---------------------------------------------------------------------------
 
 const SYNC_LABEL = {
   saving: 'Saving…',
