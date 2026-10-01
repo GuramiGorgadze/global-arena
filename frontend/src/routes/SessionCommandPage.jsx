@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import Flag from '../components/session/Flag';
 import SeatAvatar from '../components/session/SeatAvatar';
 import * as munApi from '../api/mun';
+import { useCommandTheme, ThemeToggle, ThemeChoice } from '../hooks/useCommandTheme';
 import {
   CAUCUS_PRESETS,
   COMMITTEES,
@@ -105,6 +106,7 @@ export default function SessionCommandPage() {
   const [sideTab, setSideTab] = useState('motions');
   const [delegateModalId, setDelegateModalId] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { theme, setTheme } = useCommandTheme();
   const modalOpen = !!delegateModalId || settingsOpen;
 
   // --- first-time setup ----------------------------------------------------
@@ -326,7 +328,10 @@ export default function SessionCommandPage() {
       // "user" makes Framer Motion drop slides and scales (keeping fades)
       // for anyone who has asked their system for less motion.
       <MotionConfig reducedMotion="user">
-        <div className="commandPage">
+        <div
+          className="commandPage"
+          data-command-theme={theme}
+        >
           <AnimatePresence mode="wait">
             <motion.div
               key={gate.key}
@@ -365,7 +370,10 @@ export default function SessionCommandPage() {
   };
 
   return (
-    <div className="commandPage commandPage--enter">
+    <div
+      className="commandPage commandPage--enter"
+      data-command-theme={theme}
+    >
       <SessionBar
         session={session}
         committee={committee}
@@ -377,6 +385,8 @@ export default function SessionCommandPage() {
         onExportMinutes={handleExportMinutes}
         onClose={actions.closeSession}
         onReopen={actions.reopenSession}
+        theme={theme}
+        onSetTheme={setTheme}
       />
 
       {session.phase === 'rollcall' ? (
@@ -499,6 +509,8 @@ export default function SessionCommandPage() {
             logout={logout}
             onClose={() => setSettingsOpen(false)}
             onExportJson={handleExportJson}
+            theme={theme}
+            onSetTheme={setTheme}
           />
         )}
       </AnimatePresence>
@@ -821,14 +833,7 @@ function CommitteePicker({ direction, statuses, onSelect }) {
   );
 }
 
-function CommitteeCard({
-  committee,
-  state,
-  flagCodes,
-  extraFlagsCount,
-  seatCount,
-  onSelect,
-}) {
+function CommitteeCard({ committee, state, flagCodes, extraFlagsCount, seatCount, onSelect }) {
   const checking = state === 'checking';
 
   // A soft highlight that follows the pointer. It is written straight to CSS
@@ -1138,9 +1143,7 @@ function PasswordStep({ direction, committee, hasPassword, onBack, login }) {
         className="loginStep__footer"
         variants={itemVariants}
       >
-        <p className="loginStep__help">
-          Forgot this password? Our team can change or recover it.
-        </p>
+        <p className="loginStep__help">Forgot this password? Our team can change or recover it.</p>
         <button
           type="button"
           className="loginStep__back"
@@ -1275,6 +1278,8 @@ function SessionBar({
   onExportMinutes,
   onClose,
   onReopen,
+  theme,
+  onSetTheme,
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(session.topic);
@@ -1382,6 +1387,10 @@ function SessionBar({
         >
           <i className="bi bi-download" />
         </button>
+        <ThemeToggle
+          theme={theme}
+          onSetTheme={onSetTheme}
+        />
         <button
           type="button"
           className="commandIconBtn"
@@ -3230,7 +3239,16 @@ function DelegateModal({ session, delegate, actions, onClose }) {
   );
 }
 
-function SettingsModal({ session, actions, resetSession, logout, onClose, onExportJson }) {
+function SettingsModal({
+  session,
+  actions,
+  resetSession,
+  logout,
+  onClose,
+  onExportJson,
+  theme,
+  onSetTheme,
+}) {
   const committee = getCommittee(session.committeeId);
   const [resetting, setResetting] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -3260,6 +3278,17 @@ function SettingsModal({ session, actions, resetSession, logout, onClose, onExpo
       onClose={onClose}
     >
       <div className="settingsModal">
+        <div className="settingsRow settingsRow--column">
+          <span>
+            Theme
+            <small>Choose the console appearance</small>
+          </span>
+          <ThemeChoice
+            theme={theme}
+            onSetTheme={onSetTheme}
+          />
+        </div>
+
         <label className="settingsRow">
           <span>
             Chime

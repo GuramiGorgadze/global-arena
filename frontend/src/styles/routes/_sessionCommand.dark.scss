@@ -1,34 +1,7 @@
 @use '../abstracts' as *;
 
-// ---------------------------------------------------------------------------
-// Light palette
-//
-// Everything colour-related in this file comes from the tokens below, so the
-// whole console can be re-tuned from one place. The old dark tokens
-// ($black-*, $white-*, $gold-bright) are no longer referenced here.
-//
-//   $paper / $card / $elevated   surfaces, page → raised
-//   $ink / $ink-muted / $ink-dim text, strong → faint
-//   $gold                        deep gold: text, borders, strokes (readable on white)
-//   $gold-fill                   bright gold: solid fills that carry dark text
-// ---------------------------------------------------------------------------
-
-$paper: #f6f2e9;
-$card: #ffffff;
-$elevated: #fbf8f1;
-$border: #e3dccd;
-
-$ink: #211b12;
-$ink-muted: #5a5144;
-$ink-dim: #7d7364;
-
-$gold: #9c7208;
-$gold-fill: #e0b53c;
-$gold-fill-light: #efd37e;
-$gold-fill-deep: #c99a1f;
-
-$ok: #168a4a;
-$bad: #d1343a;
+$ok: #4ade80;
+$bad: #e5484d;
 $neutral: #8c8378;
 $bp-console: 1180px;
 
@@ -44,12 +17,7 @@ $font-mono: ui-monospace, 'SF Mono', Menlo, monospace; // keyboard shortcuts
 // --- Numbers -------------------------------------------------------------
 $font-number: $font-display; // clocks, tallies, counters, stat values
 
-$gold-cta-gradient: linear-gradient(
-  135deg,
-  $gold-fill 0%,
-  $gold-fill-light 50%,
-  $gold-fill-deep 100%
-);
+$gold-cta-gradient: linear-gradient(135deg, $gold-bright 0%, #e8c96a 50%, $gold-muted 100%);
 
 @keyframes commandSetupPulse {
   0%,
@@ -90,19 +58,9 @@ $gold-cta-gradient: linear-gradient(
   }
 }
 
-// Gradient-filled headline text, tuned for a light background (the shared
-// gold-text mixin is built for dark surfaces and washes out on white).
-@mixin accent-text {
-  background: linear-gradient(135deg, #7a5a05 0%, #b8891a 50%, #8a640a 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-
 @mixin thin-scroll {
   scrollbar-width: thin;
-  scrollbar-color: rgba($gold, 0.4) transparent;
+  scrollbar-color: rgba($gold-bright, 0.35) transparent;
 
   &::-webkit-scrollbar {
     width: 8px;
@@ -111,30 +69,31 @@ $gold-cta-gradient: linear-gradient(
     background: transparent;
   }
   &::-webkit-scrollbar-thumb {
-    background-color: rgba($gold, 0.36);
+    background-color: rgba($gold-bright, 0.32);
     border-radius: $radius-pill;
 
     &:hover {
-      background-color: rgba($gold, 0.55);
+      background-color: rgba($gold-bright, 0.5);
     }
   }
 }
 
 @mixin panel-surface {
-  border: 1px solid $border;
+  border: 1px solid $black-border;
   border-radius: $radius-xl;
-  background: linear-gradient(160deg, rgba($card, 0.98), rgba($elevated, 0.98));
-  box-shadow:
-    inset 0 1px 0 rgba(#fff, 0.9),
-    0 1px 2px rgba($ink, 0.04),
-    0 6px 18px rgba($ink, 0.05);
+  background: linear-gradient(160deg, rgba($black-card, 0.92), rgba($black-elevated, 0.94));
+  box-shadow: inset 0 1px 0 rgba($white-warm, 0.05);
 }
 
 // ---------------------------------------------------------------------------
 // Shell
+//
+// Scoped to the dark theme. The light stylesheet scopes itself to
+// [data-command-theme='light'], so both can be compiled into the same CSS
+// bundle and the attribute alone decides which one applies.
 // ---------------------------------------------------------------------------
 
-.commandPage {
+.commandPage[data-command-theme='dark'] {
   --command-nav: 0px;
 
   position: relative;
@@ -145,9 +104,9 @@ $gold-cta-gradient: linear-gradient(
   flex-direction: column;
   overflow: hidden;
   font-family: $font-body-text;
-  background-color: $paper;
-  color: $ink;
-  color-scheme: light;
+  background-color: $black-deep;
+  color: $white-warm;
+  color-scheme: dark;
 
   &::before {
     content: '';
@@ -156,8 +115,8 @@ $gold-cta-gradient: linear-gradient(
     z-index: 0;
     pointer-events: none;
     background:
-      radial-gradient(ellipse 70% 45% at 50% 0%, rgba($gold-fill, 0.2), transparent 62%),
-      radial-gradient(ellipse 60% 40% at 10% 100%, rgba($gold-fill, 0.12), transparent 60%);
+      radial-gradient(ellipse 70% 45% at 50% 0%, rgba($gold-bright, 0.09), transparent 62%),
+      radial-gradient(ellipse 60% 40% at 10% 100%, rgba($gold-bright, 0.05), transparent 60%);
   }
 
   > * {
@@ -166,7 +125,9 @@ $gold-cta-gradient: linear-gradient(
   }
 
   // The console itself, once the sign-in gate has let go of the page.
-  &--enter {
+  // Compound selector: the root is now an attribute selector, so the BEM
+  // modifier can no longer be built with `&--enter`.
+  &.commandPage--enter {
     animation: commandPageIn 0.3s $ease-out backwards;
   }
 
@@ -217,7 +178,11 @@ $gold-cta-gradient: linear-gradient(
       inset: 0;
       z-index: 0;
       pointer-events: none;
-      background-image: radial-gradient(circle at 1px 1px, rgba($gold, 0.26) 1px, transparent 0);
+      background-image: radial-gradient(
+        circle at 1px 1px,
+        rgba($gold-bright, 0.16) 1px,
+        transparent 0
+      );
       background-size: 26px 26px;
       mask-image: radial-gradient(ellipse 65% 55% at 50% 18%, black, transparent 72%);
       -webkit-mask-image: radial-gradient(ellipse 65% 55% at 50% 18%, black, transparent 72%);
@@ -242,12 +207,12 @@ $gold-cta-gradient: linear-gradient(
       gap: 7px;
       padding: 8px 20px;
       border-radius: $radius-pill;
-      border: 1px solid rgba($gold, 0.5);
-      background: linear-gradient(135deg, rgba($gold-fill, 0.34), rgba($gold-fill, 0.14));
+      border: 1px solid rgba($gold-bright, 0.55);
+      background: linear-gradient(135deg, rgba($gold-bright, 0.22), rgba($gold-bright, 0.08));
       box-shadow:
-        0 0 0 1px rgba($gold, 0.1),
-        0 8px 22px rgba($ink, 0.1);
-      color: $gold;
+        0 0 0 1px rgba($gold-bright, 0.12),
+        0 10px 28px rgba($black-deep, 0.55);
+      color: $gold-bright;
       font-family: $font-brand;
       font-size: 12px;
       font-weight: 700;
@@ -270,14 +235,14 @@ $gold-cta-gradient: linear-gradient(
       line-height: 1.15;
       text-wrap: balance;
       margin-bottom: 12px;
-      @include accent-text;
+      @include gold-text;
     }
 
     &__desc {
       font-family: $font-subhead;
       font-size: 14.5px;
       line-height: 1.75;
-      color: $ink-muted;
+      color: $white-muted;
       max-width: 520px;
       margin: 0 auto;
       text-wrap: pretty;
@@ -334,7 +299,7 @@ $gold-cta-gradient: linear-gradient(
         position: absolute;
         inset: 0 0 auto 0;
         height: 2px;
-        background: linear-gradient(90deg, transparent, rgba($gold, 0.75), transparent);
+        background: linear-gradient(90deg, transparent, rgba($gold-bright, 0.7), transparent);
         opacity: 0;
         transition: opacity $duration-fast $ease-out;
       }
@@ -348,7 +313,7 @@ $gold-cta-gradient: linear-gradient(
         pointer-events: none;
         background: radial-gradient(
           240px circle at var(--mx) var(--my),
-          rgba($gold-fill, 0.22),
+          rgba($gold-bright, 0.14),
           transparent 70%
         );
         opacity: 0;
@@ -356,8 +321,8 @@ $gold-cta-gradient: linear-gradient(
       }
 
       &:hover:not(:disabled) {
-        border-color: rgba($gold, 0.5);
-        box-shadow: 0 14px 34px rgba($ink, 0.14);
+        border-color: rgba($gold-bright, 0.42);
+        box-shadow: 0 14px 34px rgba($black-deep, 0.45);
 
         &::before {
           opacity: 1;
@@ -371,7 +336,7 @@ $gold-cta-gradient: linear-gradient(
       }
 
       &:focus-visible {
-        outline: 2px solid $gold;
+        outline: 2px solid $gold-bright;
         outline-offset: -4px;
       }
 
@@ -391,8 +356,8 @@ $gold-cta-gradient: linear-gradient(
       bottom: -18px;
       font-size: 108px;
       line-height: 1;
-      color: $gold;
-      opacity: 0.08;
+      color: $gold-bright;
+      opacity: 0.05;
       pointer-events: none;
       transition:
         opacity $duration-fast $ease-out,
@@ -400,7 +365,7 @@ $gold-cta-gradient: linear-gradient(
     }
 
     &__card:hover:not(:disabled) &__cardGlyph {
-      opacity: 0.14;
+      opacity: 0.09;
       transform: scale(1.06) rotate(-4deg);
     }
 
@@ -414,9 +379,9 @@ $gold-cta-gradient: linear-gradient(
       align-items: center;
       justify-content: center;
       border-radius: 50%;
-      border: 1px solid $border;
-      background: rgba($ink, 0.03);
-      color: $ink-dim;
+      border: 1px solid $black-border;
+      background: rgba($black-deep, 0.4);
+      color: $white-dim;
       font-size: 12px;
       transition:
         color $duration-fast $ease-out,
@@ -427,9 +392,9 @@ $gold-cta-gradient: linear-gradient(
 
     &__card:hover:not(:disabled) &__cardArrow,
     &__card:focus-visible &__cardArrow {
-      color: $ink;
-      background: $gold-fill;
-      border-color: $gold-fill;
+      color: $black-deep;
+      background: $gold-bright;
+      border-color: $gold-bright;
       transform: translateX(3px);
     }
 
@@ -452,10 +417,14 @@ $gold-cta-gradient: linear-gradient(
       align-items: center;
       justify-content: center;
       font-size: 19px;
-      color: $gold;
-      background: radial-gradient(circle at 30% 30%, rgba($gold-fill, 0.4), rgba($gold-fill, 0.14));
-      border: 1px solid rgba($gold, 0.36);
-      box-shadow: inset 0 0 0 1px rgba(#fff, 0.5);
+      color: $gold-bright;
+      background: radial-gradient(
+        circle at 30% 30%,
+        rgba($gold-bright, 0.22),
+        rgba($gold-bright, 0.08)
+      );
+      border: 1px solid rgba($gold-bright, 0.32);
+      box-shadow: inset 0 0 0 1px rgba($black-deep, 0.3);
     }
 
     &__status {
@@ -466,9 +435,9 @@ $gold-cta-gradient: linear-gradient(
       padding: 3px 9px 3px 7px;
       margin-top: 4px;
       border-radius: $radius-pill;
-      border: 1px solid $border;
-      background: rgba($ink, 0.04);
-      color: $ink-dim;
+      border: 1px solid $black-border;
+      background: rgba($white-warm, 0.06);
+      color: $white-dim;
       font-family: $font-label;
       font-size: 10px;
       font-weight: 700;
@@ -480,15 +449,15 @@ $gold-cta-gradient: linear-gradient(
       }
 
       &--ready {
-        color: $gold;
-        background: rgba($gold-fill, 0.2);
-        border-color: rgba($gold, 0.34);
+        color: $gold-bright;
+        background: rgba($gold-bright, 0.12);
+        border-color: rgba($gold-bright, 0.3);
       }
 
       &--active {
         color: $ok;
-        background: rgba($ok, 0.1);
-        border-color: rgba($ok, 0.32);
+        background: rgba($ok, 0.12);
+        border-color: rgba($ok, 0.3);
       }
 
       &--checking i {
@@ -511,15 +480,15 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-label;
       font-size: 19px;
       font-weight: 700;
-      color: $ink;
+      color: $white-warm;
     }
 
     &__tag {
       font-family: $font-label;
       font-size: 10px;
       font-weight: 700;
-      color: $gold;
-      border: 1px solid rgba($gold, 0.45);
+      color: $gold-bright;
+      border: 1px solid rgba($gold-bright, 0.4);
       border-radius: $radius-pill;
       padding: 2px 7px;
     }
@@ -528,7 +497,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-subhead;
       font-size: 12px;
       line-height: 1.45;
-      color: $ink-muted;
+      color: $white-muted;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
@@ -545,7 +514,7 @@ $gold-cta-gradient: linear-gradient(
       width: 100%;
       margin-top: auto;
       padding-top: 12px;
-      border-top: 1px solid $border;
+      border-top: 1px solid $black-border;
     }
 
     &__cardEnd {
@@ -561,7 +530,7 @@ $gold-cta-gradient: linear-gradient(
       gap: 5px;
       font-family: $font-subhead;
       font-size: 11px;
-      color: $ink-dim;
+      color: $white-dim;
       white-space: nowrap;
 
       i {
@@ -578,8 +547,8 @@ $gold-cta-gradient: linear-gradient(
       > * {
         border-radius: 4px;
         box-shadow:
-          0 0 0 2px $card,
-          0 2px 6px rgba($ink, 0.2);
+          0 0 0 2px $black-elevated,
+          0 2px 6px rgba($black-deep, 0.5);
         margin-left: -8px;
 
         &:first-child {
@@ -600,14 +569,14 @@ $gold-cta-gradient: linear-gradient(
       height: 15px;
       margin-left: -8px;
       border-radius: 4px;
-      background: $elevated;
+      background: $black-elevated;
       box-shadow:
-        0 0 0 2px $card,
-        0 2px 6px rgba($ink, 0.2);
+        0 0 0 2px $black-elevated,
+        0 2px 6px rgba($black-deep, 0.5);
       font-family: $font-label;
       font-size: 9px;
       font-weight: 700;
-      color: $ink-dim;
+      color: $white-dim;
     }
 
     // Three short reassurances under the grid, each with its own glyph, in
@@ -632,19 +601,19 @@ $gold-cta-gradient: linear-gradient(
         gap: 10px;
         padding: 12px 14px;
         border-radius: $radius-md;
-        border: 1px solid $border;
-        background: rgba($card, 0.7);
+        border: 1px solid $black-border;
+        background: rgba($black-deep, 0.35);
         font-family: $font-subhead;
         font-size: 12px;
         line-height: 1.55;
-        color: $ink-muted;
+        color: $white-muted;
       }
 
       i {
         flex-shrink: 0;
         margin-top: 2px;
         font-size: 14px;
-        color: $gold;
+        color: $gold-bright;
       }
     }
   }
@@ -666,7 +635,7 @@ $gold-cta-gradient: linear-gradient(
 
     &__icon {
       font-size: 34px;
-      color: $gold;
+      color: $gold-bright;
     }
 
     // A loading ring rather than a frozen hourglass: it says "working", not
@@ -676,8 +645,8 @@ $gold-cta-gradient: linear-gradient(
       width: 44px;
       height: 44px;
       border-radius: 50%;
-      border: 2px solid rgba($gold, 0.2);
-      border-top-color: $gold;
+      border: 2px solid rgba($gold-bright, 0.18);
+      border-top-color: $gold-bright;
       animation: commandSetupSpin 0.9s linear infinite;
     }
 
@@ -686,7 +655,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-subhead;
       font-size: 14px;
       line-height: 1.6;
-      color: $ink-muted;
+      color: $white-muted;
     }
   }
 
@@ -731,7 +700,7 @@ $gold-cta-gradient: linear-gradient(
       border: none;
       border-radius: $radius-pill;
       background: none;
-      color: $ink-dim;
+      color: $white-dim;
       font-family: $font-label;
       font-size: 12px;
       font-weight: 700;
@@ -741,15 +710,15 @@ $gold-cta-gradient: linear-gradient(
         background $duration-fast $ease-out;
 
       &.is-current {
-        color: $ink;
+        color: $white-warm;
       }
 
       &.is-done {
-        color: $gold;
+        color: $gold-bright;
       }
 
       &.is-upcoming {
-        opacity: 0.8;
+        opacity: 0.75;
       }
     }
 
@@ -758,12 +727,12 @@ $gold-cta-gradient: linear-gradient(
       touch-action: manipulation;
 
       &:hover:not(:disabled) {
-        background: rgba($gold-fill, 0.2);
-        color: $ink;
+        background: rgba($gold-bright, 0.1);
+        color: $white-warm;
       }
 
       &:focus-visible {
-        outline: 2px solid $gold;
+        outline: 2px solid $gold-bright;
         outline-offset: 2px;
       }
 
@@ -781,8 +750,8 @@ $gold-cta-gradient: linear-gradient(
       align-items: center;
       justify-content: center;
       border-radius: 50%;
-      border: 1px solid $border;
-      background: $card;
+      border: 1px solid $black-border;
+      background: rgba($black-deep, 0.6);
       font-family: $font-number;
       font-size: 11px;
       font-variant-numeric: tabular-nums;
@@ -799,15 +768,15 @@ $gold-cta-gradient: linear-gradient(
     }
 
     &__item.is-current &__dot {
-      background: $gold-fill;
-      border-color: $gold-fill;
-      color: $ink;
+      background: $gold-bright;
+      border-color: $gold-bright;
+      color: $black-deep;
     }
 
     &__item.is-done &__dot {
-      background: rgba($gold-fill, 0.25);
-      border-color: rgba($gold, 0.55);
-      color: $gold;
+      background: rgba($gold-bright, 0.16);
+      border-color: rgba($gold-bright, 0.5);
+      color: $gold-bright;
     }
 
     &__label {
@@ -825,7 +794,7 @@ $gold-cta-gradient: linear-gradient(
       width: 44px;
       height: 2px;
       border-radius: $radius-pill;
-      background: rgba($ink, 0.12);
+      background: rgba($white-warm, 0.1);
       overflow: hidden;
 
       @media (max-width: 380px) {
@@ -836,7 +805,7 @@ $gold-cta-gradient: linear-gradient(
     &__lineFill {
       position: absolute;
       inset: 0;
-      background: $gold-fill-deep;
+      background: $gold-bright;
       transform: scaleX(0);
       transform-origin: left center;
       transition: transform 0.4s $ease-out;
@@ -871,9 +840,9 @@ $gold-cta-gradient: linear-gradient(
       margin-bottom: 16px;
       font-size: 27px;
       box-shadow:
-        inset 0 0 0 1px rgba(#fff, 0.5),
-        0 0 0 6px rgba($gold-fill, 0.14),
-        0 0 40px rgba($gold-fill, 0.35);
+        inset 0 0 0 1px rgba($black-deep, 0.3),
+        0 0 0 6px rgba($gold-bright, 0.06),
+        0 0 44px rgba($gold-bright, 0.2);
     }
 
     // The tag sits beside the title rather than inside it: the title is
@@ -891,7 +860,7 @@ $gold-cta-gradient: linear-gradient(
       font-size: clamp(30px, 5vw, 38px);
       font-weight: 700;
       line-height: 1.15;
-      @include accent-text;
+      @include gold-text;
     }
 
     &__fullName {
@@ -900,7 +869,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-subhead;
       font-size: 13px;
       line-height: 1.5;
-      color: $ink-muted;
+      color: $white-muted;
       text-wrap: balance;
     }
 
@@ -914,7 +883,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-subhead;
       font-size: 11.5px;
       line-height: 1.4;
-      color: $ink-dim;
+      color: $white-dim;
 
       i {
         flex-shrink: 0;
@@ -956,8 +925,8 @@ $gold-cta-gradient: linear-gradient(
       text-align: left;
       @include panel-surface;
       box-shadow:
-        inset 0 1px 0 rgba(#fff, 0.9),
-        0 18px 48px rgba($ink, 0.12);
+        inset 0 1px 0 rgba($white-warm, 0.05),
+        0 24px 60px rgba($black-deep, 0.45);
 
       @media (max-width: 480px) {
         padding: 18px 16px 16px;
@@ -987,15 +956,15 @@ $gold-cta-gradient: linear-gradient(
       margin-bottom: 20px;
       padding: 13px 14px;
       border-radius: $radius-md;
-      border: 1px solid rgba($gold, 0.32);
-      background: linear-gradient(135deg, rgba($gold-fill, 0.2), rgba($gold-fill, 0.07));
+      border: 1px solid rgba($gold-bright, 0.28);
+      background: linear-gradient(135deg, rgba($gold-bright, 0.1), rgba($gold-bright, 0.03));
       text-align: left;
 
       i {
         flex-shrink: 0;
         margin-top: 1px;
         font-size: 15px;
-        color: $gold;
+        color: $gold-bright;
       }
     }
 
@@ -1003,7 +972,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-label;
       font-size: 12.5px;
       font-weight: 700;
-      color: $ink;
+      color: $white-warm;
       margin-bottom: 3px;
     }
 
@@ -1011,7 +980,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-subhead;
       font-size: 12px;
       line-height: 1.55;
-      color: $ink-muted;
+      color: $white-muted;
     }
 
     &__desc {
@@ -1019,7 +988,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-subhead;
       font-size: 13.5px;
       line-height: 1.6;
-      color: $ink-muted;
+      color: $white-muted;
     }
 
     &__fields {
@@ -1040,14 +1009,14 @@ $gold-cta-gradient: linear-gradient(
       font-weight: 700;
       letter-spacing: 0.03em;
       text-transform: uppercase;
-      color: $ink-muted;
+      color: $white-muted;
     }
 
     &__inputWrap {
       position: relative;
 
       &:focus-within .loginStep__lead {
-        color: $gold;
+        color: $gold-bright;
       }
     }
 
@@ -1057,7 +1026,7 @@ $gold-cta-gradient: linear-gradient(
       left: 14px;
       transform: translateY(-50%);
       font-size: 15px;
-      color: $ink-dim;
+      color: $white-dim;
       pointer-events: none;
       transition: color $duration-fast $ease-out;
     }
@@ -1069,9 +1038,9 @@ $gold-cta-gradient: linear-gradient(
       height: 48px;
       padding: 0 52px 0 42px;
       border-radius: $radius-md;
-      border: 1px solid $border;
-      background: $card;
-      color: $ink;
+      border: 1px solid $black-border;
+      background: rgba($black-deep, 0.7);
+      color: $white-warm;
       font-family: $font-body-text;
       font-size: 16px;
       transition:
@@ -1079,13 +1048,13 @@ $gold-cta-gradient: linear-gradient(
         box-shadow $duration-fast $ease-out;
 
       &:hover:not(:focus) {
-        border-color: rgba($gold, 0.4);
+        border-color: rgba($gold-bright, 0.25);
       }
 
       &:focus {
         outline: none;
-        border-color: rgba($gold, 0.7);
-        box-shadow: 0 0 0 3px rgba($gold-fill, 0.3);
+        border-color: rgba($gold-bright, 0.6);
+        box-shadow: 0 0 0 3px rgba($gold-bright, 0.16);
       }
 
       &[aria-invalid='true'] {
@@ -1098,7 +1067,6 @@ $gold-cta-gradient: linear-gradient(
 
       &[readonly] {
         opacity: 0.7;
-        background: $elevated;
       }
     }
 
@@ -1115,22 +1083,22 @@ $gold-cta-gradient: linear-gradient(
       border: none;
       border-radius: $radius-md;
       background: none;
-      color: $ink-dim;
+      color: $white-dim;
       font-size: 15px;
       cursor: pointer;
       touch-action: manipulation;
       transition: color $duration-fast $ease-out;
 
       &:hover {
-        color: $gold;
+        color: $gold-bright;
       }
 
       &[aria-pressed='true'] {
-        color: $gold;
+        color: $gold-bright;
       }
 
       &:focus-visible {
-        outline: 2px solid $gold;
+        outline: 2px solid $gold-bright;
         outline-offset: -2px;
       }
     }
@@ -1159,7 +1127,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-subhead;
       font-size: 12px;
       line-height: 1.5;
-      color: $gold;
+      color: $gold-bright;
 
       i {
         font-size: 12px;
@@ -1180,7 +1148,7 @@ $gold-cta-gradient: linear-gradient(
         gap: 8px;
         font-family: $font-subhead;
         font-size: 12px;
-        color: $ink-dim;
+        color: $white-dim;
         transition: color $duration-fast $ease-out;
 
         i {
@@ -1210,7 +1178,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-subhead;
       font-size: 12px;
       line-height: 1.6;
-      color: $ink-dim;
+      color: $white-dim;
     }
 
     &__back {
@@ -1223,7 +1191,7 @@ $gold-cta-gradient: linear-gradient(
       margin-top: 10px;
       border-radius: $radius-pill;
       background: none;
-      color: $ink-muted;
+      color: $white-muted;
       font-family: $font-button;
       font-size: 13px;
       font-weight: 600;
@@ -1238,8 +1206,8 @@ $gold-cta-gradient: linear-gradient(
       }
 
       &:hover:not(:disabled) {
-        color: $ink;
-        background: rgba($gold-fill, 0.2);
+        color: $white-warm;
+        background: rgba($gold-bright, 0.08);
 
         i {
           transform: translateX(-3px);
@@ -1247,7 +1215,7 @@ $gold-cta-gradient: linear-gradient(
       }
 
       &:focus-visible {
-        outline: 2px solid $gold;
+        outline: 2px solid $gold-bright;
         outline-offset: 2px;
       }
 
@@ -1278,8 +1246,8 @@ $gold-cta-gradient: linear-gradient(
     align-items: center;
     gap: 20px;
     padding: 12px 18px;
-    border-bottom: 1px solid $border;
-    background: rgba($card, 0.88);
+    border-bottom: 1px solid $black-border;
+    background: rgba($black-deep, 0.9);
     backdrop-filter: blur(8px);
 
     &__identity {
@@ -1299,9 +1267,9 @@ $gold-cta-gradient: linear-gradient(
       align-items: center;
       justify-content: center;
       font-size: 16px;
-      color: $gold;
-      background: rgba($gold-fill, 0.22);
-      border: 1px solid rgba($gold, 0.35);
+      color: $gold-bright;
+      background: rgba($gold-bright, 0.1);
+      border: 1px solid rgba($gold-bright, 0.3);
     }
 
     &__titles {
@@ -1316,15 +1284,15 @@ $gold-cta-gradient: linear-gradient(
       font-size: 15px;
       font-weight: 700;
       line-height: 1.2;
-      color: $ink;
+      color: $white-warm;
     }
 
     &__tag {
       font-family: $font-label;
       font-size: 10px;
       font-weight: 700;
-      color: $gold;
-      border: 1px solid rgba($gold, 0.45);
+      color: $gold-bright;
+      border: 1px solid rgba($gold-bright, 0.4);
       border-radius: $radius-pill;
       padding: 1px 6px;
     }
@@ -1337,7 +1305,7 @@ $gold-cta-gradient: linear-gradient(
       padding: 0;
       background: none;
       border: none;
-      color: $ink-dim;
+      color: $white-dim;
       font-family: $font-body-text;
       font-size: 12px;
       text-align: left;
@@ -1353,7 +1321,7 @@ $gold-cta-gradient: linear-gradient(
       }
 
       &:hover {
-        color: $ink-muted;
+        color: $white-muted;
 
         i {
           opacity: 1;
@@ -1365,15 +1333,15 @@ $gold-cta-gradient: linear-gradient(
       width: min(460px, 60vw);
       padding: 3px 8px;
       border-radius: $radius-md;
-      border: 1px solid rgba($gold, 0.5);
-      background: $card;
-      color: $ink;
+      border: 1px solid rgba($gold-bright, 0.4);
+      background: rgba($black-deep, 0.7);
+      color: $white-warm;
       font-family: $font-body-text;
       font-size: 12px;
 
       &:focus {
         outline: none;
-        box-shadow: 0 0 0 3px rgba($gold-fill, 0.3);
+        box-shadow: 0 0 0 3px rgba($gold-bright, 0.16);
       }
     }
 
@@ -1412,8 +1380,8 @@ $gold-cta-gradient: linear-gradient(
     min-width: 74px;
     padding: 6px 12px;
     border-radius: $radius-md;
-    border: 1px solid $border;
-    background: $elevated;
+    border: 1px solid $black-border;
+    background: rgba($black-card, 0.55);
     text-align: center;
 
     &__value {
@@ -1423,7 +1391,7 @@ $gold-cta-gradient: linear-gradient(
       font-weight: 700;
       line-height: 1.2;
       font-variant-numeric: tabular-nums;
-      color: $gold;
+      color: $gold-bright;
     }
 
     &__label {
@@ -1431,7 +1399,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-label;
       font-size: 9.5px;
       letter-spacing: 0.04em;
-      color: $ink-dim;
+      color: $white-dim;
       white-space: nowrap;
     }
 
@@ -1444,7 +1412,7 @@ $gold-cta-gradient: linear-gradient(
     }
 
     &--clock .commandStat__value {
-      color: $ink;
+      color: $white-warm;
     }
   }
 
@@ -1459,11 +1427,11 @@ $gold-cta-gradient: linear-gradient(
     min-width: 108px;
     padding: 6px 11px;
     border-radius: $radius-pill;
-    border: 1px solid $border;
-    background: $elevated;
+    border: 1px solid $black-border;
+    background: rgba($black-card, 0.55);
     font-family: $font-label;
     font-size: 11px;
-    color: $ink-dim;
+    color: $white-dim;
     white-space: nowrap;
     transition:
       color $duration-fast $ease-out,
@@ -1486,22 +1454,22 @@ $gold-cta-gradient: linear-gradient(
     }
 
     &--saving {
-      color: $ink-muted;
+      color: $white-muted;
 
       i {
-        color: $gold;
+        color: $gold-bright;
       }
     }
 
     &--saved {
       color: $ok;
-      border-color: rgba($ok, 0.35);
+      border-color: rgba($ok, 0.3);
     }
 
     &--error {
       color: $bad;
       border-color: rgba($bad, 0.4);
-      background: rgba($bad, 0.07);
+      background: rgba($bad, 0.08);
     }
 
     @media (max-width: 640px) {
@@ -1532,9 +1500,9 @@ $gold-cta-gradient: linear-gradient(
     align-items: center;
     justify-content: center;
     font-size: 15px;
-    border: 1px solid $border;
-    background: $card;
-    color: $ink-muted;
+    border: 1px solid $black-border;
+    background: rgba($black-card, 0.6);
+    color: $white-muted;
     cursor: pointer;
     transition:
       color $duration-fast $ease-out,
@@ -1542,12 +1510,12 @@ $gold-cta-gradient: linear-gradient(
       background $duration-fast $ease-out;
 
     &:hover:not(:disabled) {
-      color: $gold;
-      border-color: rgba($gold, 0.5);
+      color: $gold-bright;
+      border-color: rgba($gold-bright, 0.4);
     }
 
     &:focus-visible {
-      outline: 2px solid $gold;
+      outline: 2px solid $gold-bright;
       outline-offset: 2px;
     }
 
@@ -1570,9 +1538,9 @@ $gold-cta-gradient: linear-gradient(
     gap: 8px;
     padding: 9px 16px;
     border-radius: $radius-pill;
-    border: 1px solid $border;
+    border: 1px solid $black-border;
     background: transparent;
-    color: $ink-muted;
+    color: $white-muted;
     font-family: $font-button;
     font-size: 13px;
     font-weight: 600;
@@ -1584,13 +1552,13 @@ $gold-cta-gradient: linear-gradient(
       background $duration-fast $ease-out;
 
     &:hover:not(:disabled) {
-      color: $ink;
-      border-color: rgba($gold, 0.5);
-      background: rgba($gold-fill, 0.18);
+      color: $white-warm;
+      border-color: rgba($gold-bright, 0.4);
+      background: $gold-glow-sm;
     }
 
     &:focus-visible {
-      outline: 2px solid $gold;
+      outline: 2px solid $gold-bright;
       outline-offset: 2px;
     }
 
@@ -1618,14 +1586,14 @@ $gold-cta-gradient: linear-gradient(
     border: none;
     border-radius: $radius-pill;
     background: $gold-cta-gradient;
-    color: $ink;
+    color: $black-deep;
     font-family: $font-button;
     font-size: 13.5px;
     font-weight: 700;
     letter-spacing: 0.02em;
     white-space: nowrap;
     cursor: pointer;
-    box-shadow: 0 8px 22px rgba($gold-fill-deep, 0.35);
+    box-shadow: 0 8px 22px rgba($gold-bright, 0.25);
     transition:
       transform $duration-fast $ease-out,
       box-shadow $duration-fast $ease-out,
@@ -1637,16 +1605,16 @@ $gold-cta-gradient: linear-gradient(
 
     &:hover:not(:disabled) {
       transform: translateY(-1px);
-      box-shadow: 0 12px 30px rgba($gold-fill-deep, 0.45);
+      box-shadow: 0 12px 30px rgba($gold-bright, 0.35);
     }
 
     &:active:not(:disabled) {
       transform: translateY(0);
-      box-shadow: 0 6px 16px rgba($gold-fill-deep, 0.35);
+      box-shadow: 0 6px 16px rgba($gold-bright, 0.28);
     }
 
     &:focus-visible {
-      outline: 2px solid $ink;
+      outline: 2px solid $white-warm;
       outline-offset: 2px;
     }
 
@@ -1668,12 +1636,12 @@ $gold-cta-gradient: linear-gradient(
     padding: 0;
     font-family: $font-button;
     font-size: 12px;
-    color: $ink-dim;
+    color: $white-dim;
     cursor: pointer;
     transition: color $duration-fast $ease-out;
 
     &:hover:not(:disabled) {
-      color: $gold;
+      color: $gold-bright;
     }
 
     &:disabled {
@@ -1692,9 +1660,9 @@ $gold-cta-gradient: linear-gradient(
     gap: 5px;
     padding: 5px 11px;
     border-radius: $radius-pill;
-    border: 1px solid $border;
-    background: $card;
-    color: $ink-dim;
+    border: 1px solid $black-border;
+    background: rgba($black-deep, 0.5);
+    color: $white-dim;
     font-family: $font-button;
     font-size: 11.5px;
     line-height: 1.3;
@@ -1706,19 +1674,19 @@ $gold-cta-gradient: linear-gradient(
       background $duration-fast $ease-out;
 
     &:hover {
-      color: $ink;
-      border-color: rgba($gold, 0.45);
+      color: $white-warm;
+      border-color: rgba($gold-bright, 0.35);
     }
 
     &:focus-visible {
-      outline: 2px solid $gold;
+      outline: 2px solid $gold-bright;
       outline-offset: 1px;
     }
 
     &--active {
-      color: $ink;
-      background: $gold-fill;
-      border-color: $gold-fill;
+      color: $black-deep;
+      background: $gold-bright;
+      border-color: $gold-bright;
       font-weight: 700;
     }
   }
@@ -1729,7 +1697,7 @@ $gold-cta-gradient: linear-gradient(
     font-family: $font-subhead;
     font-size: 12.5px;
     line-height: 1.6;
-    color: $ink-dim;
+    color: $white-dim;
     list-style: none;
   }
 
@@ -1744,15 +1712,15 @@ $gold-cta-gradient: linear-gradient(
 
     &--present {
       color: $ok;
-      background: rgba($ok, 0.13);
+      background: rgba($ok, 0.14);
     }
     &--voting {
-      color: $gold;
-      background: rgba($gold-fill, 0.26);
+      color: $gold-bright;
+      background: rgba($gold-bright, 0.16);
     }
     &--absent {
       color: $bad;
-      background: rgba($bad, 0.12);
+      background: rgba($bad, 0.14);
     }
   }
 
@@ -1814,7 +1782,7 @@ $gold-cta-gradient: linear-gradient(
       justify-content: space-between;
       gap: 10px;
       padding: 13px 14px;
-      border-bottom: 1px solid $border;
+      border-bottom: 1px solid $black-border;
     }
 
     &__title {
@@ -1825,14 +1793,14 @@ $gold-cta-gradient: linear-gradient(
       font-size: 11.5px;
       font-weight: 700;
       letter-spacing: 0.02em;
-      color: $ink-dim;
+      color: $white-dim;
     }
 
     &__count {
       padding: 1px 7px;
       border-radius: $radius-pill;
-      background: rgba($gold-fill, 0.26);
-      color: $gold;
+      background: rgba($gold-bright, 0.14);
+      color: $gold-bright;
       font-family: $font-number;
       font-size: 10.5px;
       font-variant-numeric: tabular-nums;
@@ -1843,7 +1811,7 @@ $gold-cta-gradient: linear-gradient(
       display: grid;
       grid-auto-flow: column;
       grid-auto-columns: 1fr;
-      border-bottom: 1px solid $border;
+      border-bottom: 1px solid $black-border;
     }
 
     &__tab {
@@ -1855,7 +1823,7 @@ $gold-cta-gradient: linear-gradient(
       background: none;
       border: none;
       border-bottom: 2px solid transparent;
-      color: $ink-dim;
+      color: $white-dim;
       font-family: $font-button;
       font-size: 10.5px;
       cursor: pointer;
@@ -1868,17 +1836,17 @@ $gold-cta-gradient: linear-gradient(
       }
 
       &:hover {
-        color: $ink-muted;
+        color: $white-muted;
       }
 
       &:focus-visible {
-        outline: 2px solid $gold;
+        outline: 2px solid $gold-bright;
         outline-offset: -3px;
       }
 
       &--active {
-        color: $gold;
-        border-bottom-color: $gold;
+        color: $gold-bright;
+        border-bottom-color: $gold-bright;
       }
     }
 
@@ -1892,7 +1860,7 @@ $gold-cta-gradient: linear-gradient(
     &__foot {
       flex-shrink: 0;
       padding: 10px 14px;
-      border-top: 1px solid $border;
+      border-top: 1px solid $black-border;
       text-align: center;
     }
   }
@@ -1906,8 +1874,8 @@ $gold-cta-gradient: linear-gradient(
       grid-template-columns: repeat(3, 1fr);
       gap: 4px;
       padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
-      border-top: 1px solid $border;
-      background: rgba($card, 0.94);
+      border-top: 1px solid $black-border;
+      background: rgba($black-deep, 0.92);
     }
 
     &__btn {
@@ -1919,7 +1887,7 @@ $gold-cta-gradient: linear-gradient(
       border-radius: $radius-md;
       border: none;
       background: none;
-      color: $ink-dim;
+      color: $white-dim;
       font-family: $font-button;
       font-size: 10.5px;
       cursor: pointer;
@@ -1929,8 +1897,8 @@ $gold-cta-gradient: linear-gradient(
       }
 
       &--active {
-        color: $gold;
-        background: rgba($gold-fill, 0.22);
+        color: $gold-bright;
+        background: rgba($gold-bright, 0.1);
       }
     }
   }
@@ -1971,7 +1939,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-number;
       font-size: 11px;
       letter-spacing: 0.06em;
-      color: $ink-dim;
+      color: $white-dim;
       font-variant-numeric: tabular-nums;
     }
 
@@ -1989,7 +1957,7 @@ $gold-cta-gradient: linear-gradient(
 
     &__flag {
       border-radius: 6px;
-      box-shadow: 0 10px 30px rgba($ink, 0.22);
+      box-shadow: 0 10px 30px rgba($black-deep, 0.6);
     }
 
     &__name {
@@ -2003,7 +1971,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-subhead;
       font-size: 13px;
       line-height: 1.55;
-      color: $ink-dim;
+      color: $white-dim;
     }
 
     &__actions {
@@ -2016,9 +1984,9 @@ $gold-cta-gradient: linear-gradient(
     &__btn {
       padding: 13px 22px;
       border-radius: $radius-pill;
-      border: 1px solid $border;
-      background: $card;
-      color: $ink-muted;
+      border: 1px solid $black-border;
+      background: rgba($black-card, 0.6);
+      color: $white-muted;
       font-family: $font-button;
       font-size: 13.5px;
       font-weight: 600;
@@ -2029,26 +1997,26 @@ $gold-cta-gradient: linear-gradient(
         background $duration-fast $ease-out;
 
       &:focus-visible {
-        outline: 2px solid $gold;
+        outline: 2px solid $gold-bright;
         outline-offset: 2px;
       }
 
       &--present:hover {
         color: $ok;
-        border-color: rgba($ok, 0.55);
-        background: rgba($ok, 0.08);
+        border-color: rgba($ok, 0.5);
+        background: rgba($ok, 0.1);
       }
 
       &--voting:hover {
-        color: $gold;
-        border-color: rgba($gold, 0.55);
-        background: rgba($gold-fill, 0.2);
+        color: $gold-bright;
+        border-color: rgba($gold-bright, 0.5);
+        background: rgba($gold-bright, 0.1);
       }
 
       &--absent:hover {
         color: $bad;
-        border-color: rgba($bad, 0.55);
-        background: rgba($bad, 0.08);
+        border-color: rgba($bad, 0.5);
+        background: rgba($bad, 0.1);
       }
     }
 
@@ -2068,7 +2036,7 @@ $gold-cta-gradient: linear-gradient(
     &__summary {
       flex-shrink: 0;
       padding: 14px;
-      border-bottom: 1px solid $border;
+      border-bottom: 1px solid $black-border;
     }
 
     &__counts {
@@ -2077,11 +2045,11 @@ $gold-cta-gradient: linear-gradient(
       margin: 10px 0 8px;
       font-family: $font-subhead;
       font-size: 12px;
-      color: $ink-dim;
+      color: $white-dim;
 
       b {
         font-family: $font-number;
-        color: $ink;
+        color: $white-warm;
         font-size: 15px;
         font-weight: 700;
         font-variant-numeric: tabular-nums;
@@ -2124,12 +2092,12 @@ $gold-cta-gradient: linear-gradient(
       cursor: pointer;
 
       &:hover {
-        background: rgba($ink, 0.045);
+        background: rgba($black-deep, 0.5);
       }
 
       &--active {
-        background: rgba($gold-fill, 0.2);
-        box-shadow: inset 0 0 0 1px rgba($gold, 0.35);
+        background: rgba($gold-bright, 0.1);
+        box-shadow: inset 0 0 0 1px rgba($gold-bright, 0.3);
       }
 
       &--absent {
@@ -2154,7 +2122,7 @@ $gold-cta-gradient: linear-gradient(
       justify-content: space-between;
       gap: 10px;
       padding: 12px 14px;
-      border-top: 1px solid $border;
+      border-top: 1px solid $black-border;
 
       .submitBtn {
         padding: 12px 20px;
@@ -2170,27 +2138,27 @@ $gold-cta-gradient: linear-gradient(
   .rosterTools {
     flex-shrink: 0;
     padding: 10px 12px;
-    border-bottom: 1px solid $border;
+    border-bottom: 1px solid $black-border;
   }
 
   .rosterSearch {
     width: 100%;
     padding: 8px 11px;
     border-radius: $radius-md;
-    border: 1px solid $border;
-    background: $card;
-    color: $ink;
+    border: 1px solid $black-border;
+    background: rgba($black-deep, 0.6);
+    color: $white-warm;
     font-family: $font-body-text;
     font-size: 13px;
 
     &::placeholder {
-      color: $ink-dim;
+      color: $white-dim;
     }
 
     &:focus {
       outline: none;
-      border-color: rgba($gold, 0.6);
-      box-shadow: 0 0 0 3px rgba($gold-fill, 0.28);
+      border-color: rgba($gold-bright, 0.45);
+      box-shadow: 0 0 0 3px rgba($gold-bright, 0.14);
     }
   }
 
@@ -2220,7 +2188,7 @@ $gold-cta-gradient: linear-gradient(
     transition: background $duration-fast $ease-out;
 
     &:hover {
-      background: rgba($ink, 0.045);
+      background: rgba($black-deep, 0.5);
     }
 
     &--absent {
@@ -2228,8 +2196,8 @@ $gold-cta-gradient: linear-gradient(
     }
 
     &--speaking {
-      background: rgba($gold-fill, 0.2);
-      box-shadow: inset 0 0 0 1px rgba($gold, 0.38);
+      background: rgba($gold-bright, 0.1);
+      box-shadow: inset 0 0 0 1px rgba($gold-bright, 0.32);
       opacity: 1;
     }
 
@@ -2248,7 +2216,7 @@ $gold-cta-gradient: linear-gradient(
       cursor: pointer;
 
       &:focus-visible {
-        outline: 2px solid $gold;
+        outline: 2px solid $gold-bright;
         outline-offset: 1px;
         border-radius: 6px;
       }
@@ -2264,7 +2232,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-body-text;
       font-size: 12.5px;
       line-height: 1.35;
-      color: $ink;
+      color: $white-warm;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -2273,7 +2241,7 @@ $gold-cta-gradient: linear-gradient(
     &__sub {
       font-family: $font-subhead;
       font-size: 10.5px;
-      color: $ink-dim;
+      color: $white-dim;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -2284,8 +2252,8 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-label;
       font-size: 9.5px;
       font-weight: 700;
-      color: $gold;
-      border: 1px solid rgba($gold, 0.45);
+      color: $gold-bright;
+      border: 1px solid rgba($gold-bright, 0.4);
       border-radius: $radius-pill;
       padding: 1px 5px;
     }
@@ -2305,14 +2273,14 @@ $gold-cta-gradient: linear-gradient(
       align-items: center;
       justify-content: center;
       font-size: 12px;
-      border: 1px solid $border;
+      border: 1px solid $black-border;
       background: transparent;
-      color: $ink-dim;
+      color: $white-dim;
       cursor: pointer;
 
       &:hover:not(:disabled) {
-        color: $gold;
-        border-color: rgba($gold, 0.5);
+        color: $gold-bright;
+        border-color: rgba($gold-bright, 0.4);
       }
 
       &:disabled {
@@ -2328,8 +2296,8 @@ $gold-cta-gradient: linear-gradient(
     padding: 0 4px;
     border-radius: 5px;
     border: 1px solid transparent;
-    background: rgba($ink, 0.06);
-    color: $ink-dim;
+    background: rgba($black-deep, 0.55);
+    color: $white-dim;
     font-family: $font-button;
     font-size: 9.5px;
     font-weight: 700;
@@ -2339,28 +2307,28 @@ $gold-cta-gradient: linear-gradient(
       background $duration-fast $ease-out;
 
     &:focus-visible {
-      outline: 2px solid $gold;
+      outline: 2px solid $gold-bright;
       outline-offset: 1px;
     }
 
     &--present.statusBtn--on {
-      color: #fff;
+      color: $black-deep;
       background: $ok;
     }
     &--voting.statusBtn--on {
-      color: $ink;
-      background: $gold-fill;
+      color: $black-deep;
+      background: $gold-bright;
     }
     &--absent.statusBtn--on {
-      color: #fff;
+      color: $white-warm;
       background: $bad;
     }
   }
 
   .addSeat {
     padding: 12px;
-    border-bottom: 1px solid $border;
-    background: $elevated;
+    border-bottom: 1px solid $black-border;
+    background: rgba($black-deep, 0.4);
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -2376,14 +2344,14 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-label;
       font-size: 11px;
       font-weight: 700;
-      color: $ink-dim;
+      color: $white-dim;
     }
 
     &__hint {
       font-family: $font-subhead;
       font-size: 10.5px;
       line-height: 1.45;
-      color: $ink-dim;
+      color: $white-dim;
     }
 
     &__suggestions {
@@ -2398,9 +2366,9 @@ $gold-cta-gradient: linear-gradient(
       max-height: 190px;
       overflow-y: auto;
       border-radius: $radius-md;
-      border: 1px solid rgba($gold, 0.35);
-      background: $card;
-      box-shadow: 0 16px 40px rgba($ink, 0.18);
+      border: 1px solid rgba($gold-bright, 0.3);
+      background: $black-elevated;
+      box-shadow: 0 16px 40px rgba($black-deep, 0.7);
       @include thin-scroll;
 
       button {
@@ -2412,20 +2380,20 @@ $gold-cta-gradient: linear-gradient(
         border: none;
         border-radius: 6px;
         background: none;
-        color: $ink;
+        color: $white-warm;
         font-family: $font-body-text;
         font-size: 12.5px;
         text-align: left;
         cursor: pointer;
 
         &:hover {
-          background: rgba($gold-fill, 0.22);
+          background: rgba($gold-bright, 0.12);
         }
 
         small {
           margin-left: auto;
           font-family: $font-label;
-          color: $ink-dim;
+          color: $white-dim;
           font-size: 10.5px;
         }
       }
@@ -2470,16 +2438,16 @@ $gold-cta-gradient: linear-gradient(
 
     &__ringTrack {
       fill: none;
-      stroke: rgba($ink, 0.09);
+      stroke: rgba($white-warm, 0.07);
       stroke-width: 10;
     }
 
     &__ringFill {
       fill: none;
-      stroke: $gold-fill-deep;
+      stroke: $gold-bright;
       stroke-width: 10;
       stroke-linecap: round;
-      filter: drop-shadow(0 0 8px rgba($gold-fill, 0.5));
+      filter: drop-shadow(0 0 10px rgba($gold-bright, 0.45));
       transition:
         stroke-dashoffset 0.2s linear,
         stroke $duration-mid $ease-out;
@@ -2502,7 +2470,7 @@ $gold-cta-gradient: linear-gradient(
     &__flag {
       border-radius: 5px;
       margin-bottom: 6px;
-      box-shadow: 0 6px 20px rgba($ink, 0.22);
+      box-shadow: 0 6px 20px rgba($black-deep, 0.6);
     }
 
     &__clock {
@@ -2512,10 +2480,10 @@ $gold-cta-gradient: linear-gradient(
       line-height: 1;
       font-variant-numeric: tabular-nums;
       letter-spacing: -0.01em;
-      color: $ink;
+      color: $white-warm;
 
       &--idle {
-        color: $ink-dim;
+        color: $white-dim;
       }
     }
 
@@ -2523,7 +2491,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-body-text;
       font-size: 14px;
       font-weight: 600;
-      color: $ink;
+      color: $white-warm;
       line-height: 1.35;
     }
 
@@ -2563,7 +2531,7 @@ $gold-cta-gradient: linear-gradient(
         font-size: 14px;
         font-weight: 700;
         font-variant-numeric: tabular-nums;
-        color: $gold;
+        color: $gold-bright;
       }
     }
 
@@ -2571,7 +2539,7 @@ $gold-cta-gradient: linear-gradient(
       min-width: 0;
       font-family: $font-body-text;
       font-size: 12px;
-      color: $ink-muted;
+      color: $white-muted;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -2580,13 +2548,13 @@ $gold-cta-gradient: linear-gradient(
     &__track {
       height: 4px;
       border-radius: $radius-pill;
-      background: rgba($ink, 0.09);
+      background: rgba($white-warm, 0.08);
       overflow: hidden;
     }
 
     &__fill {
       height: 100%;
-      background: $gold-fill-deep;
+      background: $gold-bright;
       border-radius: $radius-pill;
       transition: width 0.2s linear;
     }
@@ -2595,7 +2563,7 @@ $gold-cta-gradient: linear-gradient(
       margin-top: 6px;
       font-family: $font-subhead;
       font-size: 11px;
-      color: $ink-dim;
+      color: $white-dim;
     }
 
     &--done {
@@ -2625,13 +2593,12 @@ $gold-cta-gradient: linear-gradient(
       border-radius: $radius-pill;
       border: none;
       background: $gold-cta-gradient;
-      color: $ink;
+      color: $black-deep;
       font-family: $font-button;
       font-size: 14px;
       font-weight: 700;
       letter-spacing: 0.02em;
       cursor: pointer;
-      box-shadow: 0 6px 18px rgba($gold-fill-deep, 0.3);
 
       i {
         font-size: 17px;
@@ -2643,14 +2610,14 @@ $gold-cta-gradient: linear-gradient(
       }
 
       &:focus-visible {
-        outline: 2px solid $ink;
+        outline: 2px solid $white-warm;
         outline-offset: 2px;
       }
 
       &--running {
-        background: rgba($gold-fill, 0.24);
-        color: $gold;
-        box-shadow: inset 0 0 0 1px rgba($gold, 0.5);
+        background: rgba($gold-bright, 0.16);
+        color: $gold-bright;
+        box-shadow: inset 0 0 0 1px rgba($gold-bright, 0.45);
       }
     }
 
@@ -2663,9 +2630,9 @@ $gold-cta-gradient: linear-gradient(
       min-width: 64px;
       padding: 8px 12px;
       border-radius: $radius-md;
-      border: 1px solid $border;
-      background: $card;
-      color: $ink-muted;
+      border: 1px solid $black-border;
+      background: rgba($black-deep, 0.5);
+      color: $white-muted;
       font-family: $font-button;
       font-size: 10.5px;
       cursor: pointer;
@@ -2678,12 +2645,12 @@ $gold-cta-gradient: linear-gradient(
       }
 
       &:hover:not(:disabled) {
-        color: $gold;
-        border-color: rgba($gold, 0.5);
+        color: $gold-bright;
+        border-color: rgba($gold-bright, 0.4);
       }
 
       &:focus-visible {
-        outline: 2px solid $gold;
+        outline: 2px solid $gold-bright;
         outline-offset: 2px;
       }
 
@@ -2696,14 +2663,14 @@ $gold-cta-gradient: linear-gradient(
       // buttons, so it reads warm rather than gold.
       &--end:hover:not(:disabled) {
         color: $bad;
-        border-color: rgba($bad, 0.5);
+        border-color: rgba($bad, 0.45);
       }
 
       // Once the block is spent, End is the obvious next move.
       &--urgent {
         color: $bad;
-        border-color: rgba($bad, 0.5);
-        background: rgba($bad, 0.08);
+        border-color: rgba($bad, 0.45);
+        background: rgba($bad, 0.1);
       }
     }
   }
@@ -2719,7 +2686,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-label;
       font-size: 11px;
       font-weight: 600;
-      color: $ink-dim;
+      color: $white-dim;
       margin-right: 2px;
     }
   }
@@ -2731,13 +2698,13 @@ $gold-cta-gradient: linear-gradient(
     margin: 0 12px 4px;
     padding: 12px 14px;
     border-radius: $radius-md;
-    border: 1px solid $border;
-    background: $elevated;
+    border: 1px solid $black-border;
+    background: rgba($black-deep, 0.42);
 
     i {
       flex-shrink: 0;
       font-size: 15px;
-      color: $gold;
+      color: $gold-bright;
       padding-top: 1px;
     }
 
@@ -2745,7 +2712,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-subhead;
       font-size: 12px;
       line-height: 1.6;
-      color: $ink-muted;
+      color: $white-muted;
     }
   }
 
@@ -2758,7 +2725,7 @@ $gold-cta-gradient: linear-gradient(
       justify-content: space-between;
       gap: 10px;
       padding: 12px 0 10px;
-      border-top: 1px solid $border;
+      border-top: 1px solid $black-border;
       margin-top: 4px;
     }
 
@@ -2773,10 +2740,10 @@ $gold-cta-gradient: linear-gradient(
     &__held {
       margin-top: 10px;
       padding-top: 9px;
-      border-top: 1px dashed rgba($ink, 0.16);
+      border-top: 1px dashed rgba($white-warm, 0.1);
       font-family: $font-subhead;
       font-size: 11px;
-      color: $ink-dim;
+      color: $white-dim;
     }
   }
 
@@ -2784,21 +2751,21 @@ $gold-cta-gradient: linear-gradient(
     width: 100%;
     padding: 8px 30px 8px 11px;
     border-radius: $radius-md;
-    border: 1px solid $border;
-    background: $card
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%237d7364' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l5 5 5-5'/%3E%3C/svg%3E")
+    border: 1px solid $black-border;
+    background: rgba($black-deep, 0.6)
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%238c8378' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l5 5 5-5'/%3E%3C/svg%3E")
       no-repeat right 11px center;
     background-size: 10px 7px;
     appearance: none;
     -webkit-appearance: none;
-    color: $ink-muted;
+    color: $white-muted;
     font-family: $font-body-text;
     font-size: 12.5px;
     cursor: pointer;
 
     &:focus {
       outline: none;
-      border-color: rgba($gold, 0.6);
+      border-color: rgba($gold-bright, 0.45);
     }
 
     &:disabled {
@@ -2807,8 +2774,8 @@ $gold-cta-gradient: linear-gradient(
     }
 
     option {
-      background: $card;
-      color: $ink;
+      background: $black-card;
+      color: $white-warm;
     }
   }
 
@@ -2827,11 +2794,11 @@ $gold-cta-gradient: linear-gradient(
     gap: 9px;
     padding: 6px 8px;
     border-radius: $radius-md;
-    background: rgba($ink, 0.035);
+    background: rgba($black-deep, 0.4);
     border: 1px solid transparent;
 
     &:hover {
-      border-color: rgba($gold, 0.3);
+      border-color: rgba($gold-bright, 0.22);
     }
 
     &__pos {
@@ -2840,7 +2807,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-number;
       font-size: 11px;
       font-variant-numeric: tabular-nums;
-      color: $gold;
+      color: $gold-bright;
       text-align: center;
     }
 
@@ -2850,7 +2817,7 @@ $gold-cta-gradient: linear-gradient(
       padding: 0;
       border: none;
       background: none;
-      color: $ink;
+      color: $white-warm;
       font-family: $font-body-text;
       font-size: 12.5px;
       text-align: left;
@@ -2860,7 +2827,7 @@ $gold-cta-gradient: linear-gradient(
       white-space: nowrap;
 
       &:hover {
-        color: $gold;
+        color: $gold-bright;
       }
     }
 
@@ -2878,13 +2845,13 @@ $gold-cta-gradient: linear-gradient(
         border: none;
         border-radius: 5px;
         background: none;
-        color: $ink-dim;
+        color: $white-dim;
         font-size: 11px;
         cursor: pointer;
 
         &:hover:not(:disabled) {
-          color: $gold;
-          background: rgba($gold-fill, 0.22);
+          color: $gold-bright;
+          background: rgba($gold-bright, 0.1);
         }
 
         &:disabled {
@@ -2897,7 +2864,7 @@ $gold-cta-gradient: linear-gradient(
 
   .pointsBlock {
     padding: 12px 12px 16px;
-    border-top: 1px solid $border;
+    border-top: 1px solid $black-border;
 
     &__row {
       display: grid;
@@ -2913,9 +2880,9 @@ $gold-cta-gradient: linear-gradient(
     gap: 7px;
     padding: 9px 10px;
     border-radius: $radius-md;
-    border: 1px solid $border;
-    background: $card;
-    color: $ink-muted;
+    border: 1px solid $black-border;
+    background: rgba($black-deep, 0.45);
+    color: $white-muted;
     font-family: $font-button;
     font-size: 11px;
     line-height: 1.3;
@@ -2927,13 +2894,13 @@ $gold-cta-gradient: linear-gradient(
 
     i {
       font-size: 13px;
-      color: $gold;
+      color: $gold-bright;
       flex-shrink: 0;
     }
 
     &:hover:not(:disabled) {
-      color: $ink;
-      border-color: rgba($gold, 0.5);
+      color: $white-warm;
+      border-color: rgba($gold-bright, 0.38);
     }
 
     &:disabled {
@@ -2960,14 +2927,14 @@ $gold-cta-gradient: linear-gradient(
     flex-direction: column;
     gap: 9px;
     padding: 13px;
-    border-bottom: 1px solid $border;
-    background: $elevated;
+    border-bottom: 1px solid $black-border;
+    background: rgba($black-deep, 0.35);
 
     &__hint {
       font-family: $font-subhead;
       font-size: 11px;
       line-height: 1.5;
-      color: $ink-dim;
+      color: $white-dim;
       margin-top: -3px;
     }
   }
@@ -2982,7 +2949,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-label;
       font-size: 11px;
       font-weight: 600;
-      color: $ink-dim;
+      color: $white-dim;
       width: 100%;
     }
   }
@@ -2997,12 +2964,12 @@ $gold-cta-gradient: linear-gradient(
   .motionCard {
     padding: 12px;
     border-radius: $radius-md;
-    border: 1px solid $border;
-    background: $card;
+    border: 1px solid $black-border;
+    background: rgba($black-deep, 0.45);
 
     &--first {
-      border-color: rgba($gold, 0.5);
-      background: rgba($gold-fill, 0.12);
+      border-color: rgba($gold-bright, 0.4);
+      background: rgba($gold-bright, 0.06);
     }
 
     &__head {
@@ -3020,8 +2987,8 @@ $gold-cta-gradient: linear-gradient(
       align-items: center;
       justify-content: center;
       font-size: 13px;
-      color: $gold;
-      background: rgba($gold-fill, 0.26);
+      color: $gold-bright;
+      background: rgba($gold-bright, 0.12);
     }
 
     &__titles {
@@ -3033,7 +3000,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-label;
       font-size: 13px;
       font-weight: 600;
-      color: $ink;
+      color: $white-warm;
       line-height: 1.35;
     }
 
@@ -3045,7 +3012,7 @@ $gold-cta-gradient: linear-gradient(
       margin-top: 3px;
       font-family: $font-subhead;
       font-size: 11px;
-      color: $ink-dim;
+      color: $white-dim;
     }
 
     &__first {
@@ -3053,8 +3020,8 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-label;
       font-size: 9.5px;
       font-weight: 700;
-      color: $gold;
-      border: 1px solid rgba($gold, 0.45);
+      color: $gold-bright;
+      border: 1px solid rgba($gold-bright, 0.4);
       border-radius: $radius-pill;
       padding: 2px 7px;
     }
@@ -3063,11 +3030,11 @@ $gold-cta-gradient: linear-gradient(
       margin-top: 9px;
       padding: 8px 10px;
       border-radius: 6px;
-      background: rgba($ink, 0.045);
+      background: rgba($black-deep, 0.55);
       font-family: $font-body-text;
       font-size: 12.5px;
       line-height: 1.5;
-      color: $ink-muted;
+      color: $white-muted;
     }
 
     &__chair {
@@ -3076,7 +3043,7 @@ $gold-cta-gradient: linear-gradient(
       p {
         font-family: $font-subhead;
         font-size: 11.5px;
-        color: $ink-dim;
+        color: $white-dim;
         margin-bottom: 8px;
       }
     }
@@ -3104,7 +3071,7 @@ $gold-cta-gradient: linear-gradient(
       margin: 9px 0;
       font-family: $font-subhead;
       font-size: 11px;
-      color: $ink-dim;
+      color: $white-dim;
       text-align: center;
     }
 
@@ -3123,15 +3090,15 @@ $gold-cta-gradient: linear-gradient(
   .counter {
     padding: 8px;
     border-radius: $radius-md;
-    border: 1px solid $border;
-    background: $elevated;
+    border: 1px solid $black-border;
+    background: rgba($black-deep, 0.5);
     text-align: center;
 
     &__label {
       display: block;
       font-family: $font-label;
       font-size: 10.5px;
-      color: $ink-dim;
+      color: $white-dim;
       margin-bottom: 4px;
     }
 
@@ -3146,15 +3113,15 @@ $gold-cta-gradient: linear-gradient(
         height: 26px;
         flex-shrink: 0;
         border-radius: 6px;
-        border: 1px solid $border;
-        background: $card;
-        color: $ink-muted;
+        border: 1px solid $black-border;
+        background: rgba($black-card, 0.7);
+        color: $white-muted;
         font-size: 11px;
         cursor: pointer;
 
         &:hover {
-          color: $ink;
-          border-color: rgba($gold, 0.45);
+          color: $white-warm;
+          border-color: rgba($gold-bright, 0.35);
         }
       }
     }
@@ -3178,7 +3145,7 @@ $gold-cta-gradient: linear-gradient(
 
   .motionHistory {
     padding: 13px;
-    border-top: 1px solid $border;
+    border-top: 1px solid $black-border;
 
     ul {
       margin: 9px 0 0;
@@ -3196,13 +3163,13 @@ $gold-cta-gradient: linear-gradient(
       padding: 5px 7px;
       border-radius: 6px;
       font-size: 11.5px;
-      background: rgba($ink, 0.035);
+      background: rgba($black-deep, 0.35);
     }
 
     &__time {
       font-family: $font-number;
       font-variant-numeric: tabular-nums;
-      color: $ink-dim;
+      color: $white-dim;
       font-size: 10.5px;
       flex-shrink: 0;
     }
@@ -3211,7 +3178,7 @@ $gold-cta-gradient: linear-gradient(
       flex: 1;
       min-width: 0;
       font-family: $font-body-text;
-      color: $ink-muted;
+      color: $white-muted;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -3221,7 +3188,7 @@ $gold-cta-gradient: linear-gradient(
       flex-shrink: 0;
       font-family: $font-subhead;
       font-size: 10.5px;
-      color: $ink-dim;
+      color: $white-dim;
     }
 
     &__row--passed &__result {
@@ -3243,13 +3210,13 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-subhead;
       font-size: 11.5px;
       line-height: 1.6;
-      color: $ink-dim;
+      color: $white-dim;
     }
 
     &__foot {
       margin-top: auto;
       padding: 12px 13px;
-      border-top: 1px solid $border;
+      border-top: 1px solid $black-border;
 
       .submitBtn {
         width: 100%;
@@ -3262,21 +3229,21 @@ $gold-cta-gradient: linear-gradient(
 
   .voteBoard {
     padding: 14px 13px;
-    border-bottom: 1px solid $border;
+    border-bottom: 1px solid $black-border;
 
     &__subject {
       font-family: $font-heading;
       font-size: 14px;
       font-weight: 600;
       line-height: 1.4;
-      color: $ink;
+      color: $white-warm;
     }
 
     &__kind {
       margin-top: 3px;
       font-family: $font-subhead;
       font-size: 11px;
-      color: $ink-dim;
+      color: $white-dim;
     }
 
     &__bars {
@@ -3290,7 +3257,7 @@ $gold-cta-gradient: linear-gradient(
       margin-top: 10px;
       font-family: $font-subhead;
       font-size: 11px;
-      color: $ink-dim;
+      color: $white-dim;
     }
 
     &__veto {
@@ -3301,7 +3268,7 @@ $gold-cta-gradient: linear-gradient(
       padding: 8px 10px;
       border-radius: 6px;
       border: 1px solid rgba($bad, 0.4);
-      background: rgba($bad, 0.08);
+      background: rgba($bad, 0.1);
       color: $bad;
       font-family: $font-subhead;
       font-size: 11.5px;
@@ -3319,14 +3286,14 @@ $gold-cta-gradient: linear-gradient(
       flex-shrink: 0;
       font-family: $font-label;
       font-size: 11px;
-      color: $ink-dim;
+      color: $white-dim;
     }
 
     &__track {
       flex: 1;
       height: 8px;
       border-radius: $radius-pill;
-      background: rgba($ink, 0.08);
+      background: rgba($white-warm, 0.06);
       overflow: hidden;
     }
 
@@ -3375,8 +3342,8 @@ $gold-cta-gradient: linear-gradient(
     gap: 10px;
     padding: 11px 13px;
     border-radius: $radius-md;
-    border: 1px solid rgba($ok, 0.45);
-    background: rgba($ok, 0.09);
+    border: 1px solid rgba($ok, 0.42);
+    background: rgba($ok, 0.1);
     color: $ok;
     font-family: $font-heading;
     font-size: 15px;
@@ -3392,12 +3359,12 @@ $gold-cta-gradient: linear-gradient(
       font-size: 12px;
       font-weight: 400;
       font-variant-numeric: tabular-nums;
-      color: $ink-muted;
+      color: $white-muted;
     }
 
     &--failed {
-      border-color: rgba($bad, 0.45);
-      background: rgba($bad, 0.08);
+      border-color: rgba($bad, 0.42);
+      background: rgba($bad, 0.1);
       color: $bad;
     }
   }
@@ -3419,7 +3386,7 @@ $gold-cta-gradient: linear-gradient(
     border-radius: $radius-md;
 
     &:hover {
-      background: rgba($ink, 0.045);
+      background: rgba($black-deep, 0.45);
     }
 
     &__name {
@@ -3437,8 +3404,8 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-label;
       font-size: 9.5px;
       font-weight: 700;
-      color: $gold;
-      border: 1px solid rgba($gold, 0.45);
+      color: $gold-bright;
+      border: 1px solid rgba($gold-bright, 0.4);
       border-radius: $radius-pill;
       padding: 1px 5px;
     }
@@ -3459,9 +3426,9 @@ $gold-cta-gradient: linear-gradient(
     height: 28px;
     padding: 0 9px;
     border-radius: 6px;
-    border: 1px solid $border;
-    background: $card;
-    color: $ink-dim;
+    border: 1px solid $black-border;
+    background: rgba($black-deep, 0.5);
+    color: $white-dim;
     font-family: $font-button;
     font-size: 12px;
     cursor: pointer;
@@ -3471,7 +3438,7 @@ $gold-cta-gradient: linear-gradient(
       border-color $duration-fast $ease-out;
 
     &:focus-visible {
-      outline: 2px solid $gold;
+      outline: 2px solid $gold-bright;
       outline-offset: 1px;
     }
 
@@ -3482,21 +3449,21 @@ $gold-cta-gradient: linear-gradient(
 
     &--yes:hover:not(:disabled),
     &--yes.voteBtn--on {
-      color: #fff;
+      color: $black-deep;
       background: $ok;
       border-color: $ok;
     }
 
     &--no:hover:not(:disabled),
     &--no.voteBtn--on {
-      color: #fff;
+      color: $white-warm;
       background: $bad;
       border-color: $bad;
     }
 
     &--abstain:hover:not(:disabled),
     &--abstain.voteBtn--on {
-      color: #fff;
+      color: $black-deep;
       background: $neutral;
       border-color: $neutral;
     }
@@ -3528,11 +3495,11 @@ $gold-cta-gradient: linear-gradient(
     gap: 9px;
     padding: 9px 10px;
     border-radius: $radius-md;
-    border: 1px solid $border;
-    background: $card;
+    border: 1px solid $black-border;
+    background: rgba($black-deep, 0.42);
 
     &--passed {
-      border-color: rgba($ok, 0.4);
+      border-color: rgba($ok, 0.35);
     }
 
     &--failed {
@@ -3543,8 +3510,8 @@ $gold-cta-gradient: linear-gradient(
       flex-shrink: 0;
       padding: 3px 7px;
       border-radius: 5px;
-      background: rgba($gold-fill, 0.26);
-      color: $gold;
+      background: rgba($gold-bright, 0.14);
+      color: $gold-bright;
       font-family: $font-label;
       font-size: 10.5px;
       font-weight: 700;
@@ -3559,7 +3526,7 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-body-text;
       font-size: 12.5px;
       line-height: 1.4;
-      color: $ink;
+      color: $white-warm;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -3572,28 +3539,27 @@ $gold-cta-gradient: linear-gradient(
       margin-top: 2px;
       font-family: $font-subhead;
       font-size: 10.5px;
-      color: $ink-dim;
+      color: $white-dim;
     }
 
     &__status {
       flex-shrink: 0;
       padding: 4px 20px 4px 6px;
       border-radius: 6px;
-      border: 1px solid $border;
-      background: $card
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%237d7364' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l5 5 5-5'/%3E%3C/svg%3E")
+      border: 1px solid $black-border;
+      background: rgba($black-card, 0.7)
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%238c8378' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M1 1l5 5 5-5'/%3E%3C/svg%3E")
         no-repeat right 6px center;
       background-size: 9px 6px;
       appearance: none;
       -webkit-appearance: none;
-      color: $ink-muted;
+      color: $white-muted;
       font-family: $font-body-text;
       font-size: 10.5px;
       cursor: pointer;
 
       option {
-        background: $card;
-        color: $ink;
+        background: $black-card;
       }
     }
 
@@ -3604,7 +3570,7 @@ $gold-cta-gradient: linear-gradient(
       border: none;
       border-radius: 5px;
       background: none;
-      color: $ink-dim;
+      color: $white-dim;
       font-size: 11px;
       cursor: pointer;
 
@@ -3623,13 +3589,13 @@ $gold-cta-gradient: linear-gradient(
       display: flex;
       gap: 7px;
       padding: 11px;
-      border-bottom: 1px solid $border;
+      border-bottom: 1px solid $black-border;
     }
 
     &__foot {
       margin-top: auto;
       padding: 11px;
-      border-top: 1px solid $border;
+      border-top: 1px solid $black-border;
     }
   }
 
@@ -3653,7 +3619,7 @@ $gold-cta-gradient: linear-gradient(
     line-height: 1.5;
 
     &:hover {
-      background: rgba($ink, 0.04);
+      background: rgba($black-deep, 0.4);
     }
 
     &__time {
@@ -3661,14 +3627,14 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-number;
       font-size: 10.5px;
       font-variant-numeric: tabular-nums;
-      color: $ink-dim;
+      color: $white-dim;
       padding-top: 1px;
     }
 
     i {
       flex-shrink: 0;
       font-size: 11px;
-      color: $ink-dim;
+      color: $white-dim;
       padding-top: 2px;
     }
 
@@ -3676,25 +3642,25 @@ $gold-cta-gradient: linear-gradient(
       flex: 1;
       min-width: 0;
       font-family: $font-body-text;
-      color: $ink-muted;
+      color: $white-muted;
       word-break: break-word;
     }
 
     &--vote,
     &--motion {
-      border-left-color: rgba($gold, 0.6);
+      border-left-color: rgba($gold-bright, 0.5);
 
       i {
-        color: $gold;
+        color: $gold-bright;
       }
     }
 
     &--caucus {
-      border-left-color: rgba($gold, 0.35);
+      border-left-color: rgba($gold-bright, 0.3);
     }
 
     &--session {
-      border-left-color: rgba($ok, 0.55);
+      border-left-color: rgba($ok, 0.5);
 
       i {
         color: $ok;
@@ -3706,7 +3672,7 @@ $gold-cta-gradient: linear-gradient(
     }
 
     &--note {
-      background: rgba($gold-fill, 0.14);
+      background: rgba($gold-bright, 0.05);
     }
   }
 
@@ -3722,7 +3688,7 @@ $gold-cta-gradient: linear-gradient(
     align-items: center;
     justify-content: center;
     padding: 20px;
-    background: rgba($ink, 0.45);
+    background: rgba($black-deep, 0.8);
     backdrop-filter: blur(5px);
 
     &__card {
@@ -3731,10 +3697,9 @@ $gold-cta-gradient: linear-gradient(
       max-height: 86vh;
       overflow-y: auto;
       border-radius: $radius-xl;
-      border: 1px solid rgba($gold, 0.3);
-      background: $card;
-      color: $ink;
-      box-shadow: 0 24px 70px rgba($ink, 0.3);
+      border: 1px solid rgba($gold-bright, 0.3);
+      background: $black-elevated;
+      box-shadow: 0 24px 70px rgba($black-deep, 0.7);
       @include thin-scroll;
     }
 
@@ -3747,18 +3712,19 @@ $gold-cta-gradient: linear-gradient(
       justify-content: space-between;
       gap: 12px;
       padding: 14px 16px;
-      border-bottom: 1px solid $border;
-      background: $card;
+      border-bottom: 1px solid $black-border;
+      background: $black-elevated;
     }
 
     &__title {
-      min-width: 0;
-      font-family: $font-heading;
-      font-size: 15px;
-      font-weight: 700;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+  min-width: 0;
+  font-family: $font-heading;
+  font-size: 15px;
+  font-weight: 700;
+  color: $white-warm;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
     }
   }
 
@@ -3776,14 +3742,14 @@ $gold-cta-gradient: linear-gradient(
       font-family: $font-heading;
       font-size: 15px;
       font-weight: 600;
-      color: $ink;
+      color: $white-warm;
     }
 
     &__sub {
       font-family: $font-subhead;
       font-size: 12px;
       line-height: 1.5;
-      color: $ink-dim;
+      color: $white-dim;
       margin-bottom: 6px;
     }
 
@@ -3796,8 +3762,8 @@ $gold-cta-gradient: linear-gradient(
       div {
         padding: 10px 6px;
         border-radius: $radius-md;
-        border: 1px solid $border;
-        background: $elevated;
+        border: 1px solid $black-border;
+        background: rgba($black-deep, 0.5);
         text-align: center;
       }
 
@@ -3806,14 +3772,14 @@ $gold-cta-gradient: linear-gradient(
         font-family: $font-number;
         font-size: 16px;
         font-weight: 700;
-        color: $gold;
+        color: $gold-bright;
         font-variant-numeric: tabular-nums;
       }
 
       small {
         font-family: $font-label;
         font-size: 10px;
-        color: $ink-dim;
+        color: $white-dim;
       }
     }
 
@@ -3822,9 +3788,9 @@ $gold-cta-gradient: linear-gradient(
       margin-top: 6px;
       padding: 10px 12px;
       border-radius: $radius-md;
-      border: 1px solid $border;
-      background: $card;
-      color: $ink;
+      border: 1px solid $black-border;
+      background: rgba($black-deep, 0.6);
+      color: $white-warm;
       font-family: $font-body-text;
       font-size: 13px;
       line-height: 1.6;
@@ -3832,8 +3798,8 @@ $gold-cta-gradient: linear-gradient(
 
       &:focus {
         outline: none;
-        border-color: rgba($gold, 0.6);
-        box-shadow: 0 0 0 3px rgba($gold-fill, 0.28);
+        border-color: rgba($gold-bright, 0.45);
+        box-shadow: 0 0 0 3px rgba($gold-bright, 0.14);
       }
     }
 
@@ -3869,7 +3835,7 @@ $gold-cta-gradient: linear-gradient(
       gap: 12px;
       margin-top: 18px;
       padding-top: 14px;
-      border-top: 1px solid $border;
+      border-top: 1px solid $black-border;
     }
 
     &__signout {
@@ -3883,7 +3849,7 @@ $gold-cta-gradient: linear-gradient(
     justify-content: space-between;
     gap: 14px;
     padding: 13px 0;
-    border-bottom: 1px solid $border;
+    border-bottom: 1px solid $black-border;
     cursor: pointer;
 
     > span {
@@ -3892,13 +3858,13 @@ $gold-cta-gradient: linear-gradient(
       gap: 3px;
       font-family: $font-body-text;
       font-size: 13px;
-      color: $ink;
+      color: $white-warm;
 
       small {
         font-family: $font-subhead;
         font-size: 11px;
         line-height: 1.45;
-        color: $ink-dim;
+        color: $white-dim;
       }
     }
 
@@ -3917,8 +3883,8 @@ $gold-cta-gradient: linear-gradient(
       height: 22px;
       margin: 0;
       border-radius: $radius-pill;
-      border: 1px solid $border;
-      background: rgba($ink, 0.1);
+      border: 1px solid $black-border;
+      background: rgba($black-deep, 0.7);
       position: relative;
       cursor: pointer;
       transition:
@@ -3933,25 +3899,24 @@ $gold-cta-gradient: linear-gradient(
         width: 16px;
         height: 16px;
         border-radius: 50%;
-        background: #fff;
-        box-shadow: 0 1px 3px rgba($ink, 0.3);
+        background: $white-dim;
         transition:
           transform $duration-fast $ease-out,
           background $duration-fast $ease-out;
       }
 
       &:checked {
-        background: rgba($gold-fill, 0.55);
-        border-color: rgba($gold, 0.6);
+        background: rgba($gold-bright, 0.26);
+        border-color: rgba($gold-bright, 0.55);
 
         &::after {
           transform: translateX(18px);
-          background: #fff;
+          background: $gold-bright;
         }
       }
 
       &:focus-visible {
-        outline: 2px solid $gold;
+        outline: 2px solid $gold-bright;
         outline-offset: 2px;
       }
     }
@@ -3969,7 +3934,7 @@ $gold-cta-gradient: linear-gradient(
       gap: 6px;
       font-family: $font-subhead;
       font-size: 12px;
-      color: $ink-dim;
+      color: $white-dim;
     }
 
     kbd {
@@ -3978,10 +3943,9 @@ $gold-cta-gradient: linear-gradient(
       padding: 2px 6px;
       margin-right: 5px;
       border-radius: 5px;
-      border: 1px solid $border;
-      border-bottom-width: 2px;
-      background: $elevated;
-      color: $ink-muted;
+      border: 1px solid $black-border;
+      background: rgba($black-deep, 0.7);
+      color: $white-muted;
       font-family: $font-mono;
       font-size: 10.5px;
       text-align: center;
@@ -3993,11 +3957,11 @@ $gold-cta-gradient: linear-gradient(
     display: inline-block;
     border-radius: 3px;
     object-fit: cover;
-    background: rgba($ink, 0.05);
-    box-shadow: inset 0 0 0 1px rgba($ink, 0.14);
+    background: rgba($white-warm, 0.06);
+    box-shadow: inset 0 0 0 1px rgba($white-warm, 0.12);
 
     &--empty {
-      background: rgba($ink, 0.05);
+      background: rgba($white-warm, 0.05);
     }
 
     &--emoji {
@@ -4016,8 +3980,8 @@ $gold-cta-gradient: linear-gradient(
     border-radius: 50%;
     object-fit: cover;
     object-position: center 22%;
-    background: rgba($ink, 0.05);
-    box-shadow: inset 0 0 0 1px rgba($ink, 0.16);
+    background: rgba($white-warm, 0.06);
+    box-shadow: inset 0 0 0 1px rgba($white-warm, 0.14);
 
     &.rollCall__flag,
     &.floorStage__flag {
@@ -4026,20 +3990,20 @@ $gold-cta-gradient: linear-gradient(
 
     &.rollCall__flag {
       box-shadow:
-        inset 0 0 0 1px rgba($ink, 0.16),
-        0 10px 30px rgba($ink, 0.22);
+        inset 0 0 0 1px rgba($white-warm, 0.14),
+        0 10px 30px rgba($black-deep, 0.6);
     }
 
     &.floorStage__flag {
       box-shadow:
-        inset 0 0 0 1px rgba($ink, 0.16),
-        0 6px 20px rgba($ink, 0.22);
+        inset 0 0 0 1px rgba($white-warm, 0.14),
+        0 6px 20px rgba($black-deep, 0.6);
     }
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .commandPage {
+  .commandPage[data-command-theme='dark'] {
     .floorStage__ringFill,
     .floorBlock__fill {
       transition: none;
@@ -4047,7 +4011,7 @@ $gold-cta-gradient: linear-gradient(
 
     // Framer Motion handles its own slides and scales under reducedMotion
     // "user"; these are the CSS-driven ones.
-    &--enter {
+    &.commandPage--enter {
       animation: none;
     }
 
@@ -4086,22 +4050,5 @@ $gold-cta-gradient: linear-gradient(
     .loginStep__spinner {
       animation: commandSetupPulse 1.6s ease-in-out infinite;
     }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Theme transition
-// ---------------------------------------------------------------------------
-
-::view-transition-old(.commandPage),
-::view-transition-new(.commandPage) {
-  animation-duration: 220ms;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(.commandPage),
-  ::view-transition-new(.commandPage) {
-    animation-duration: 1ms;
   }
 }

@@ -15,6 +15,7 @@
 @use 'routes/admin';
 @use 'routes/notFoundPage';
 @use 'routes/sessionCommand';
+@use 'routes/sessionCommand.dark' as *;
 @use 'routes/vote';
 @use 'routes/votingControl';
 @use 'routes/votingShared';
