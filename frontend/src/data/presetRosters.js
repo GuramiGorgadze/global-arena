@@ -94,8 +94,7 @@ export const DISEC_ROSTER = [
 export const PRESS_ROSTER = [
   seat('gb', 'BBC World Service N1', 'United Kingdom'),
   seat('gb', 'BBC World Service N2', 'United Kingdom'),
-  seat('us', 'Voice of America (VOA) N1', 'United States'),
-  seat('us', 'Voice of America (VOA) N2', 'United States'),
+  seat('us', 'Voice of America (VOA)', 'United States'),
   seat('fr', 'France 24 N1', 'France'),
   seat('fr', 'France 24 N2', 'France'),
   seat('cn', 'China Daily N1', 'China'),
@@ -106,7 +105,6 @@ export const PRESS_ROSTER = [
   seat('qa', 'Al Jazeera Arabic N2', 'Qatar'),
   seat('ps', 'Wafa — Palestine News Agency N1', 'Palestine'),
   seat('ps', 'Wafa — Palestine News Agency N2', 'Palestine'),
-  seat('un', 'Independent Digital / Citizen Journalist', 'Independent'),
   seat('il', 'The Jerusalem Post N1', 'Israel'),
   seat('il', 'The Jerusalem Post N2', 'Israel'),
 ];
